@@ -1,0 +1,41 @@
+/* Navbar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+
+
+  padding: 1rem 2rem;
+}
+
+.navbar-list {
+  list-style: none;
+  display: flex;
+  gap: 2rem; /* espacio entre items */
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+
+
+.navbar-list li a {
+  color: #ecf0f1; /* color claro */
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-list li a:hover {
+  color: #3498db; /* color azul al pasar el mouse */
+}
+
+/* Opcional: destacar la ruta activa */
+.navbar-list li a.active,
+.navbar-list li a[data-active="true"] {
+  color: #e74c3c; /* color rojo para activo */
+  font-weight: 700;
+}

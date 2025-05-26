@@ -1,0 +1,214 @@
+/* Track.css */
+
+.track-container {
+  border-radius: 1em;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #444;
+}
+
+.title {
+  text-align: center;
+  font-weight: 9em;
+  font-size: 2em;
+  margin-bottom: 1em;
+  color: #fff;
+  background-color: #d79fd5;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  user-select: none;
+}
+
+/* Tabs de categoría de tiempo */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+
+.tab-button {
+  background: #c8e6c9;
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 2em;
+  font-weight: 600;
+  cursor: pointer;
+  color: #2e7d32;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.tab-button:hover {
+  background-color: #a5d6a7;
+}
+
+.tab-button.active {
+  background-color: #4caf50;
+  color: white;
+}
+
+/* Fecha */
+.date-label {
+  text-align: center;
+  font-size: 1em;
+  font-weight: 600;
+  color: #2e7d32;
+  user-select: none;
+}
+
+/* Gráfico donut */
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 50vh;
+  width:30%;
+  margin: 2em auto;
+  position: relative;
+  justify-content: center;
+}
+h3 {
+  text-align: center;
+  margin-bottom: 1rem; /* espacio entre título y gráfico */
+}
+
+.chart-container{
+  display: flex;
+  justify-content: center;
+  gap: 2rem; /* espacio entre gráficos */
+  flex-wrap: wrap; /* para que en pantallas pequeñas bajen */
+  margin: 2em auto;
+}
+
+/* Lista categorías */
+.categories-list {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  flex-wrap: wrap;
+  margin: 1em;
+}
+
+.category-item {
+  background: white;
+  border-radius: 1em;
+  box-shadow: 0 1em 1em rgb(0 0 0 / 0.12);
+  padding: 1em 1em;
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  user-select: none;
+}
+
+.color-box {
+  border-radius: 0.5em;
+  flex-shrink: 0;
+}
+
+.category-name {
+  flex-grow: 1;
+  font-weight: 600;
+  color: #333;
+}
+
+.category-percent {
+  font-weight: 700;
+  color: #4caf50;
+  text-align: right;
+}
+
+.category-value {
+  font-weight: 600;
+  color: #555;
+  text-align: right;
+}
+
+/* Botón añadir gasto */
+.add-button {
+  background-color: #4caf50;
+  color: white;
+  font-size: 2em;
+  border: none;
+  box-shadow: 0 4em 12em rgb(76 175 80 / 0.5);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+
+.add-button:hover {
+  background-color: #388e3c;
+}
+
+/* Balance resumen */
+.balance-summary {
+  display: flex;
+  justify-content: space-around;
+  font-weight: 600;
+  font-size: 1em;
+  color: #2e7d32;
+  user-select: none;
+}
+
+/* Cuenta */
+.account-card {
+  margin-top: 1em;
+  background: #a5d6a7;
+  border-radius: 1em;
+  padding: 1em 2em;
+  font-weight: 700;
+  text-align: center;
+  color: #1b5e20;
+  user-select: none;
+}
+
+/* Mensajes carga y error */
+.loading, .error {
+  text-align: center;
+  font-weight: 600;
+
+  color: #666;
+  user-select: none;
+}
+
+.error {
+  color: #d32f2f;
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+
+.custom-modal {
+  background: white;     /* Muy importante para que se vea */
+  padding: 3vh 3vw;
+  border-radius: 1em;
+  max-width: 70%;
+  width: 70%;
+  box-shadow: 0 1em 2em rgba(0,0,0,0.3);
+  z-index: 1001;
+  color: black;          /* Texto visible */
+}
+.no-data-message {
+  margin: 2em auto;
+  padding: 2em;
+  max-width: 20vw;
+  background-color: #f5f5f5;
+  border: 0.1em solid #ddd;
+  border-radius: 1em;
+  color: #555;
+  font-size: 1.2rem;
+  text-align: center;
+  box-shadow: 0 0.1em 1em rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+
+
