@@ -68,7 +68,7 @@ function agruparPorCategoria(transactions) {
   // Usamos un objeto para acumular por categoría
   const agrupados = {};
 
-  transactions.forEach(({ category, type, value, icon, name }) => {
+  transactions.forEach(({ category, type, value, icon, name, createdAt }) => {
     const key = `${type}-${category}`; // diferenciamos gastos e ingresos por categoría
     if (!agrupados[key]) {
       agrupados[key] = {
@@ -77,6 +77,7 @@ function agruparPorCategoria(transactions) {
         value: 0,
         icon,
         name,
+        createdAt
       };
     }
     agrupados[key].value += Number(value);

@@ -99,3 +99,22 @@ app.get("/profile", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Error al obtener gastos" });
   }
 });
+
+app.put("/profile", authMiddleware, async (req, res) => {
+   try {
+    const response = await axios.put(userServiceUrl + '/profile',req.body, // datos a enviar en el body
+  {
+    headers: {
+      Authorization: req.headers.authorization, // envías el header correcto
+    },
+    params: {
+      clientId: req.user.userId, // si usas params, pero parece que no es necesario para editar perfil
+    },
+  }
+); 
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error en /profile:", error.message);
+    res.status(500).json({ error: "Error al editar perfil" });
+  }
+});

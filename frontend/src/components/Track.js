@@ -2,28 +2,35 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Track.css";
 import { jwtDecode } from "jwt-decode";
-import { Doughnut  } from "react-chartjs-2";
+import { Doughnut, Line   } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   ArcElement,
   Tooltip,
   Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  TimeScale,
 } from "chart.js";
+import 'chartjs-adapter-date-fns';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, 
+  LineElement,
+  TimeScale
+);
 
 const categories = [
   { id: "day", label: "Día" },
   { id: "week", label: "Semana" },
   { id: "month", label: "Mes" },
   { id: "year", label: "Año" },
-  { id: "period", label: "Período" },
+  { id: "period", label: "Periodo" },
 ];
 const expenseCategories = ["Comida", "Ropa", "Hogar", "Transporte", "Salud", "Regalo"];
 const incomeCategories = ["Ahorro", "Salario", "Bonos", "Otros ingresos"];
-const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚"];
-
-
+const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
 
 const Track = () => {
   const [data, setData] = useState([]);
@@ -39,6 +46,8 @@ const Track = () => {
   value: "",
   icon: "💸",
 });
+
+
 // Obtener categorías únicas de gastos y de ingresos por separado
 const expenseCategoriesUnique = [...new Set(data.filter(i => i.type === "expense").map(i => i.category))];
 const incomeCategoriesUnique = [...new Set(data.filter(i => i.type === "income").map(i => i.category))];
@@ -113,6 +122,7 @@ const doughnutData = {
 
 const doughnutOptions = {
   responsive: true,
+  //maintainAspectRatio: false,
   plugins: {
     legend: {
       position: "bottom",
@@ -181,6 +191,91 @@ const formattedDate = today.toLocaleDateString('es-ES', options);
   console.log("Abriendo modal");
   setModalOpen(true);
 };
+
+  // 1. Extraer fechas únicas, agrupar datos, preparar lineChartData
+  const datesSet = new Set();
+  data.forEach(item => {
+    if (item.createdAt) {
+      const day = new Date(item.createdAt).toISOString().slice(0, 10);
+      datesSet.add(day);
+    }
+  });
+  const dates = Array.from(datesSet).sort((a, b) => new Date(a) - new Date(b));
+
+  const expensesByDate = {};
+  const incomesByDate = {};
+  dates.forEach(date => {
+    expensesByDate[date] = 0;
+    incomesByDate[date] = 0;
+  });
+
+  data.forEach(item => {
+    if (item.createdAt) {
+      const day = new Date(item.createdAt).toISOString().slice(0, 10);
+      if (item.type === "expense") {
+        expensesByDate[day] += Number(item.value);
+      } else if (item.type === "income") {
+        incomesByDate[day] += Number(item.value);
+      }
+    }
+  });
+
+  // Datos para el gráfico de líneas
+const lineChartData = {
+  labels: dates,
+  datasets: [
+    {
+      label: "Gastos",
+      data: dates.map(date => expensesByDate[date]),
+      borderColor: "#f44336",
+      backgroundColor: "#f4433620",
+      fill: true,
+      tension: 0.3,
+    },
+    {
+      label: "Ingresos",
+      data: dates.map(date => incomesByDate[date]),
+      borderColor: "#4caf50",
+      backgroundColor: "#4caf5020",
+      fill: true,
+      tension: 0.3,
+    },
+  ],
+};
+
+const lineChartOptions = {
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "bottom",
+    },
+    tooltip: {
+      enabled: true,
+    },
+  },
+  scales: {
+    x: {
+      type: "time",
+      time: {
+        unit: selectedCategory,
+        tooltipFormat: "PP",
+      },
+      title: {
+        display: true,
+        text: "Fecha",
+      },
+    },
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: "Cantidad (€)",
+      },
+    },
+  },
+};
+console.log("Fechas para gráfico:", dates);
+console.log(data.map(i => i.createdAt));
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -259,13 +354,15 @@ const expensePercent = ((balance.expense / safeTotal) * 100).toFixed(1);
 const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
 
   return (
-    
-    
     <div className="track-container">
-    {error && <p>Error</p>}
-      <h1 className="title">CONTROL EXHAUSTIVO DE GASTOS E INGRESOS</h1>
+      {error && <div className="error-message">{error}</div>}
+      
+      <header className="header">
+        <h1 className="title">Control Financiero</h1>
+        <p className="subtitle">Gestión inteligente de gastos e ingresos</p>
+      </header>
 
-      <div className="tabs">
+      <nav className="tabs">
         {categories.map((cat) => (
           <button
             key={cat.id}
@@ -275,65 +372,101 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
             {cat.label}
           </button>
         ))}
+      </nav>
+
+      <div className="date-section">
+        <p className="date-label">Hoy, {formattedDate}</p>
       </div>
 
-      <p className="date-label">Hoy, {formattedDate}</p>
-      {balance.expense>0 || balance.income>0 ?(
+      {balance.expense > 0 || balance.income > 0 ? (
+        <>
+          <div className="balance-card">
+            <h2 className="balance-title">Balance Total</h2>
+            <div className="balance-amount">
+              <span className={totalAmount >= 0 ? 'positive' : 'negative'}>
+                {totalAmount.toFixed(2)}€
+              </span>
+            </div>
+            <div className="balance-details">
+              <div className="balance-item expense">
+                <span className="label">Gastos</span>
+                <span className="amount">{balance.expense.toFixed(2)}€</span>
+              </div>
+              <div className="balance-item income">
+                <span className="label">Ingresos</span>
+                <span className="amount">{balance.income.toFixed(2)}€</span>
+              </div>
+            </div>
+          </div>
 
- <div className="chart-container">
-  <div className="chart-wrapper">
-    <h3>Balance: {totalAmount} €</h3>
-    <Doughnut data={doughnutData} options={doughnutOptions} />
+         
+
+  <div className="charts-grid">
+  <div className="chart-card">
+    <h3 className="chart-title">Balance General</h3>
+    <div className="chart-wrapper">
+      <Doughnut data={doughnutData} options={doughnutOptions} />
+    </div>
   </div>
-  <div className="chart-wrapper">
-    <h3>Gastos por Categoría</h3>
-    <Doughnut data={expenseChartData} options={doughnutOptions} />
+
+  <div className="chart-card">
+    <h3 className="chart-title">Gastos por Categoría</h3>
+    <div className="chart-wrapper">
+      <Doughnut data={expenseChartData} options={doughnutOptions} />
+    </div>
   </div>
+
+  <div className="chart-card">
+    <h3 className="chart-title">Ingresos por Categoría</h3>
+    <div className="chart-wrapper">
+      <Doughnut data={incomeChartData} options={doughnutOptions} />
+    </div>
+  </div>
+
+  
+</div>
+<div className="chart-card">
+  <h3 className="chart-title">Evolución Gastos e Ingresos</h3>
   <div className="chart-wrapper">
-    <h3>Ingresos por Categoría</h3>
-    <Doughnut data={incomeChartData} options={doughnutOptions} />
+    <Line data={lineChartData} options={lineChartOptions} />
   </div>
 </div>
-      ):( <p className="no-data-message">No hay datos de gastos ni ingresos para mostrar.</p>
 
-      )};
-      
-  <div style={{ display: "flex", justifyContent: "space-around", marginTop: 10 }}>
-    <span style={{ color: "#f44336" }}>Gastos: {expensePercent}%</span>
-    <span style={{ color: "#4caf50" }}>Ingresos: {incomePercent}%</span>
-  </div>
+          
+        </>
+      ) : (
+        <div className="no-data-card">
+          <div className="no-data-icon">📊</div>
+          <h3>No hay datos disponibles</h3>
+          <p>Comienza añadiendo tu primera transacción para ver los análisis</p>
+        </div>
+      )}
 
-
-      <div className="categories-list">
-        {data
-          .map((cat, idx) => (
-            <div key={idx} className="category-item">
-              <div
-                className="color-box"
-                style={{ backgroundColor: "#4caf50" }} // Color fijo para ejemplo
-              >
-                {cat.icon}
+      <div className="transactions-section">
+        <h3 className="section-title">Transacciones Recientes</h3>
+        <div className="transactions-list">
+          {data.slice(0, 10).map((transaction, idx) => (
+            <div key={idx} className="transaction-item">
+              <div className="transaction-icon">{transaction.icon}</div>
+              <div className="transaction-details">
+                <div className="transaction-name">{transaction.name}</div>
+                <div className="transaction-category">{transaction.category}</div>
               </div>
-              <p className="category-name">{cat.category}</p>
-              <p className="category-value">{cat.value}€ </p>
+              <div className={`transaction-amount ${transaction.type}`}>
+                {transaction.type === 'expense' ? '-' : '+'}
+                {transaction.value}€
+              </div>
             </div>
           ))}
+        </div>
       </div>
 
-      <div className="balance-summary">
-        <p><strong>Expense: </strong>{balance.expense}€</p>
-        <p><strong>Income: </strong>{balance.income}€</p>
-      </div>
-
-      <div className="account-card">
-        <p>💰 <strong>My Account: </strong>{totalAmount.toFixed(2)}€</p>
-        <button className="add-button" onClick={handleAddGasto}>
-        +
+      <button className="add-button" onClick={handleAddGasto}>
+        <span className="add-icon">+</span>
+        <span className="add-text">Nueva Transacción</span>
       </button>
-      </div>
-      
 
-      {/* Modal para añadir gasto */}
+            {/* Modal para añadir gasto */}
       {modalOpen && (
         <div className="modal-backdrop">
           <div className="custom-modal">

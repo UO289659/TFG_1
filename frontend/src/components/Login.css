@@ -1,5 +1,5 @@
 /* Fondo con gradiente */
-.login-container {
+.form-container {
     text-align: center;
     background: linear-gradient(to bottom right, #d7e1ec, #b4c5e4);
     min-height: 100vh;
@@ -52,6 +52,7 @@
     font-size: 0.9rem;
     margin-top: 10px;
     color: #333;
+    text-align: left;
   }
   
   input {
@@ -89,4 +90,6 @@
   .links a:hover {
     text-decoration: underline;
   }
+
+
   

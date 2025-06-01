@@ -29,7 +29,7 @@ app.post('/register', async (req, res) => {
   
   try {
       // Check if required fields are present in the request body
-      validateRequiredFields(req, ['nombre', 'email', 'password']);
+      validateRequiredFields(req, ['nombre', 'apellido', 'email', 'password']);
 
       const existingUser = await User.findOne({ email: req.body.email });
       if (existingUser) {
@@ -39,7 +39,8 @@ app.post('/register', async (req, res) => {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
       const newUser = new User({
-          username: req.body.nombre,
+          name:req.body.nombre,
+          surname: req.body.apellido,
           email: req.body.email,
           password: hashedPassword,
       });
@@ -90,6 +91,33 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
   });
+
+  app.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const clientId = req.user.id; // Se obtiene del middleware de autenticación
+    const { name, surname } = req.body;
+
+     console.log('req.user:', req.user);
+    console.log('req.body:', req.body);
+
+    if (!name || !surname) {
+      return res.status(400).json({ message: "Faltan datos obligatorios." });
+    }
+
+    const user = await User.findById(clientId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    user.name = name;
+    user.surname = surname;
+
+    await user.save();
+
+    res.json({ message: "Perfil actualizado correctamente", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
