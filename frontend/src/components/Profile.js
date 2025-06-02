@@ -12,8 +12,15 @@ const Profile = () => {
     name: "",
     surname: "",
     email: "",
-    // agrega aquí otros campos que quieras mostrar/editar
   });
+
+  const [passwordData, setPasswordData] = useState({
+  actualPassword: "",
+  newPassword: "",
+  repeatNewPassword: "",
+});
+
+
   const isPremium = userData?.isPremium === 1 || userData?.isPremium === true;
 
   useEffect(() => {
@@ -69,17 +76,36 @@ const Profile = () => {
   if (loading) return <p>Cargando perfil...</p>; //ESTO IGUAL HAY QUE QUITARLO
   if (error) return <p>{error}</p>;
 
+  const handlePasswordInputChange = (e) => {
+  setPasswordData((prev) => ({
+    ...prev,
+    [e.target.name]: e.target.value,
+  }));
+};
+
 
   const handlePasswordChange = async (e) => { //está sin hacer
     e.preventDefault();
+     if (passwordData.newPassword !== passwordData.repeatNewPassword) {
+      alert("Las contraseñas no coinciden");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
 
-      await axios.put("http://localhost:4000/profile", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put("http://localhost:4000/password", {
+      actualPassword: passwordData.actualPassword,
+      newPassword: passwordData.newPassword,
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
       alert("Perfil actualizado con éxito");
+      setPasswordData({
+        actualPassword: "",
+        newPassword: "",
+        repeatNewPassword: "",
+      });
     } catch (err) {
       alert("Error al actualizar perfil");
     }
@@ -312,8 +338,8 @@ const Profile = () => {
                     name="actualPassword"
                     type="password"
                     className="form-control form-control-modern"
-                   // value={passwordData.actualPassword}
-                  //  onChange={handlePasswordChange}
+                    value={passwordData.actualPassword}
+                    onChange={handlePasswordInputChange}
                     required
                   />
                 </div>
@@ -324,8 +350,8 @@ const Profile = () => {
                     name="newPassword"
                     type="password"
                     className="form-control form-control-modern"
-                    //value={passwordData.newPassword}
-                    //onChange={handlePasswordChange}
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordInputChange}
                     required
                   />
                 </div>
@@ -336,8 +362,8 @@ const Profile = () => {
                     name="repeatNewPassword"
                     type="password"
                     className="form-control form-control-modern"
-                    //value={passwordData.repeatNewPassword}
-                    //onChange={handlePasswordChange}
+                    value={passwordData.repeatNewPassword}
+                    onChange={handlePasswordInputChange}
                     required
                   />
                 </div>

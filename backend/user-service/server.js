@@ -119,6 +119,24 @@ app.post('/register', async (req, res) => {
   }
 });
 
+app.put("/password", authMiddleware, async(req, res) => {
+  try{
+  const clientId = req.user.id; // Se obtiene del middleware de autenticación
+  const { actualPassword, newPassword } = req.body;
+  const user = await User.findById(clientId);
+ if(await bcrypt.compare(actualPassword, user.password)){
+  const newHashedPassword= await bcrypt.hash(newPassword, 10);
+  user.password=newHashedPassword;
+  await user.save();
+  res.json({ message: "Contraseña actualizada correctamente" });
+ }
+  }catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+ 
+});
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
