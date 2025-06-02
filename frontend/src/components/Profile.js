@@ -3,8 +3,10 @@ import axios from "axios";
 import { User, Mail, Shield, Key, Check, Star, Crown, Settings, Edit3, Save, X } from "lucide-react";
 import "./Profile.css"
 import PlanCard from "./PlanCard";
+import { useNavigate } from "react-router-dom"; // Para la redirección
 
 const Profile = () => {
+  const navigate = useNavigate(); // Hook para redirigir al usuario
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,8 +37,6 @@ const Profile = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        console.log("token de profile: "+token);
 
         setUserData(response.data);
         setFormData({
@@ -115,8 +115,10 @@ const Profile = () => {
   };
 
    const handleUpgrade = () => {
-    alert("Redirigiendo al proceso de suscripción...");
+    navigate("/subscribe");
   };
+
+  
 
    if (loading) {
     return (
@@ -192,10 +194,26 @@ const Profile = () => {
             
             <div className="row">
             <div className="col-md-6">
-              <PlanCard type="basic" isSelected={!isPremium} isProfile={true} onSelect={() => {}} />
+              <PlanCard 
+  type="basic" 
+  isSelected={!isPremium}
+  onSelect={() => {
+    if (isPremium) {
+      navigate("/unsubscribe");  // Si es premium, puede cambiar a básico
+    }
+  }}
+/>
             </div>
             <div className="col-md-6">
-              <PlanCard type="premium" isSelected={isPremium} isProfile={true} onSelect={handleUpgrade} />
+              <PlanCard 
+  type="premium" 
+  isSelected={isPremium}
+  onSelect={() => {
+    if (!isPremium) {
+      navigate("/subscribe");  // Si es básico, puede pasarse a premium
+    }
+  }}
+/>
             </div>
           </div>  
                   

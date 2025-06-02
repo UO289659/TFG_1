@@ -17,8 +17,7 @@ const SelectPlan = () => {
         { plan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Suscripción actualizada con éxito");
-      navigate("/suscribe");
+      navigate("/subscribe");
     } catch (error) {
       alert("Error al actualizar el plan");
     }

@@ -8,6 +8,8 @@ import Track from "./components/Track";
 import Navbar from "./components/Navbar";
 import Profile from "./components/Profile"
 import SelectPlan from "./components/SelectPlan";
+import Subscribe from "./components/Subscribe";
+import Unsubscribe from "./components/Unsubscibe";
 
 function AppWrapper() {
   const location = useLocation();
@@ -29,6 +31,8 @@ function AppWrapper() {
           <Route path="/track" element={<Track />} />
            <Route path="/profile" element={<Profile />} />
            <Route path="/select-plan" element={<SelectPlan />} />
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
         </Routes>
       </div>
     </>
