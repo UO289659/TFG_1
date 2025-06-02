@@ -21,11 +21,13 @@ const Login = () => {
     setError("");
 
     try {
+      localStorage.removeItem("token");
       const res = await axios.post("http://localhost:4000/login", formData);
-      console.log("✅ Inicio de sesión exitoso:", res.data);
 
       // Guardar el token en localStorage o sessionStorage
       localStorage.setItem("token", res.data.token);
+
+      console.log("nuevo token login: "+res.data.token);
 
       // Redirigir a la página de bienvenida
       navigate("/track");

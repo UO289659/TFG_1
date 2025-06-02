@@ -36,6 +36,8 @@ const Profile = () => {
           },
         });
 
+        console.log("token de profile: "+token);
+
         setUserData(response.data);
         setFormData({
           name: response.data.name || "",

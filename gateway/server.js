@@ -88,11 +88,10 @@ app.get("/profile", authMiddleware, async (req, res) => {
       headers: {
         Authorization: req.headers.authorization, // reenvías el token JWT
       },
-      params: {
-        clientId: req.user.userId , 
-      },
+     
     });
-    
+    console.log("Usuario en gateway:", req.user);
+
     res.json(response.data);
   } catch (error) {
     console.error("Error en /profile:", error.message);

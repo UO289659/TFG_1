@@ -80,7 +80,8 @@ app.post('/register', async (req, res) => {
 
   app.get('/profile', authMiddleware, async (req, res)=>{
     try{
-      const user= await User.findOne({clientId: req.user.userId });
+      const userId = req.user.id;
+      const user = await User.findById(userId);
         if (!user) {
         return res.status(401).json({ error: "Usuario no encontrado" });
       }
