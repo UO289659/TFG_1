@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { User, Mail, Shield, Key, Check, Star, Crown, Settings, Edit3, Save, X } from "lucide-react";
 import "./Profile.css"
+import PlanCard from "./PlanCard";
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
@@ -186,88 +187,17 @@ const Profile = () => {
               <h2 className="h3 mb-0">Planes de Suscripción</h2>
             </div>
             
+            
             <div className="row">
-              <div className="col-md-6">
-                <div className={`plan-card ${!isPremium ? 'active' : ''}`}>
-                  {!isPremium && (
-                    <div className="check-badge">
-                      <Check size={16} />
-                    </div>
-                  )}
-                  <div className={`plan-icon ${!isPremium ? 'active' : 'basic'}`}>
-                    <Shield size={28} />
-                  </div>
-                  <h3 className="h4 mb-2">Plan Básico</h3>
-                  <p className="text-muted mb-3">Funciones esenciales</p>
-                  
-                  <ul className="feature-list">
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Acceso a funciones básicas
-                    </li>
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Soporte por email
-                    </li>
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Almacenamiento limitado
-                    </li>
-                  </ul>
-                  
-                  {!isPremium && (
-                    <div className="active-plan-badge mt-3">
-                      Plan Activo
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="col-md-6">
-                <div className={`plan-card ${isPremium ? 'active' : ''}`}>
-                  {isPremium && (
-                    <div className="check-badge">
-                      <Check size={16} />
-                    </div>
-                  )}
-                  <div className={`plan-icon ${isPremium ? 'active' : 'premium'}`}>
-                    <Crown size={28} />
-                  </div>
-                  <h3 className="h4 mb-2">Plan Premium</h3>
-                  <p className="text-muted mb-3">Experiencia completa</p>
-                  
-                  <ul className="feature-list">
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Acceso completo a todas las funciones
-                    </li>
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Soporte prioritario 24/7
-                    </li>
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Almacenamiento ilimitado
-                    </li>
-                    <li className="feature-item">
-                      <Check size={16} className="feature-check" />
-                      Funciones avanzadas
-                    </li>
-                  </ul>
-                  
-                  {isPremium ? (
-                    <div className="active-plan-badge mt-3">
-                      Plan Activo
-                    </div>
-                  ) : (
-                    <button onClick={handleUpgrade} className="gradient-btn mt-3">
-                      Suscribirse
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="col-md-6">
+              <PlanCard type="basic" isSelected={!isPremium} isProfile={true} onSelect={() => {}} />
             </div>
-          </div>
+            <div className="col-md-6">
+              <PlanCard type="premium" isSelected={isPremium} isProfile={true} onSelect={handleUpgrade} />
+            </div>
+          </div>  
+                  
+            </div>
 
           <div className="row">
             {/* Profile Form */}

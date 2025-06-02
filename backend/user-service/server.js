@@ -137,6 +137,24 @@ app.put("/password", authMiddleware, async(req, res) => {
  
 });
 
+app.post("/subscribe", authMiddleware, async (req, res) => {
+  try {
+    const clientId = req.user.id;
+    const { plan } = req.body;
+
+    const user = await User.findById(clientId);
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    user.isPremium = plan === 'premium'; // Si eligió premium, marcarlo
+    await user.save();
+
+    res.json({ message: "Plan actualizado correctamente", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar plan" });
+  }
+});
+
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);

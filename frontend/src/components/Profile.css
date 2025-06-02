@@ -72,91 +72,6 @@
   transform: scale(1.05);
 }
 
-/* Cards profesionales */
-.professional-card {
-  background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-  border: none;
-  margin-bottom: 2rem;
-  transition: all 0.3s ease;
-}
-
-.professional-card:hover {
-  box-shadow: 0 12px 35px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
-}
-
-/* Cards de planes */
-.plan-card {
-  background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-  border: 2px solid transparent;
-  margin-bottom: 2rem;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.plan-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-}
-
-.plan-card.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
-}
-
-/* Iconos de planes */
-.plan-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.plan-icon.basic {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.plan-icon.premium {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.plan-icon.active {
-  background: #e8eaf6;
-  color: #667eea;
-}
-
-/* Lista de características */
-.feature-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.8rem;
-  color: #666;
-}
-
-.feature-check {
-  color: #4caf50;
-  margin-right: 0.8rem;
-  flex-shrink: 0;
-}
-
 /* Botones con gradiente principal */
 .gradient-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -180,6 +95,23 @@
 .gradient-btn:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+
+/* Cards profesionales */
+.professional-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border: none;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.professional-card:hover {
+  box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
 }
 
 /* Botones con gradiente verde */
@@ -245,28 +177,7 @@
   border-color: #ddd;
 }
 
-/* Badge de plan activo */
-.active-plan-badge {
-  background: #e8f5e8;
-  color: #2e7d32;
-  padding: 8px 16px;
-  border-radius: 25px;
-  font-weight: 600;
-  text-align: center;
-  margin-top: 1rem;
-}
 
-/* Badge de verificación */
-.check-badge {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: #e8f5e8;
-  color: #2e7d32;
-  padding: 8px;
-  border-radius: 50%;
-  z-index: 10;
-}
 
 /* Contenedor principal */
 .profile-container {
@@ -321,10 +232,7 @@
     padding: 1.5rem;
   }
   
-  .plan-card {
-    padding: 1.5rem;
-  }
-  
+ 
   .avatar-container {
     width: 80px;
     height: 80px;

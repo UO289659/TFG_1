@@ -7,6 +7,7 @@ import Chart from "./components/Chart";
 import Track from "./components/Track";
 import Navbar from "./components/Navbar";
 import Profile from "./components/Profile"
+import SelectPlan from "./components/SelectPlan";
 
 function AppWrapper() {
   const location = useLocation();
@@ -27,6 +28,7 @@ function AppWrapper() {
           <Route path="/statistics" element={<Chart />} />
           <Route path="/track" element={<Track />} />
            <Route path="/profile" element={<Profile />} />
+           <Route path="/select-plan" element={<SelectPlan />} />
         </Routes>
       </div>
     </>

@@ -136,4 +136,15 @@ app.put("/password", authMiddleware, async (req, res) => {
     console.error("Error en /password:", error.message);
     res.status(500).json({ error: "Error al editar contraseña" });
   }
-})
+});
+
+app.post("/subscribe", authMiddleware, async (req, res) => {
+  try {
+    const response = await axios.post(userServiceUrl + "/subscribe", req.body, {
+      headers: { Authorization: req.headers.authorization }
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
