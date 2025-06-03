@@ -10,6 +10,8 @@ import Profile from "./components/Profile"
 import SelectPlan from "./components/SelectPlan";
 import Subscribe from "./components/Subscribe";
 import Unsubscribe from "./components/Unsubscibe";
+import  Contact from "./components/Contact";
+
 
 function AppWrapper() {
   const location = useLocation();
@@ -23,6 +25,7 @@ function AppWrapper() {
     <>
       {showNavbar && <Navbar />}
       <div className="main-content">
+  
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/register" element={<Register />} />
@@ -33,6 +36,8 @@ function AppWrapper() {
            <Route path="/select-plan" element={<SelectPlan />} />
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/contact" element={<Contact />} />
+            
         </Routes>
       </div>
     </>
@@ -41,9 +46,11 @@ function AppWrapper() {
 
 function App() {
   return (
+   
     <Router>
       <AppWrapper />
     </Router>
+   
   );
 }
 

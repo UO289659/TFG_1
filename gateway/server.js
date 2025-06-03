@@ -10,6 +10,7 @@ app.use(express.json());
 
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000';
 const statsServiceUrl = process.env.STATS_SERVICE_URL || 'http://localhost:5001';
+const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
@@ -145,5 +146,20 @@ app.post("/subscribe", authMiddleware, async (req, res) => {
     res.json(response.data);
   } catch (error) {
     res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+app.post('/send-email', async (req, res) => {
+   console.log("📩 Recibida solicitud de envío de email:", req.body); // 👈 agrega esto
+  try {
+    // Enviar directamente el cuerpo de la solicitud al servicio de correo
+    const response = await axios.post(mailServiceUrl+'/send-email', req.body);
+
+    // Si el correo se envía correctamente, respondemos con un mensaje de éxito
+    res.status(200).send('Correo enviado correctamente');
+  } catch (error) {
+    // Si ocurre un error al redirigir la solicitud, respondemos con un error
+    console.error('Error al enviar el correo:', error);
+    res.status(500).send('Error al enviar el correo');
   }
 });
