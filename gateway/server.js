@@ -213,15 +213,15 @@ app.get("/categories", authMiddleware, async (req, res) => {
   }
 });
 
-app.post("/categorias", authMiddleware, async (req, res) => {
-  const response = await axios.post(`${userServiceUrl}/categorias`, req.body, {
+app.post("/categories", authMiddleware, async (req, res) => {
+  const response = await axios.post(`${statsServiceUrl}/categories`, req.body, {
     headers: { Authorization: req.headers.authorization }
   });
   res.json(response.data);
 });
 
-app.delete("/categorias", authMiddleware, async (req, res) => {
-  const response = await axios.delete(`${userServiceUrl}/categorias`, {
+app.delete("/categorie", authMiddleware, async (req, res) => {
+  const response = await axios.delete(`${statsServiceUrl}/categorie`, {
     headers: { Authorization: req.headers.authorization },
     data: req.body,
   });

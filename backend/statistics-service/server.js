@@ -164,4 +164,33 @@ app.get("/icons", authMiddleware, async (req, res) => {
   }
 });
 
+app.post('/categories', async (req, res) => {
+  const { name, type } = req.body;
 
+  if ( !name || !type) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
+
+  const newCategory = new Categoria({
+      name,
+      type,
+    });
+
+    await newCategory.save();
+
+    return res.status(201).json(newCategory);
+});
+
+app.delete('/categorie', async (req, res) => {
+  try {
+    const { type, name } = req.body;
+    const deleted = await Categoria.findOneAndDelete({ name, type });
+    if (!deleted) {
+      return res.status(404).json({ message: "Categoría no encontrada" });
+    }
+    res.status(200).json({ message: "Categoría eliminada" });
+  } catch (err) {
+    console.error("Error al eliminar categoría:", err.message);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
