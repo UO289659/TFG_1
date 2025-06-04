@@ -11,7 +11,7 @@ const ConfigurarCategorias = () => {
 
   useEffect(() => {
     const fetchCategorias = async () => {
-      const res = await axios.get("http://localhost:4000/categorias", {
+      const res = await axios.get("http://localhost:4000/categories", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategorias(res.data);
