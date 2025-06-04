@@ -16,6 +16,8 @@ import {
 } from "chart.js";
 import 'chartjs-adapter-date-fns';
 
+import { Pencil, Trash2  } from 'lucide-react';
+
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, 
   LineElement,
   TimeScale
@@ -28,9 +30,7 @@ const categories = [
   { id: "year", label: "Año" },
   { id: "period", label: "Periodo" },
 ];
-const expenseCategories = ["Comida", "Ropa", "Hogar", "Transporte", "Salud", "Regalo"];
-const incomeCategories = ["Ahorro", "Salario", "Bonos", "Otros ingresos"];
-const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
+
 
 const Track = () => {
   const [data, setData] = useState([]);
@@ -39,6 +39,9 @@ const Track = () => {
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("day");
   const [modalOpen, setModalOpen] = useState(false);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [incomeCategories, setIncomeCategories] = useState([]);
+  const [iconOptions, setIconOptions] = useState([]);
   const [newEntry, setNewEntry] = useState({
   name: "",
   type: "expense",
@@ -141,6 +144,40 @@ const today = new Date();
 const options = { day: 'numeric', month: 'long' };
 const formattedDate = today.toLocaleDateString('es-ES', options); 
 
+useEffect(() => {
+  const fetchCategorias = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.get("http://localhost:4000/categories", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setExpenseCategories(res.data.expense || []);
+      setIncomeCategories(res.data.income || []);
+    } catch (err) {
+      console.error("Error al cargar categorías:", err);
+    }
+  };
+
+  fetchCategorias();
+}, []);
+
+useEffect(() => {
+  const fetchIcons = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.get("http://localhost:4000/icons", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIconOptions(res.data|| []);
+    } catch (err) {
+      console.error("Error al cargar iconos:", err);
+    }
+  };
+
+  fetchIcons();
+}, []);
+
+
   useEffect(() => {
   const token = localStorage.getItem("token");
 
@@ -175,6 +212,8 @@ const formattedDate = today.toLocaleDateString('es-ES', options);
 
   fetchGastos();
 }, [selectedCategory]);
+
+
 
 
   useEffect(() => {
@@ -279,15 +318,22 @@ console.log(data.map(i => i.createdAt));
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-
-  if (!newEntry.name || !newEntry.value || isNaN(newEntry.value)) {
-    alert("Por favor, completa el nombre y un valor válido.");
-    return;
-  }
   const token = localStorage.getItem("token");
   const decoded = jwtDecode(token);
   const clientId = decoded.userId; 
 
+  if (newEntry._id) {
+    console.log("Editando transacción:", newEntry._id);
+  // Editar transacción existente
+  const response=await axios.put(`http://localhost:4000/track/${newEntry._id}`, newEntry, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+} else {
+  if (!newEntry.name || !newEntry.value || isNaN(newEntry.value)) {
+    alert("Por favor, completa el nombre y un valor válido.");
+    return;
+  }
+  
   const newItem = {
     name: newEntry.name,
     type: newEntry.type,
@@ -297,8 +343,10 @@ const handleSubmit = async (e) => {
     clientId: clientId,
   };
 
+  await axios.post("http://localhost:4000/track", newItem);
+}
   try {
-    const response = await axios.post("http://localhost:4000/track", newItem);
+
     const response2 = await axios.get("http://localhost:4000/gastos/"+selectedCategory, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -308,6 +356,7 @@ const handleSubmit = async (e) => {
     alert("Error al guardar el gasto/ingreso");
     console.error(error);
   }
+
 };
 
 const handleInputChange = (e) => {
@@ -346,6 +395,42 @@ function IconPicker({ selectedIcon, onSelect }) {
     </div>
   );
 }
+
+const handleEditTransaction = (transaction) => {
+  setNewEntry({
+    name: transaction.name,
+    type: transaction.type,
+    category: transaction.category,
+    value: transaction.value,
+    icon: transaction.icon,
+    _id: transaction._id, // Asegúrate de que existe este campo
+  });
+  setModalOpen(true);
+};
+
+const handleDeleteTransaction = async (id) => {
+  const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta transacción?");
+  if (!confirmDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    await axios.delete(`http://localhost:4000/track/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // Recargar lista después de borrar
+    const response = await axios.get(`http://localhost:4000/gastos/${selectedCategory}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setData(response.data);
+  } catch (error) {
+    console.error("Error al borrar la transacción:", error);
+    alert("Error al eliminar la transacción");
+  }
+};
+
 
   // Calculamos porcentaje para el donut chart
 const totalAmount = balance.income- balance.expense;
@@ -456,7 +541,18 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                 {transaction.type === 'expense' ? '-' : '+'}
                 {transaction.value}€
               </div>
+              <button onClick={() => handleEditTransaction(transaction)} className="edit-button" title="Editar">
+              <Pencil size={18} />
+            </button>
+            <button
+              onClick={() => handleDeleteTransaction(transaction._id)}
+              className="delete-button"
+              title="Eliminar transacción"
+            >
+              <Trash2 size={18} />
+            </button>
             </div>
+            
           ))}
         </div>
       </div>
@@ -541,7 +637,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                 />
 
               <div className="modal-buttons">
-                <button type="submit" className="btn btn-primary">Añadir</button>
+                <button type="submit" className="btn btn-primary">Aceptar</button>
                 <button type="button" className="btn btn-secondary" onClick={handleModalClose}>Cancelar</button>
               </div>
             </form>

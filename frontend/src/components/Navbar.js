@@ -13,6 +13,7 @@ const Navbar = () => {
         <li><Link to="/">Inicio</Link></li>
         <li><Link to="/track">Track</Link></li>
         <li><Link to="/profile">Perfil</Link></li>
+         <li><Link to="/categories">Categorias</Link></li>
       </ul>
     </nav>
   );

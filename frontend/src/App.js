@@ -11,7 +11,7 @@ import SelectPlan from "./components/SelectPlan";
 import Subscribe from "./components/Subscribe";
 import Unsubscribe from "./components/Unsubscibe";
 import  Contact from "./components/Contact";
-
+import ConfigurarCategorias from "./components/ConfigurarCategorias";
 
 function AppWrapper() {
   const location = useLocation();
@@ -37,7 +37,7 @@ function AppWrapper() {
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/contact" element={<Contact />} />
-            
+            <Route path="/categories" element={<ConfigurarCategorias />} />
         </Routes>
       </div>
     </>

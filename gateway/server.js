@@ -163,3 +163,79 @@ app.post('/send-email', async (req, res) => {
     res.status(500).send('Error al enviar el correo');
   }
 });
+
+app.put('/track/:id', async (req, res) => {
+  try{
+    const response = await axios.put(
+  statsServiceUrl + '/track/' + req.params.id,
+  req.body,
+  {
+    headers: {
+      Authorization: req.headers.authorization,
+    },
+  }
+);
+
+   res.status(response.status).json(response.data);
+  }catch (err) {
+    console.error("Error en PUT /track/:id desde API Gateway:", err.message);
+    res.status(err.response?.status || 500).json({
+      message: "Error al actualizar la transacción",
+      error: err.message,
+    });
+  }
+});
+
+app.delete('/track/:id', async (req, res) => {
+  try {
+    const response = await axios.delete(`${statsServiceUrl}/track/${req.params.id}`, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error("Error al eliminar en API Gateway:", error.message);
+    res.status(error.response?.status || 500).json({
+      message: "Error al eliminar transacción",
+      error: error.message,
+    });
+  }
+});
+
+app.get("/categories", authMiddleware, async (req, res) => {
+  try {
+    const response = await axios.get(`${statsServiceUrl}/categories`, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error en /categorias:", err.message);
+    res.status(err.response?.status || 500).json({ error: "Error al obtener categorías" });
+  }
+});
+
+app.post("/categorias", authMiddleware, async (req, res) => {
+  const response = await axios.post(`${userServiceUrl}/categorias`, req.body, {
+    headers: { Authorization: req.headers.authorization }
+  });
+  res.json(response.data);
+});
+
+app.delete("/categorias", authMiddleware, async (req, res) => {
+  const response = await axios.delete(`${userServiceUrl}/categorias`, {
+    headers: { Authorization: req.headers.authorization },
+    data: req.body,
+  });
+  res.json(response.data);
+});
+
+app.get("/icons", authMiddleware, async (req, res) => {
+  try {
+    const response = await axios.get(`${statsServiceUrl}/icons`, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error en /icons:", err.message);
+    res.status(err.response?.status || 500).json({ error: "Error al obtener iconos" });
+  }
+});
