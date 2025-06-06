@@ -14,6 +14,8 @@ const Navbar = () => {
         <li><Link to="/track">Track</Link></li>
         <li><Link to="/profile">Perfil</Link></li>
          <li><Link to="/categories">Categorias</Link></li>
+         <li><Link to="/contact">Contacto</Link></li>
+         <li><Link to="/help">Ayuda</Link></li>
       </ul>
     </nav>
   );
