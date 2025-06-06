@@ -239,3 +239,37 @@ app.get("/icons", authMiddleware, async (req, res) => {
     res.status(err.response?.status || 500).json({ error: "Error al obtener iconos" });
   }
 });
+
+app.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Enviar la solicitud al microservicio de autenticación
+    const response = await axios.post(userServiceUrl+"/forgot-password", { email });
+
+    // Pasar la respuesta del microservicio al cliente
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error en el gateway al restablecer la contraseña:", error);
+    res.status(500).json({ error: "Error en el gateway al procesar la solicitud." });
+  }
+});
+
+// Ruta para restablecer la contraseña
+app.post('/reset-password/:token', async (req, res) => {
+  const { token } = req.params;  // Obtener el token de la URL
+  const { password } = req.body; // Obtener la nueva contraseña del cuerpo de la solicitud
+
+  try {
+    // Hacer una solicitud al microservicio de autenticación para restablecer la contraseña
+    const response = await axios.post(userServiceUrl+`/reset-password/${token}`, { password });
+
+    // Pasar la respuesta del microservicio al cliente
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error al restablecer la contraseña en el gateway:", error);
+    res.status(500).json({ error: "Error al procesar la solicitud de restablecimiento de contraseña." });
+  }
+});
+
+

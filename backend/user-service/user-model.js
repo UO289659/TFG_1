@@ -5,6 +5,8 @@ const UserSchema = new mongoose.Schema({
     email: { type: String, unique: true },
     password: String,
     isPremium: Boolean,
+    resetToken: String,
+    resetTokenExpiration: Date,
   });
 
 const User = mongoose.model('User', UserSchema);

@@ -25,7 +25,7 @@ const SelectPlan = () => {
 
     const handleContinueWithCurrent = () => {
     // Simplemente navegar de vuelta al perfil sin cambios
-    navigate("/profile");
+    navigate("/track");
   };
 
   return (

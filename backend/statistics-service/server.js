@@ -9,6 +9,7 @@ const seedIconos= require("./seedIcons");
 const app = express();
 const Transaction = require("../statistics-service/statistics-model")
 const Categoria = require("./category-model")
+const UserCategory=require("./user-category");
 const Icono = require("./icon-model")
 app.use(cors());
 app.use(express.json());
@@ -43,7 +44,9 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
         ]
       }
  }).exec();
- 
+ if(gastos==null){
+  res.status(404).json({ error: "Todavía no hay datos" });
+ }
  //const resultadoAgrupado = agruparPorCategoria(gastos);
  res.json(gastos);
   } catch (error) {
@@ -129,31 +132,42 @@ app.delete('/track/:id', async (req, res) => {
 
 app.get("/categories", authMiddleware, async (req, res) => {
   try {
-    const categorias = await Categoria.find();
-    console.log("📦 Categorías encontradas:", categorias);
+    const userId = req.user.id;
 
-    if (!Array.isArray(categorias)) {
-      return res.status(500).json({ error: "categorias no es un array" });
-    }
+    // 1. Obtener categorías globales
+    const categoriasGlobales = await Categoria.find();
 
-    if (categorias.length === 0) {
-      return res.status(500).json({ error: "La colección 'categorias' está vacía" });
-    }
+    // 2. Obtener categorías personalizadas del usuario
+    const categoriasUsuario = await UserCategory.find({ userId });
 
-    const iconosUnicos = [...new Set(categorias.map(c => c.icon))];
+    // 3. Combinar ambas listas
+    const todas = [
+      ...categoriasGlobales.map(c => ({
+        name: c.name,
+        type: c.type,
+       
+      })),
+      ...categoriasUsuario.map(c => ({
+        name: c.name,
+        type: c.type,
+      }))
+    ];
 
+    // 4. Agrupar por tipo y extraer iconos únicos
     const porTipo = {
-      expense: categorias.filter(c => c.type === "expense").map(c => c.name),
-      income: categorias.filter(c => c.type === "income").map(c => c.name),
-      icons: iconosUnicos
+      expense: todas.filter(c => c.type === "expense").map(c => c.name),
+      income: todas.filter(c => c.type === "income").map(c => c.name),
+    
     };
 
     res.json(porTipo);
+
   } catch (err) {
     console.error("❌ Error exacto en /categories:", err);
     res.status(500).json({ error: err.message || "Fallo interno" });
   }
 });
+
 
 app.get("/icons", authMiddleware, async (req, res) => {
   try {
@@ -164,14 +178,16 @@ app.get("/icons", authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/categories', async (req, res) => {
+app.post('/categories',authMiddleware, async (req, res) => {
   const { name, type } = req.body;
+  const userId= req.user.id;
 
   if ( !name || !type) {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 
-  const newCategory = new Categoria({
+  const newCategory = new UserCategory({
+      userId,
       name,
       type,
     });

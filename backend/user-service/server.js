@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const User = require('./user-model')
 const cors = require("cors");
 const authMiddleware = require("../auth-middleware/index");
+const crypto = require("crypto");
+const axios = require("axios");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -46,7 +48,23 @@ app.post('/register', async (req, res) => {
       });
 
       await newUser.save();
-      res.json({ message: "Usuario registrado con éxito" });
+       // Crear el mensaje de correo informativo
+    const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
+
+    // Enviar un correo informativo al usuario
+    await axios.post(`${mailServiceUrl}/send-registration-email`, {
+      to: req.body.email,
+      subject: 'Cuenta Creada - Gestor de Finanzas',
+      message: `¡Hola ${req.body.nombre} ${req.body.apellido}!
+
+      Tu cuenta en Gestor de Finanzas ha sido creada exitosamente. Ahora puedes comenzar a gestionar tus finanzas.
+
+      Si no realizaste este registro, por favor contáctanos de inmediato.
+
+      ¡Gracias por unirte a nosotros!
+      `,
+    });
+      res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación." });
   } catch (error) {
       res.status(400).json({ error: error.message }); 
   }});
@@ -152,6 +170,82 @@ app.post("/subscribe", authMiddleware, async (req, res) => {
     res.json({ message: "Plan actualizado correctamente", user });
   } catch (error) {
     res.status(500).json({ message: "Error al actualizar plan" });
+  }
+});
+
+// Ruta para solicitar el restablecimiento de la contraseña
+app.post("/forgot-password", async (req, res) => {
+  
+  const { email } = req.body;
+  if (!email) {
+  return res.status(400).json({ error: "El correo electrónico es requerido" });
+}
+
+  try {
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(400).json({ error: "No se encontró un usuario con ese correo electrónico." });
+    }
+
+    // Generar un token de restablecimiento
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Aquí puedes guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
+    user.resetToken = resetToken;
+    user.resetTokenExpiration = Date.now() + 3600000; // 1 hora de validez
+
+    await user.save();
+
+
+  // Enviar el correo a través del mail-service
+    const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
+    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    
+    const mailResponse =await axios.post(`${mailServiceUrl}/send-reset-email`, {
+      to: email,
+      resetLink: resetLink
+    });
+
+    // Si el correo fue enviado correctamente, devolver un mensaje de éxito
+    if (mailResponse.status === 200) {
+      return res.status(200).json({ message: "Correo de restablecimiento enviado correctamente. Revisa tu bandeja de entrada." });
+    } else {
+      // Si el servicio de correo respondió con un error, manejarlo
+      return res.status(500).json({ error: "Hubo un problema al enviar el correo." });
+    }
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al procesar la solicitud." });
+  }
+});
+
+
+app.post("/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  try {
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiration: { $gt: Date.now() }, // Verifica que el token no haya expirado
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Token de restablecimiento inválido o expirado." });
+    }
+
+    const newHashedPassword= await bcrypt.hash(password, 10);
+    user.password=newHashedPassword;
+    user.resetToken = undefined; // Limpiar el token de restablecimiento
+    user.resetTokenExpiration = undefined; // Limpiar la expiración del token
+    await user.save();
+
+    res.json({ message: "Contraseña restablecida con éxito. Puede cerrar esta ventana." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al restablecer la contraseña." });
   }
 });
 

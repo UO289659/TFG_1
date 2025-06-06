@@ -12,6 +12,9 @@ import Subscribe from "./components/Subscribe";
 import Unsubscribe from "./components/Unsubscibe";
 import  Contact from "./components/Contact";
 import ConfigurarCategorias from "./components/ConfigurarCategorias";
+import HelpPage from "./components/Help";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 
 function AppWrapper() {
   const location = useLocation();
@@ -38,6 +41,9 @@ function AppWrapper() {
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/categories" element={<ConfigurarCategorias />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </div>
     </>

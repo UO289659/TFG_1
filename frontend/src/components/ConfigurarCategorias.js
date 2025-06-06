@@ -4,6 +4,7 @@ import axios from "axios";
 import { Plus, Trash2, Tag, TrendingUp, TrendingDown, X } from "lucide-react";
 import "./ConfigurarCategorias.css";
 
+
 const ConfigurarCategorias = () => {
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
   const [nuevoNombre, setNuevoNombre] = useState("");
@@ -15,7 +16,7 @@ const ConfigurarCategorias = () => {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/categories", {
+        const res = await axios.get(Process.env.GATEWAY_URL+"/categories", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCategorias(res.data);
