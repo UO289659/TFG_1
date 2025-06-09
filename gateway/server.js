@@ -41,8 +41,32 @@ app.post('/register', async (req, res) => {
     });
   }
 });
+app.get('/gastos/rango', authMiddleware, async (req, res) => {
+  const { start, end } = req.query;
+   // Verificar si las fechas están siendo recibidas correctamente
+  console.log("🔎 Start:", start, "End:", end);
+
+  try {
+    const response = await axios.get(statsServiceUrl+'/gastos/rango', {
+     params: { 
+        start, 
+        end,
+        clientId: req.user.id || req.user.userId // ✅ Agregar clientId
+      },
+      headers: {
+        Authorization: req.headers.authorization,
+      },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error desde el gateway:", error.message);
+    res.status(500).json({ error: "Error en gateway" });
+  }
+});
 
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
+  console.log("Entro por gastos / period");
    try {
     const period = req.params.period; 
     const response = await axios.get(statsServiceUrl+'/gastos/'+period, {
@@ -59,6 +83,8 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Error al obtener gastos" });
   }
 });
+
+
 
 /* app.get("/track", async (req, res) => {
   try {

@@ -759,3 +759,38 @@
 .edit-button:hover, .delete-button:hover {
   color: #4caf50;
 }
+
+/* Personalización de DatePicker */
+.react-datepicker__input-container input {
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s ease;
+}
+
+.react-datepicker__input-container input:focus {
+  border-color: #4caf50;
+  outline: none;
+}
+
+.react-datepicker__day:hover {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.react-datepicker__day--selected {
+  background-color: #4caf50;
+  color: white;
+}
+/* Animación suave para abrir el DatePicker */
+.react-datepicker {
+  transition: all 0.3s ease-in-out;
+}
+.react-datepicker__day--range-start,
+.react-datepicker__day--range-end {
+  background-color: #81c784;
+  color: white;
+  border-radius: 50%;
+}

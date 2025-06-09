@@ -17,6 +17,8 @@ import {
 import 'chartjs-adapter-date-fns';
 
 import { Pencil, Trash2  } from 'lucide-react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, 
   LineElement,
@@ -28,7 +30,7 @@ const categories = [
   { id: "week", label: "Semana" },
   { id: "month", label: "Mes" },
   { id: "year", label: "Año" },
-  { id: "period", label: "Periodo" },
+
 ];
 
 
@@ -42,10 +44,13 @@ const Track = () => {
   const [expenseCategories, setExpenseCategories] = useState([]);
   const [incomeCategories, setIncomeCategories] = useState([]);
   const [iconOptions, setIconOptions] = useState([]);
+  const [customStartDate, setCustomStartDate] = useState(null);
+  const [customEndDate, setCustomEndDate] = useState(null);
+  const [period, setPeriod] = useState(false);
   const [newEntry, setNewEntry] = useState({
   name: "",
   type: "expense",
-  category: "",  
+  category: "Comida",  
   value: "",
   icon: "💸",
 });
@@ -179,11 +184,22 @@ useEffect(() => {
 
 
   useEffect(() => {
-  const token = localStorage.getItem("token");
+    console.log("useEffect triggered with selectedCategory:", selectedCategory);
+  console.log("Current loading state:", loading);
+     setLoading(false);
+  setError("");
+    if (selectedCategory === "") {
+         
+    return;
+  }
+
+   console.log("Starting fetch for category:", selectedCategory);
 
   const fetchGastos = async () => {
+     const token = localStorage.getItem("token");
     try {
       setLoading(true);
+      setError(""); // Limpia errores previos
       // Llamada a la API con filtro según selectedCategory
       const response = await axios.get("http://localhost:4000/gastos/"+selectedCategory, {
         headers: {
@@ -313,14 +329,13 @@ const lineChartOptions = {
     },
   },
 };
-console.log("Fechas para gráfico:", dates);
-console.log(data.map(i => i.createdAt));
 
 const handleSubmit = async (e) => {
   e.preventDefault();
   const token = localStorage.getItem("token");
   const decoded = jwtDecode(token);
   const clientId = decoded.userId; 
+  let newValue=0;
 
   if (newEntry._id) {
     console.log("Editando transacción:", newEntry._id);
@@ -333,17 +348,32 @@ const handleSubmit = async (e) => {
     alert("Por favor, completa el nombre y un valor válido.");
     return;
   }
+
   
+  try {
+      newValue = parseFloat(newEntry.value);
+      if (isNaN(newValue)) {
+        throw new Error("Valor no válido");
+      }
+      console.log(newValue);
+    } catch (error) {
+      console.log(error);  
+      alert("Valor no válido.");
+      return;
+    }
+
   const newItem = {
     name: newEntry.name,
     type: newEntry.type,
     category: newEntry.category,
-    value: Number(newEntry.value),
+    value: newValue,
     icon: newEntry.icon,
     clientId: clientId,
   };
 
   await axios.post("http://localhost:4000/track", newItem);
+ 
+
 }
   try {
 
@@ -368,7 +398,7 @@ const handleInputChange = (e) => {
 };
 const handleModalClose = () => {
   setModalOpen(false);
-  setNewEntry({ name: "", type: "expense", value: "", icon: "💸" });
+  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸" });
 };
 function IconPicker({ selectedIcon, onSelect }) {
   return (
@@ -431,6 +461,65 @@ const handleDeleteTransaction = async (id) => {
   }
 };
 
+const fetchCustomRangeData = async () => {
+  if (!customStartDate || !customEndDate) {
+    alert("Selecciona un rango de fechas válido.");
+    return;
+  }
+
+  // Evitar llamadas innecesarias si ya estamos cargando
+  if (loading) return;
+  
+  const token = localStorage.getItem("token");
+
+  // Función para crear timestamps inclusivos
+  const formatDateRange = (startDate, endDate) => {
+    // Inicio del día para startDate (00:00:00)
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    
+    // Final del día para endDate (23:59:59)
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
+    return {
+      start: start.toISOString(),
+      end: end.toISOString()
+    };
+  };
+
+  const { start, end } = formatDateRange(customStartDate, customEndDate);
+  
+  console.log("📅 Enviando fechas:", { start, end });
+
+  try {
+    setLoading(true);
+    const res = await axios.get("http://localhost:4000/gastos/rango", {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { start, end },
+    });
+    
+     console.log("Datos recibidos desde el backend:", res.data);  // Verifica los datos
+    setData(res.data);
+
+    // Calcular balance
+    let totalExpense = 0;
+    let totalIncome = 0;
+    res.data.forEach((item) => {
+      if (item.type === "expense") totalExpense += Number(item.value);
+      if (item.type === "income") totalIncome += Number(item.value);
+    });
+
+    setBalance({ expense: totalExpense, income: totalIncome });
+  } catch (error) {
+    console.error("Error al obtener datos personalizados:", error);
+    setError("Error al obtener datos personalizados.");
+  } finally {
+    setLoading(false);
+    setSelectedCategory("");
+  }
+};
+
 
   // Calculamos porcentaje para el donut chart
 const totalAmount = balance.income- balance.expense;
@@ -451,13 +540,70 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
         {categories.map((cat) => (
           <button
             key={cat.id}
-            className={`tab-button ${selectedCategory === cat.id ? "active" : ""}`}
-            onClick={() => setSelectedCategory(cat.id)}
+            className={`tab-button ${selectedCategory === cat.id && !period? "active" : ""}`}
+            onClick={() => {
+              setSelectedCategory(cat.id);
+              setPeriod(false);
+              // Limpiar las fechas del periodo personalizado
+              setCustomStartDate(null);
+              setCustomEndDate(null);
+            }
+          }
           >
             {cat.label}
           </button>
-        ))}
+        )
+        )}
+
+          <button
+            key={"period"}
+            className={`tab-button ${period==true ? "active" : ""}`}
+            onClick={() => {
+                setPeriod(true)}
+            }
+              
+          >
+            Periodo
+          </button>
+
       </nav>
+       {period == true && (
+          <div className="period-date-picker" style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              padding: '20px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              margin: '10px 0'
+            }}>
+
+            <label>Desde:</label>
+            <DatePicker
+              selected={customStartDate}
+              onChange={(date) => setCustomStartDate(date)}
+              selectsStart
+              startDate={customStartDate}
+              endDate={customEndDate}
+              dateFormat="dd-MM-yyyy"
+              showTodayButton
+              todayButton="Hoy"
+              placeholderText="Selecciona fecha inicial"
+            />
+            <label>Hasta:</label>
+            <DatePicker
+              selected={customEndDate}
+              onChange={(date) => setCustomEndDate(date)}
+              selectsEnd
+              startDate={customStartDate}
+              endDate={customEndDate}
+              minDate={customStartDate}
+              dateFormat="dd MMM yyyy"
+              placeholderText="Selecciona fecha final"
+            />
+            <button onClick={fetchCustomRangeData} className="btn btn-primary">Aplicar</button>
+          </div>
+        )}
 
       <div className="date-section">
         <p className="date-label">Hoy, {formattedDate}</p>
@@ -544,11 +690,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
               <button onClick={() => handleEditTransaction(transaction)} className="edit-button" title="Editar">
               <Pencil size={18} />
             </button>
-            <button
-              onClick={() => handleDeleteTransaction(transaction._id)}
-              className="delete-button"
-              title="Eliminar transacción"
-            >
+            <button onClick={() => handleDeleteTransaction(transaction._id)} className="delete-button" title="Eliminar transacción">
               <Trash2 size={18} />
             </button>
             </div>
@@ -599,9 +741,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="" disabled>
-                      Selecciona una categoría
-                    </option>
+                    
                     {(newEntry.type === "expense" ? expenseCategories : incomeCategories).map(
                       (cat) => (
                         <option key={cat} value={cat}>

@@ -342,13 +342,13 @@
 
 .delete-button {
   padding: 0.5rem;
-  color: #9ca3af;
+  
   background: none;
   border: none;
   cursor: pointer;
   border-radius: 0.5rem;
   transition: all 0.2s ease;
-  opacity: 0;
+  
 }
 
 .category-item:hover .delete-button {

@@ -18,7 +18,7 @@ const Hero = () => {
   return (
     <div className="hero-container">
       <nav className="navbar">
-        <h1 className="logo">📘 Gestor de Finanzas</h1>
+        <h1 className="logo">📘 Gestor de Finanzas </h1>
         <div>
           <button className="btn primary" onClick={() => navigate("/login")}>Iniciar Sesión</button>
           <button className="btn secondary" onClick={() => navigate("/register")}>Registrarse</button>
@@ -27,7 +27,7 @@ const Hero = () => {
 
       <div className="hero-content">
         <h2>
-          Gestiona tu  <span className="highlight">Dinero</span>
+          Gestor  <span className="highlight">SaldoSmart</span>
         </h2>
         <p>
           Toma el control de tus finanzas con IA y accede a productos exclusivos para decisiones más efectivas.
