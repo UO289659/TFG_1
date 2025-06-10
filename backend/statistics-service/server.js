@@ -30,11 +30,38 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
     console.error("❌ Error al conectar a MongoDB:", err);
   });
 
+  app.get('/gastos/rango', authMiddleware, async (req, res) => {
+  const { start, end } = req.query;
+  const clientId = req.user.id;
+  console.log("startDate:", start);
+console.log("endDate:", end);
+
+
+  if (!start || !end) {
+    return res.status(400).json({ error: "Se requieren fechas de inicio y fin" });
+  }
+
+  try {
+    const gastos = await Transaction.find({
+      clientId,
+      createdAt: {
+        $gte: new Date(start),
+        $lte: new Date(end),
+      },
+    }).sort({ createdAt: 1 });
+
+    res.json(gastos);
+  } catch (error) {
+    console.error("Error al obtener datos por rango:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 // Endpoint para obtener los gastos
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
   try {
     const { period } = req.params;
-    console.log(period);
+    console.log("Periodo escogido:"+period);
     const gastos = await Transaction.find({ 
       clientId: req.user.id,   
       $expr: {
@@ -55,13 +82,20 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
 });
 
 
+
+
 app.post('/track', async (req, res) => {
   const { name, type, category, value, icon, clientId } = req.body;
+  console.log("value en service: "+value);
+
+  console.log("category en service: "+category);
+  console.log("tipo en service; "+type);
 
   if (!clientId || !name || !type || !category || !value) {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 
+    
   const transaction = new Transaction({
       clientId,
       name,
@@ -197,16 +231,45 @@ app.post('/categories',authMiddleware, async (req, res) => {
     return res.status(201).json(newCategory);
 });
 
-app.delete('/categorie', async (req, res) => {
+app.delete('/categorie', authMiddleware, async (req, res) => {
   try {
     const { type, name } = req.body;
-    const deleted = await Categoria.findOneAndDelete({ name, type });
-    if (!deleted) {
-      return res.status(404).json({ message: "Categoría no encontrada" });
+    const userId= req.user.id;
+    console.log("userid: "+userId);
+    console.log("type: "+type);
+    console.log("name: "+name);
+     // Verificamos si la categoría existe en ambas colecciones
+    const categoryInCategoria = await Categoria.findOne({ userId, name, type });
+    const categoryInUserCategory = await UserCategory.findOne({ userId, name, type });
+
+    if (!categoryInCategoria && !categoryInUserCategory) {
+      return res.status(404).json({ message: "Categoría no encontrada en ninguna colección" });
     }
-    res.status(200).json({ message: "Categoría eliminada" });
+
+    // Intentamos eliminar en ambas colecciones
+    let deleted = false;
+    let deleted2 = false;
+
+    // Si la categoría existe en Categoria, intentamos eliminarla
+    if (categoryInCategoria) {
+      deleted = await Categoria.findOneAndDelete({ userId, name, type });
+    }
+
+    // Si la categoría existe en UserCategory, intentamos eliminarla
+    if (categoryInUserCategory) {
+      deleted2 = await UserCategory.findOneAndDelete({ userId, name, type });
+    }
+
+    // Si no se pudo eliminar en ninguna colección, devolvemos error
+    if (!deleted && !deleted2) {
+      return res.status(404).json({ message: "No se pudo eliminar la categoría" });
+    }
+
+    // Si hemos llegado aquí, al menos una de las eliminaciones fue exitosa
+    res.status(200).json({ message: "Categoría eliminada correctamente" });
   } catch (err) {
     console.error("Error al eliminar categoría:", err.message);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
+
