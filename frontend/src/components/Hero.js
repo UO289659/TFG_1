@@ -5,6 +5,60 @@ import "./Hero.css"; // Importamos los estilos
 
 const Hero = () => {
   const navigate = useNavigate(); 
+
+  // Componente SVG del logo
+const SaldoSmartLogo = ({ size = 40, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 100 120" 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Escudo */}
+    <path
+      d="M50 10 L20 25 L20 70 C20 85, 35 110, 50 110 C65 110, 80 85, 80 70 L80 25 Z"
+      fill="#FF9FC7"
+      stroke="#4A5568"
+      strokeWidth="2"
+    />
+    
+    {/* Contenedor del símbolo de dinero */}
+    <rect
+      x="35"
+      y="35"
+      width="30"
+      height="25"
+      rx="8"
+      fill="#4A5568"
+      stroke="#2D3748"
+      strokeWidth="1.5"
+    />
+    
+    {/* Símbolo de dólar */}
+    <text
+      x="50"
+      y="52"
+      textAnchor="middle"
+      fill="#FF9FC7"
+      fontSize="16"
+      fontWeight="bold"
+      fontFamily="Arial, sans-serif"
+    >
+      $
+    </text>
+    
+    {/* Base del contenedor */}
+    <ellipse
+      cx="50"
+      cy="62"
+      rx="12"
+      ry="3"
+      fill="#4A5568"
+    />
+  </svg>
+);
+
    const data = [
     { month: "Ene", balance: 400 },
     { month: "Feb", balance: 300 },
@@ -18,7 +72,21 @@ const Hero = () => {
   return (
     <div className="hero-container">
       <nav className="navbar">
-        <h1 className="logo">📘 Gestor de Finanzas </h1>
+        <div 
+          className="logo-container" 
+          onClick={() => handleNavigation('/')}
+          tabIndex={0}
+          role="button"
+          aria-label="Ir al inicio"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleNavigation('/');
+            }
+          }}
+        >
+          <SaldoSmartLogo size={45} />
+          <h1 className="logo-text">Gestor de Finanzas</h1>
+        </div>
         <div>
           <button className="btn primary" onClick={() => navigate("/login")}>Iniciar Sesión</button>
           <button className="btn secondary" onClick={() => navigate("/register")}>Registrarse</button>

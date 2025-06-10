@@ -126,6 +126,11 @@ export default function ProfessionalHelpPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedAccordion, setExpandedAccordion] = useState(false);
 
+  const handleTagClick = (tag) => {
+  setSearchTerm(tag);
+};
+
+
   const handleAccordionChange = (panel) => (event, isExpanded) => {
     setExpandedAccordion(isExpanded ? panel : false);
   };
@@ -238,6 +243,7 @@ export default function ProfessionalHelpPage() {
                         size="small"
                         variant="outlined"
                         sx={{ mr: 1, mb: 1 }}
+                         onClick={() => handleTagClick(tag)} 
                       />
                     ))}
                   </Box>

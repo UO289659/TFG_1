@@ -567,43 +567,70 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
           </button>
 
       </nav>
-       {period == true && (
-          <div className="period-date-picker" style={{
-              display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              padding: '20px',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '8px',
-              margin: '10px 0'
-            }}>
-
-            <label>Desde:</label>
-            <DatePicker
-              selected={customStartDate}
-              onChange={(date) => setCustomStartDate(date)}
-              selectsStart
-              startDate={customStartDate}
-              endDate={customEndDate}
-              dateFormat="dd-MM-yyyy"
-              showTodayButton
-              todayButton="Hoy"
-              placeholderText="Selecciona fecha inicial"
-            />
-            <label>Hasta:</label>
-            <DatePicker
-              selected={customEndDate}
-              onChange={(date) => setCustomEndDate(date)}
-              selectsEnd
-              startDate={customStartDate}
-              endDate={customEndDate}
-              minDate={customStartDate}
-              dateFormat="dd MMM yyyy"
-              placeholderText="Selecciona fecha final"
-            />
-            <button onClick={fetchCustomRangeData} className="btn btn-primary">Aplicar</button>
-          </div>
-        )}
+      {period == true && (
+  <div className="period-date-picker">
+    <div className="date-input-group">
+      <label>📅 Desde:</label>
+      <div className="date-input-wrapper">
+        <DatePicker
+          selected={customStartDate}
+          onChange={(date) => setCustomStartDate(date)}
+          selectsStart
+          startDate={customStartDate}
+          endDate={customEndDate}
+          dateFormat="dd/MM/yyyy"
+          showTodayButton
+          todayButton="📅 Hoy"
+          placeholderText="Selecciona fecha inicial"
+          className="custom-date-input"
+          calendarClassName="custom-calendar"
+          popperClassName="custom-popper"
+          showPopperArrow={false}
+          maxDate={new Date()} // No permitir fechas futuras
+        />
+      </div>
+    </div>
+    
+    <div className="date-input-group">
+      <label>📅 Hasta:</label>
+      <div className="date-input-wrapper">
+        <DatePicker
+          selected={customEndDate}
+          onChange={(date) => setCustomEndDate(date)}
+          selectsEnd
+          startDate={customStartDate}
+          endDate={customEndDate}
+          minDate={customStartDate}
+          dateFormat="dd/MM/yyyy"
+          placeholderText="Selecciona fecha final"
+          className="custom-date-input"
+          calendarClassName="custom-calendar"
+          popperClassName="custom-popper"
+          showPopperArrow={false}
+          maxDate={new Date()} // No permitir fechas futuras
+        />
+      </div>
+    </div>
+    
+    <button 
+      onClick={fetchCustomRangeData} 
+      className="btn btn-primary"
+      disabled={!customStartDate || !customEndDate || loading}
+    >
+      {loading ? (
+        <>
+          <span className="spinner">⏳</span>
+          Cargando...
+        </>
+      ) : (
+        <>
+          <span>✨</span>
+          Aplicar Filtro
+        </>
+      )}
+    </button>
+  </div>
+)}
 
       <div className="date-section">
         <p className="date-label">Hoy, {formattedDate}</p>

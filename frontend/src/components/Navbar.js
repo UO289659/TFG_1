@@ -16,6 +16,7 @@ const Navbar = () => {
          <li><Link to="/categories">Categorias</Link></li>
          <li><Link to="/contact">Contacto</Link></li>
          <li><Link to="/help">Ayuda</Link></li>
+          <li><Link to="/export-transactions">Exportar Transacciones</Link></li>
       </ul>
     </nav>
   );

@@ -15,6 +15,7 @@ import ConfigurarCategorias from "./components/ConfigurarCategorias";
 import HelpPage from "./components/Help";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import ExportTransactions from "./components/ExportTransactions";
 
 function AppWrapper() {
   const location = useLocation();
@@ -44,6 +45,7 @@ function AppWrapper() {
             <Route path="/help" element={<HelpPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/export-transactions" element={<ExportTransactions />} />
         </Routes>
       </div>
     </>

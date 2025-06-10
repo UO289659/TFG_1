@@ -298,4 +298,19 @@ app.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-
+app.get("/export", authMiddleware, async (req, res) => {
+   try {
+    const response = await axios.get(statsServiceUrl+'/export', {
+      headers: {
+        Authorization: req.headers.authorization, // reenvías el token JWT
+      },
+      params: {
+        clientId: req.user.id, 
+      },
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error en /export:", error.message);
+    res.status(500).json({ error: "Error al obtener gastos" });
+  }
+});
