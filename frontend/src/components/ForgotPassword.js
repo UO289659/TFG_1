@@ -44,6 +44,7 @@ const ForgotPassword = () => {
           <input 
             type="email" 
             name="email" 
+            className="form-control"
             placeholder="Correo Electrónico" 
             value={email} 
             onChange={handleChange} 

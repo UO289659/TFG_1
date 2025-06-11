@@ -276,8 +276,19 @@ app.post("/forgot-password", async (req, res) => {
     // Pasar la respuesta del microservicio al cliente
     res.json(response.data);
   } catch (error) {
-    console.error("Error en el gateway al restablecer la contraseña:", error);
-    res.status(500).json({ error: "Error en el gateway al procesar la solicitud." });
+    // Si el error viene del microservicio, pasamos la información de ese error
+    if (error.response) {
+      // Error de respuesta del microservicio
+      return res.status(error.response.status).json(error.response.data);
+    } else if (error.request) {
+      // Error de solicitud (el microservicio no respondió)
+      console.error("No se recibió respuesta del microservicio:", error);
+      return res.status(500).json({ error: "El servicio de autenticación no respondió." });
+    } else {
+      // Error general en la configuración o la ejecución de la solicitud
+      console.error("Error en la configuración de la solicitud:", error);
+      return res.status(500).json({ error: "Hubo un problema al intentar restablecer la contraseña." });
+    }
   }
 });
 

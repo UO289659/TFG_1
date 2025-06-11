@@ -15,7 +15,7 @@ const PlanCard = ({ type, isSelected, onSelect }) => {
       icon: <Crown size={28} />,
       title: "Plan Premium",
       description: "Experiencia completa",
-      features: ["Acceso completo a todas las funciones", "Soporte prioritario 24/7", "Almacenamiento ilimitado", "Funciones avanzadas"],
+      features: ["Acceso completo a todas las funciones", "Soporte prioritario 24/7", "Almacenamiento ilimitado", "Funciones avanzadas", "Exportar transacciones"],
       buttonLabel: "Actualizar a Premium"
     }
   };
