@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('./user-model')
 const cors = require("cors");
-const authMiddleware = require("../auth-middleware/index");
+const {authMiddleware} = require("../auth-middleware/index");
 const crypto = require("crypto");
 const axios = require("axios");
 const app = express();
@@ -45,9 +45,12 @@ app.post('/register', async (req, res) => {
           surname: req.body.apellido,
           email: req.body.email,
           password: hashedPassword,
+          isPremium: False,
       });
 
       await newUser.save();
+    
+      const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium }, process.env.SECRET_KEY, { expiresIn: '1h' });
        // Crear el mensaje de correo informativo
     const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
 
@@ -64,7 +67,7 @@ app.post('/register', async (req, res) => {
       ¡Gracias por unirte a nosotros!
       `,
     });
-      res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación." });
+      res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación.", token });
   } catch (error) {
       res.status(400).json({ error: error.message }); 
   }});
@@ -85,7 +88,7 @@ app.post('/register', async (req, res) => {
       // Check if the user exists and verify the password
       if (user && await bcrypt.compare(password, user.password)) {
         // Generate a JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user._id, isPremium: user.isPremium }, process.env.SECRET_KEY, { expiresIn: '1h' });
         // Respond with the token and user information
         res.json({ token: token, email: email, createdAt: user.createdAt });
       } else {

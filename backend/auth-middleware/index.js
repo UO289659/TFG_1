@@ -26,5 +26,11 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: "Token inválido" });
   }
 }
+function ensurePremium(req, res, next) {
+  if (!req.user.isPremium) {
+    return res.status(403).json({ error: 'Acceso restringido a usuarios premium' });
+  }
+  next();
+}
 
-module.exports = authMiddleware;
+module.exports = { authMiddleware, ensurePremium };

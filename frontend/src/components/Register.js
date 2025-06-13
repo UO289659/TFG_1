@@ -31,6 +31,7 @@ const Register = () => {
     }
     try {
       const res = await axios.post("http://localhost:4000/register", formData);
+       localStorage.setItem("token", res.data.token);
       navigate("/select-plan"); 
     } catch (error) {
       setError(error.response?.data?.error || "Hubo un error al registrarse. Inténtalo de nuevo.");

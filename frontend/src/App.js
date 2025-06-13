@@ -16,6 +16,7 @@ import HelpPage from "./components/Help";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import ExportTransactions from "./components/ExportTransactions";
+import { UserProvider } from './context/UserContext';
 
 function AppWrapper() {
   const location = useLocation();
@@ -53,12 +54,12 @@ function AppWrapper() {
 }
 
 function App() {
-  return (
-   
-    <Router>
-      <AppWrapper />
-    </Router>
-   
+ return (
+    <UserProvider>
+      <Router>
+        <AppWrapper />
+      </Router>
+    </UserProvider>
   );
 }
 

@@ -2,8 +2,10 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // Para la redirección
 import axios from "axios";
 import "./Login.css";
+import { useUserContext } from '../context/UserContext';
 
 const Login = () => {
+  const { login } = useUserContext();
   const navigate = useNavigate(); // Hook para redirigir al usuario
   const [formData, setFormData] = useState({
     email: "",
@@ -25,7 +27,7 @@ const Login = () => {
       const res = await axios.post("http://localhost:4000/login", formData);
 
       // Guardar el token en localStorage o sessionStorage
-      localStorage.setItem("token", res.data.token);
+      login(res.data.token); 
 
       console.log("nuevo token login: "+res.data.token);
 

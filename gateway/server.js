@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
-const authMiddleware = require("../backend/auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("../backend/auth-middleware/index");
 console.log("Middleware cargado:", authMiddleware);
 const app = express();
 app.use(cors());
@@ -36,6 +36,7 @@ app.post('/register', async (req, res) => {
     const userResponse = await axios.post(userServiceUrl+'/register', req.body);
     res.json(userResponse.data);
   } catch (error) {
+    console.log(error);
     res.status(error.response?.status || 500).json({
       error: error.response?.data?.error || "Error interno"
     });
@@ -309,7 +310,7 @@ app.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-app.get("/export", authMiddleware, async (req, res) => {
+app.get("/export", authMiddleware, ensurePremium, async (req, res) => {
    try {
     const response = await axios.get(statsServiceUrl+'/export', {
       headers: {

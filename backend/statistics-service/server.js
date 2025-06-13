@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require('mongoose');
 require('dotenv').config();
-const authMiddleware = require("../auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
 
 const seedCategorias = require("./seedCategories");
 const seedIconos= require("./seedIcons");
@@ -80,8 +80,6 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Error del servidor" });
   }
 });
-
-
 
 
 app.post('/track', async (req, res) => {
@@ -273,3 +271,19 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/export', authMiddleware, ensurePremium, async(req, res)=>{
+  console.log("entra por export de stats");
+  try{
+    const clientId= req.user.id;
+    console.log(clientId);
+    const response= await Transaction.find({clientId}, 
+    { _id: 0, clientId: 0, icon: 0, __v: 0 } );
+
+    console.log(response);
+     res.status(200).json(response);
+  }catch(err){
+    console.log(err);
+    res.status(500).json({ message: "Error: no se puedo extraer transacciones: "});
+  }
+   
+});
