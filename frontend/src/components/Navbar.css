@@ -39,3 +39,42 @@
   color: #e74c3c; /* color rojo para activo */
   font-weight: 700;
 }
+
+/* Agrega estos estilos a tu archivo Navbar.css existente */
+
+.logout-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
+}
+
+.logout-button:active {
+  background-color: #bd2130;
+}
+
+/* Si quieres que el botón se vea más como un enlace */
+.logout-button.link-style {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.logout-button.link-style:hover {
+  background: none;
+  color: #dc3545;
+}

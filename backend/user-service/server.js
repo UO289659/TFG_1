@@ -45,12 +45,12 @@ app.post('/register', async (req, res) => {
           surname: req.body.apellido,
           email: req.body.email,
           password: hashedPassword,
-          isPremium: False,
+          isPremium: false,
       });
 
       await newUser.save();
     
-      const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
        // Crear el mensaje de correo informativo
     const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
 
@@ -88,7 +88,7 @@ app.post('/register', async (req, res) => {
       // Check if the user exists and verify the password
       if (user && await bcrypt.compare(password, user.password)) {
         // Generate a JWT token
-        const token = jwt.sign({ userId: user._id, isPremium: user.isPremium }, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: user._id, isPremium: user.isPremium, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
         // Respond with the token and user information
         res.json({ token: token, email: email, createdAt: user.createdAt });
       } else {

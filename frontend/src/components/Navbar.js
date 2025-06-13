@@ -5,10 +5,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from '../context/UserContext';
 
 const Navbar = () => {
-  const { user } = useContext(UserContext);
+  const { user, logout } = useContext(UserContext);
   const location = useLocation();
   const navigate = useNavigate();
  
+  const handleLogout = () => {
+    logout();            // limpia token y user en el contexto
+    navigate('/login');  // redirige al login
+  };
+
 console.log('Navbar user:', user);
   return (
    
@@ -23,6 +28,14 @@ console.log('Navbar user:', user);
           {user.isPremium && (
           <li><a href="/export-transactions">Exportar Transacciones</a></li>
         )}
+         {/* Si el usuario está logueado (email existe), mostramos Cerrar sesión */}
+        {user.email && (
+          <li>
+            <button onClick={handleLogout} className="logout-button">
+              Cerrar sesión
+            </button>
+          </li>
+          )}
       </ul>
     </nav>
   );
