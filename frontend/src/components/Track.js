@@ -391,10 +391,23 @@ const handleSubmit = async (e) => {
 
 const handleInputChange = (e) => {
   const { name, value } = e.target;
-  setNewEntry((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
+
+  if (name === "type") {
+    const firstCategory = value === "income" 
+      ? incomeCategories[0] || "" 
+      : expenseCategories[0] || "";
+
+    setNewEntry((prev) => ({
+      ...prev,
+      type: value,
+      category: firstCategory, // actualizar categoría automáticamente
+    }));
+  } else {
+    setNewEntry((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
 };
 const handleModalClose = () => {
   setModalOpen(false);
@@ -689,8 +702,6 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
     <Line data={lineChartData} options={lineChartOptions} />
   </div>
 </div>
-
-          
         </>
       ) : (
         <div className="no-data-card">
@@ -703,7 +714,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
       <div className="transactions-section">
         <h3 className="section-title">Transacciones Recientes</h3>
         <div className="transactions-list">
-          {data.slice(0, 10).map((transaction, idx) => (
+         {[...data].slice(-10).reverse().map((transaction, idx) => (
             <div key={idx} className="transaction-item">
               <div className="transaction-icon">{transaction.icon}</div>
               <div className="transaction-details">

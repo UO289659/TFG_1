@@ -11,6 +11,7 @@ const categoriasIniciales = [
   { name: "Transporte", type: "expense" },
   { name: "Salud", type: "expense" },
   { name: "Regalo", type: "expense" },
+  { name: "Ocio", type: "expense" },
   { name: "Ahorro", type: "income" },
   { name: "Salario", type: "income" },
   { name: "Bonos", type: "income" },
