@@ -307,6 +307,17 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
     res.status(500).json({ error: "Error del servidor" });
   }
   });
+  app.get('/friend-requests/sent', authMiddleware, ensurePremium, async (req, res)=>{
+    try{
+      const userId = req.user.id;
+      const requests= await FriendsRequest.find({senderId:userId, status:"pending"})
+       .populate('receiverId', 'name surname email') // Campos que quieres obtener
+      res.json(requests);
+    }catch (error) {
+      console.log(error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+  });
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

@@ -24,7 +24,6 @@ const FriendsSystem = () => {
 
     const fetchFriends = async () => {
       try {
-        console.log("📞 Llamando a /friends con token:", token);
         const res = await axios.get("http://localhost:4000/friends", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -47,9 +46,22 @@ const FriendsSystem = () => {
       }
     };
 
-    fetchFriends();
-    fetchFriendRequests();
-  }, []);
+  const fetchSentRequests = async () => {
+    try {
+      const res = await axios.get("http://localhost:4000/friend-requests/sent", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSentRequests(res.data);
+    } catch (err) {
+      console.error("Error al cargar solicitudes enviadas:", err);
+    }
+  }; 
+
+  // Ejecutar las tres funciones
+  fetchFriends();
+   fetchFriendRequests();
+  fetchSentRequests(); 
+}, []);
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
@@ -327,10 +339,10 @@ const FriendsSystem = () => {
                       <div className="text-2xl">{request.receiver?.avatar || '👤'}</div>
                       <div>
                         <h4 className="font-semibold text-gray-800">
-                          {request.receiver?.name} {request.receiver?.surname}
+                          {request.receiverId?.name} {request.receiverId?.surname}
                         </h4>
-                        <p className="text-sm text-gray-600">{request.receiver?.email}</p>
-                        <p className="text-xs text-gray-500">Enviada el {request.created_at}</p>
+                        <p className="text-sm text-gray-600">{request.receiverId?.email}</p>
+                        <p className="text-xs text-gray-500">Enviada el {request.createdAt}</p>
                       </div>
                       <div className="ml-auto">
                         <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
