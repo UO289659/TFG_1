@@ -270,7 +270,7 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
 
   app.get('/users', async (req, res)=>{
     try{
-      const users = await User.find();
+      const users = await User.find({isPremium:true});
        console.log(users);
       return res.json(users);
     }catch (error) {
@@ -284,8 +284,8 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
     const { senderId, receiverId } = req.body;
 
       const newFriendRequest=new FriendsRequest({
-        sender:senderId,
-        receiver: receiverId,
+        senderId:senderId,
+        receiverId: receiverId,
         status:"pending",
       });
       await newFriendRequest.save();
@@ -295,6 +295,18 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
     }
   });
 
+  app.get('/friend-requests/received', authMiddleware, ensurePremium, async (req, res)=>{
+    try{
+      const userId = req.user.id;
+      const requests= await FriendsRequest.find({receiverId:userId})
+      .populate('senderId', 'name surname email') // Campos que quieres obtener
+      .sort({ createdAt: -1 });
+      res.json(requests);
+    }catch (error) {
+      console.log(error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+  });
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

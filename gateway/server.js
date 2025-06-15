@@ -362,3 +362,18 @@ app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=
     res.status(500).json({ error: "Error al enviar solicitud de amistad" });
   }
 });
+
+app.get("/friend-requests/received", authMiddleware, ensurePremium, async(req, res)=>{
+   try{
+    const response = await axios.get(userServiceUrl + '/friend-requests/received', {
+    headers: {
+      Authorization: req.headers.authorization
+    }
+  });
+
+    res.json(response.data);
+  }catch (error) {
+    console.error("Error en /friend-requests/received:", error.message);
+    res.status(500).json({ error: "Error al obtener amigos" });
+  }
+});

@@ -11,103 +11,121 @@ const FriendsSystem = () => {
   const [sentRequests, setSentRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const[token, setToken]=useState(null);
+  const [token, setToken] = useState(null);
+  const [usersCache, setUsersCache] = useState({}); // Cache para usuarios
 
-  // Datos de ejemplo (reemplazar con llamadas a API real)
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  setToken(token);
-  if (!token) {
-    console.error("No hay token disponible");
-    return;
-  }
+    const token = localStorage.getItem("token");
+    setToken(token);
+    if (!token) {
+      console.error("No hay token disponible");
+      return;
+    }
 
-  const fetchFriends = async () => {
+    const fetchFriends = async () => {
+      try {
+        console.log("📞 Llamando a /friends con token:", token);
+        const res = await axios.get("http://localhost:4000/friends", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFriends(res.data);
+      } catch (err) {
+        console.error("Error al cargar amigos:", err);
+      }
+    };
+
+    const fetchFriendRequests = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/friend-requests/received", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        // Con populate, ya vienen los datos del sender
+        setFriendRequests(res.data);
+      } catch (err) {
+        console.error("Error al cargar solicitudes recibidas:", err);
+      }
+    };
+
+    fetchFriends();
+    fetchFriendRequests();
+  }, []);
+
+  useEffect(() => {
+    const id = localStorage.getItem("userId");
+    console.log("id del usuario autenticado" + id);
+    setCurrentUserId(id);
+  }, []);
+
+  // Función para obtener datos de usuario por ID (con cache)
+  const getUserById = async (userId) => {
+    // Si ya tenemos el usuario en cache, lo devolvemos
+    if (usersCache[userId]) {
+      return usersCache[userId];
+    }
+
     try {
-      console.log("📞 Llamando a /friends con token:", token);
-
-      const res = await axios.get("http://localhost:4000/friends", {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.get(`http://localhost:4000/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setFriends(res.data); // Asegúrate de que el backend devuelve el formato esperado
-    } catch (err) {
-      console.error("Error al cargar amigos:", err);
+      
+      // Guardamos en cache
+      setUsersCache(prev => ({
+        ...prev,
+        [userId]: res.data
+      }));
+      
+      return res.data;
+    } catch (error) {
+      console.error("Error al obtener usuario:", error);
+      return {
+        _id: userId,
+        name: "Usuario desconocido",
+        email: "email@desconocido.com",
+        avatar: "👤"
+      };
     }
   };
-
-  /* const fetchFriendRequests = async () => {
-    try {
-      const res = await axios.get("http://localhost:4000/friend-requests/received", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setFriendRequests(res.data);
-    } catch (err) {
-      console.error("Error al cargar solicitudes recibidas:", err);
-    }
-  }; */
-
-  /* const fetchSentRequests = async () => {
-    try {
-      const res = await axios.get("http://localhost:4000/friend-requests/sent", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSentRequests(res.data);
-    } catch (err) {
-      console.error("Error al cargar solicitudes enviadas:", err);
-    }
-  }; */
-
-  // Ejecutar las tres funciones
-  fetchFriends();
- /*  fetchFriendRequests();
-  fetchSentRequests(); */
-}, []);
-
-useEffect(() => {
-  const id = localStorage.getItem("userId");
-  console.log("id del usuario autenticado"+id);
-  setCurrentUserId(id);
-}, []);
-
 
   // Buscar usuarios
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
     
     setLoading(true);
-    const result= await axios.get("http://localhost:4000/users");
-    // Simular búsqueda (reemplazar con API call)
-    setTimeout(() => {
+    try {
+      const result = await axios.get("http://localhost:4000/users");
       const users = result.data
-      .filter(user => user._id !== currentUserId) 
-      .filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+        .filter(user => user._id !== currentUserId) 
+        .filter(user => 
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       setSearchResults(users);
+    } catch (error) {
+      console.error("Error en búsqueda:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   // Enviar solicitud de amistad
   const sendFriendRequest = async (userId) => {
     try {
-      // API call: POST /api/friends/request
       console.log('Enviando solicitud a usuario:', userId);
       await axios.post("http://localhost:4000/send-friend-request",
         { senderId: currentUserId, receiverId: userId },
         { headers: { Authorization: `Bearer ${token}` }}
-    );
-      // Simular éxito
-      const user = searchResults.find(u => u.id === userId);
+      );
+      
+      const user = searchResults.find(u => u._id === userId);
       setSentRequests(prev => [...prev, {
         id: Date.now(),
-        receiver: user,
+        receiverId: user,
         created_at: new Date().toISOString().split('T')[0]
       }]);
       
-      setSearchResults(prev => prev.filter(u => u.id !== userId));
+      setSearchResults(prev => prev.filter(u => u._id !== userId));
       alert('Solicitud enviada correctamente');
     } catch (error) {
       console.error("❌ Error al enviar solicitud:", error);
@@ -118,14 +136,19 @@ useEffect(() => {
   // Aceptar solicitud
   const acceptRequest = async (requestId) => {
     try {
-      // API call: PUT /api/friends/requests/${requestId}/accept
-      const request = friendRequests.find(r => r.id === requestId);
+      const request = friendRequests.find(r => r._id === requestId);
       
-      setFriends(prev => [...prev, request.sender]);
-      setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+      await axios.put(`http://localhost:4000/friend-requests/${requestId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // El senderId ya viene populado con los datos del usuario
+      setFriends(prev => [...prev, request.senderId]);
+      setFriendRequests(prev => prev.filter(r => r._id !== requestId));
       
       alert('Solicitud aceptada');
     } catch (error) {
+      console.error('Error al aceptar solicitud:', error);
       alert('Error al aceptar solicitud');
     }
   };
@@ -133,10 +156,14 @@ useEffect(() => {
   // Rechazar solicitud
   const rejectRequest = async (requestId) => {
     try {
-      // API call: PUT /api/friends/requests/${requestId}/reject
-      setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+      await axios.put(`http://localhost:4000/friend-requests/${requestId}/reject`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setFriendRequests(prev => prev.filter(r => r._id !== requestId));
       alert('Solicitud rechazada');
     } catch (error) {
+      console.error('Error al rechazar solicitud:', error);
       alert('Error al rechazar solicitud');
     }
   };
@@ -145,10 +172,13 @@ useEffect(() => {
   const removeFriend = async (friendId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este amigo?')) {
       try {
-        // API call: DELETE /api/friends/${friendId}
-        setFriends(prev => prev.filter(f => f.id !== friendId));
+        await axios.delete(`http://localhost:4000/friends/${friendId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setFriends(prev => prev.filter(f => f._id !== friendId));
         alert('Amigo eliminado');
       } catch (error) {
+        console.error('Error al eliminar amigo:', error);
         alert('Error al eliminar amigo');
       }
     }
@@ -211,17 +241,17 @@ useEffect(() => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {friends.map(friend => (
-                <div key={friend.id} className="bg-gray-50 p-4 rounded-lg border">
+                <div key={friend._id} className="bg-gray-50 p-4 rounded-lg border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{friend.avatar}</div>
+                      <div className="text-2xl">{friend.avatar || '👤'}</div>
                       <div>
-                        <h3 className="font-semibold text-gray-800">{friend.username}</h3>
+                        <h3 className="font-semibold text-gray-800">{friend.name} {friend.surname}</h3>
                         <p className="text-sm text-gray-600">{friend.email}</p>
                       </div>
                     </div>
                     <button
-                      onClick={() => removeFriend(friend.id)}
+                      onClick={() => removeFriend(friend._id)}
                       className="text-red-500 hover:text-red-700 p-1 rounded"
                       title="Eliminar amigo"
                     >
@@ -247,26 +277,30 @@ useEffect(() => {
             ) : (
               <div className="space-y-3">
                 {friendRequests.map(request => (
-                  <div key={request.id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div key={request._id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="text-2xl">{request.sender.avatar}</div>
+                        <div className="text-2xl">{request.senderId?.avatar || '👤'}</div>
                         <div>
-                          <h4 className="font-semibold text-gray-800">{request.sender.username}</h4>
-                          <p className="text-sm text-gray-600">{request.sender.email}</p>
-                          <p className="text-xs text-gray-500">Enviada el {request.created_at}</p>
+                          <h4 className="font-semibold text-gray-800">
+                            {request.senderId?.name} {request.senderId?.surname}
+                          </h4>
+                          <p className="text-sm text-gray-600">{request.senderId?.email}</p>
+                          <p className="text-xs text-gray-500">
+                            Enviada el {new Date(request.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => acceptRequest(request.id)}
+                          onClick={() => acceptRequest(request._id)}
                           className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors"
                           title="Aceptar"
                         >
                           <Check className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => rejectRequest(request.id)}
+                          onClick={() => rejectRequest(request._id)}
                           className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
                           title="Rechazar"
                         >
@@ -290,10 +324,12 @@ useEffect(() => {
                 {sentRequests.map(request => (
                   <div key={request.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                     <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{request.receiver.avatar}</div>
+                      <div className="text-2xl">{request.receiver?.avatar || '👤'}</div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">{request.receiver.username}</h4>
-                        <p className="text-sm text-gray-600">{request.receiver.email}</p>
+                        <h4 className="font-semibold text-gray-800">
+                          {request.receiver?.name} {request.receiver?.surname}
+                        </h4>
+                        <p className="text-sm text-gray-600">{request.receiver?.email}</p>
                         <p className="text-xs text-gray-500">Enviada el {request.created_at}</p>
                       </div>
                       <div className="ml-auto">
@@ -321,7 +357,7 @@ useEffect(() => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar por username o email..."
+                  placeholder="Buscar por nombre o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -344,12 +380,12 @@ useEffect(() => {
               <h3 className="text-lg font-medium mb-3">Resultados de búsqueda</h3>
               <div className="space-y-3">
                 {searchResults.map(user => (
-                  <div key={user.id} className="bg-gray-50 p-4 rounded-lg border">
+                  <div key={user._id} className="bg-gray-50 p-4 rounded-lg border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="text-2xl">{user.avatar}</div>
+                        <div className="text-2xl">{user.avatar || '👤'}</div>
                         <div>
-                          <h4 className="font-semibold text-gray-800">{user.username}</h4>
+                          <h4 className="font-semibold text-gray-800">{user.name} {user.surname}</h4>
                           <p className="text-sm text-gray-600 flex items-center">
                             <Mail className="w-3 h-3 mr-1" />
                             {user.email}
