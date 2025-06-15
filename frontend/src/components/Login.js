@@ -28,6 +28,7 @@ const Login = () => {
 
       // Guardar el token en localStorage o sessionStorage
       login(res.data.token); 
+      
 
       console.log("nuevo token login: "+res.data.token);
 

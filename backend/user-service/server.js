@@ -3,9 +3,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('./user-model')
+const User = require('./user-model');
+const FriendsRequest = require('./friends-request-model');
 const cors = require("cors");
-const {authMiddleware} = require("../auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
 const crypto = require("crypto");
 const axios = require("axios");
 const app = express();
@@ -91,6 +92,7 @@ app.post('/register', async (req, res) => {
         const token = jwt.sign({ userId: user._id, isPremium: user.isPremium, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
         // Respond with the token and user information
         res.json({ token: token, email: email, createdAt: user.createdAt });
+        
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -251,6 +253,47 @@ app.post("/reset-password/:token", async (req, res) => {
     res.status(500).json({ error: "Error al restablecer la contraseña." });
   }
 });
+
+app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
+    try{
+      const userId = req.user.id;
+      const user = await User.findById(userId);
+        if (!user) {
+        return res.status(401).json({ error: "Usuario no encontrado" });
+      }
+      return res.json(user.friends);
+    }catch (error) {
+      console.log(error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+  });
+
+  app.get('/users', async (req, res)=>{
+    try{
+      const users = await User.find();
+       console.log(users);
+      return res.json(users);
+    }catch (error) {
+      console.log(error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+  });
+
+  app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=>{
+    try{
+    const { senderId, receiverId } = req.body;
+
+      const newFriendRequest=new FriendsRequest({
+        sender:senderId,
+        receiver: receiverId,
+        status:"pending",
+      });
+      await newFriendRequest.save();
+      res.json({ message: "Solicitud de amistad enviada con éxito." });
+    }catch(error){
+       res.status(400).json({ error: error.message }); 
+    }
+  });
 
 
   const PORT = process.env.PORT || 5000;

@@ -28,6 +28,10 @@ console.log('Navbar user:', user);
           {user.isPremium && (
           <li><a href="/export-transactions">Exportar Transacciones</a></li>
         )}
+        
+        {user.isPremium && (
+          <li><a href="/friends">Amigos</a></li>
+        )}
          {/* Si el usuario está logueado (email existe), mostramos Cerrar sesión */}
         {user.email && (
           <li>

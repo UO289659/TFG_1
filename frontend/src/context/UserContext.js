@@ -7,21 +7,26 @@ export const UserContext = createContext();
 // 2. Provider
 export function UserProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState({ isPremium: false, email: null });
+  const [user, setUser] = useState({ isPremium: false, email: null, _id:null });
 
   useEffect(() => {
     if (!token) {
-      setUser({ isPremium: false, email: null });
+      setUser({ isPremium: false, email: null, _id:null });
       return;
     }
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
+      const id = payload.userId || payload.id || null;
+
       setUser({
         isPremium: !!payload.isPremium,
         email: payload.email || null,
+        _id: id
       });
+        // Guardar userId en localStorage
+      localStorage.setItem('userId', id);
     } catch {
-      setUser({ isPremium: false, email: null });
+      setUser({ isPremium: false, email: null, _id: null});
     }
   }, [token]);
 
@@ -31,6 +36,7 @@ export function UserProvider({ children }) {
   };
   const logout = () => {
     localStorage.removeItem('token');
+     localStorage.removeItem('userId');
     setToken(null);
   };
 

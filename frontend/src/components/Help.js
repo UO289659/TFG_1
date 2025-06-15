@@ -121,15 +121,21 @@ const supportInfo = {
   hours: "Lunes a Viernes, 9:00 AM - 6:00 PM"
 };
 
+// Mover TabPanel fuera del componente principal
+const TabPanel = ({ children, value, index }) => (
+  <div role="tabpanel" hidden={value !== index}>
+    {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+  </div>
+);
+
 export default function ProfessionalHelpPage() {
   const [tabIndex, setTabIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedAccordion, setExpandedAccordion] = useState(false);
 
   const handleTagClick = (tag) => {
-  setSearchTerm(tag);
-};
-
+    setSearchTerm(tag);
+  };
 
   const handleAccordionChange = (panel) => (event, isExpanded) => {
     setExpandedAccordion(isExpanded ? panel : false);
@@ -144,12 +150,6 @@ export default function ProfessionalHelpPage() {
         item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     )
   })).filter(categoria => categoria.preguntas.length > 0);
-
-  const TabPanel = ({ children, value, index }) => (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
-  );
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -243,7 +243,7 @@ export default function ProfessionalHelpPage() {
                         size="small"
                         variant="outlined"
                         sx={{ mr: 1, mb: 1 }}
-                         onClick={() => handleTagClick(tag)} 
+                        onClick={() => handleTagClick(tag)} 
                       />
                     ))}
                   </Box>

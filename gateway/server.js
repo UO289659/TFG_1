@@ -30,7 +30,6 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  console.log("entre por gateway");
   try {
     // Forward the add user request to the user service
     const userResponse = await axios.post(userServiceUrl+'/register', req.body);
@@ -44,8 +43,6 @@ app.post('/register', async (req, res) => {
 });
 app.get('/gastos/rango', authMiddleware, async (req, res) => {
   const { start, end } = req.query;
-   // Verificar si las fechas están siendo recibidas correctamente
-  console.log("🔎 Start:", start, "End:", end);
 
   try {
     const response = await axios.get(statsServiceUrl+'/gastos/rango', {
@@ -67,7 +64,6 @@ app.get('/gastos/rango', authMiddleware, async (req, res) => {
 });
 
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
-  console.log("Entro por gastos / period");
    try {
     const period = req.params.period; 
     const response = await axios.get(statsServiceUrl+'/gastos/'+period, {
@@ -99,7 +95,6 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
 
 app.post('/track', async (req, res) => {
   try {
-    console.log("Entra por la gategay para guardar ingresos");
     // Forward 
     const statsResponse = await axios.post(statsServiceUrl+'/track', req.body);
     res.json(statsResponse.data);
@@ -118,7 +113,6 @@ app.get("/profile", authMiddleware, async (req, res) => {
       },
      
     });
-    console.log("Usuario en gateway:", req.user);
 
     res.json(response.data);
   } catch (error) {
@@ -324,5 +318,47 @@ app.get("/export", authMiddleware, ensurePremium, async (req, res) => {
   } catch (error) {
     console.error("Error en /export:", error.message);
     res.status(500).json({ error: "Error al obtener gastos" });
+  }
+});
+
+app.get("/friends", authMiddleware, ensurePremium, async(req, res)=>{
+  try{
+    const response = await axios.get(userServiceUrl + '/friends', {
+    headers: {
+      Authorization: req.headers.authorization
+    }
+  });
+
+    res.json(response.data);
+  }catch (error) {
+    console.error("Error en /friends:", error.message);
+    res.status(500).json({ error: "Error al obtener amigos" });
+  }
+});
+app.get("/users", async(req, res)=>{
+  try{
+    const response= await axios.get(userServiceUrl+'/users');
+    res.json(response.data);
+  }catch (error) {
+    console.error("Error en /users:", error.message);
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+});
+
+app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=>{
+  try{
+    const { senderId, receiverId } = req.body;
+    const response = await axios.post(userServiceUrl + "/send-friend-request",
+     { senderId, receiverId },
+    {
+    headers: {
+      Authorization: req.headers.authorization,
+    },
+  }
+);
+    res.json(response.data);
+  }catch(error){
+     console.error("Error en /send-friend-request:", error.message);
+    res.status(500).json({ error: "Error al enviar solicitud de amistad" });
   }
 });

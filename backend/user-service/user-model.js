@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema({
     isPremium: Boolean,
     resetToken: String,
     resetTokenExpiration: Date,
+    friends:  [{ }],
   });
 
 const User = mongoose.model('User', UserSchema);
