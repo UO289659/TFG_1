@@ -44,7 +44,7 @@ const Register = () => {
         <h1 className="navbar-brand">📘 Gestor de Finanzas</h1>
       </nav>
 
-      <div className="card shadow p-4" style={{ width: "30vw" }}>
+      <div className="login-card" >
         <h2 className="text-center">Crear Cuenta 🔒</h2>
         {/* Mostrar mensaje de error si existe */}
         {error && <div className="alert alert-danger text-center">{error}</div>}
