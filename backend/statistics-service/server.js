@@ -83,30 +83,54 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
 
 
 app.post('/track', async (req, res) => {
-  const { name, type, category, value, icon, clientId } = req.body;
-  console.log("value en service: "+value);
-
-  console.log("category en service: "+category);
-  console.log("tipo en service; "+type);
+  const { name, type, category, value, icon, clientId, sharedWith = [] } = req.body;
 
   if (!clientId || !name || !type || !category || !value) {
-      return res.status(400).json({ error: "Datos incompletos" });
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  try {
+    // Incluir al creador en el reparto
+    const allUsers = [clientId, ...sharedWith];
+    const totalParticipants = allUsers.length;
+    const shareValue = (Number(value) / totalParticipants).toFixed(2);
+
+    const transactions = [];
+
+    for (const id of allUsers) {
+      const others = allUsers.filter(uid => uid !== id).map(uid => ({
+        userId: new mongoose.Types.ObjectId(uid),
+        amount: shareValue,
+        isPaid: false,
+      }));
+
+      const transaction = new Transaction({
+        clientId: id,
+        name,
+        type,
+        category,
+        value: shareValue,
+        icon,
+        sharedWith: others,
+        splitType: 'equal',
+        totalParticipants,
+        createdBy: new mongoose.Types.ObjectId(clientId),
+        groupName: "Gasto compartido"
+      });
+
+      await transaction.save();
+      transactions.push(transaction);
     }
 
-    
-  const transaction = new Transaction({
-      clientId,
-      name,
-      type,
-      category,
-      value,
-      icon,
-    });
-
-    await transaction.save();
-
-    return res.status(201).json(transaction);
+    return res.status(201).json({ message: "Gasto compartido registrado", transactions });
+  } catch (err) {
+    console.error("Error al guardar transacción compartida:", err);
+    return res.status(500).json({ error: "Error al registrar la transacción" });
+  }
 });
+
+
+
 app.put('/track/:id', async (req, res) => {
   try{
     const { id } = req.params;

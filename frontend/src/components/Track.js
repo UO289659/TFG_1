@@ -53,7 +53,9 @@ const Track = () => {
   category: "Comida",  
   value: "",
   icon: "💸",
+  sharedWith: [],
 });
+const [friends, setFriends] = useState([]);
 
 
 // Obtener categorías únicas de gastos y de ingresos por separado
@@ -229,8 +231,21 @@ useEffect(() => {
   fetchGastos();
 }, [selectedCategory]);
 
+useEffect(() => {
+  const fetchFriends = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.get("http://localhost:4000/friends", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+     setFriends(res.data);
+    } catch (err) {
+      console.error("Error al cargar amigos:", err);
+    }
+  };
 
-
+  fetchFriends();
+}, []);
 
   useEffect(() => {
     let totalExpense = 0;
@@ -246,6 +261,7 @@ useEffect(() => {
   console.log("Abriendo modal");
   setModalOpen(true);
 };
+
 
   // 1. Extraer fechas únicas, agrupar datos, preparar lineChartData
   const datesSet = new Set();
@@ -369,6 +385,7 @@ const handleSubmit = async (e) => {
     value: newValue,
     icon: newEntry.icon,
     clientId: clientId,
+    sharedWith: newEntry.sharedWith,
   };
 
   await axios.post("http://localhost:4000/track", newItem);
@@ -411,7 +428,7 @@ const handleInputChange = (e) => {
 };
 const handleModalClose = () => {
   setModalOpen(false);
-  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸" });
+  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸",  sharedWith: [], });
 };
 function IconPicker({ selectedIcon, onSelect }) {
   return (
@@ -447,6 +464,7 @@ const handleEditTransaction = (transaction) => {
     value: transaction.value,
     icon: transaction.icon,
     _id: transaction._id, // Asegúrate de que existe este campo
+    sharedWith: transaction.sharedWith,
   });
   setModalOpen(true);
 };
@@ -801,6 +819,24 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                   min="0"
                   step="0.01"
                 />
+              </label>
+
+              <label>
+                  Compartir con:
+                  <select
+                    multiple
+                    value={newEntry.sharedWith}
+                    onChange={(e) => {
+                      const selectedOptions = Array.from(e.target.selectedOptions).map((o) => o.value);
+                      setNewEntry((prev) => ({ ...prev, sharedWith: selectedOptions }));
+                    }}
+                  >
+                    {friends.map((friend) => (
+                      <option key={friend._id} value={friend._id}>
+                        {friend.name}
+                      </option>
+                    ))}
+                  </select>
               </label>
 
               <label>Icono:</label>

@@ -257,7 +257,7 @@ app.post("/reset-password/:token", async (req, res) => {
 app.get("/friends", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate('friends.userId', 'name surname email avatar')
+      .populate('friends.userId', 'name surname email')
       .select('friends');
     
     // Filtrar solo amigos activos
