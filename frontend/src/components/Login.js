@@ -36,7 +36,7 @@ const Login = () => {
       navigate("/track");
     } catch (error) {
       console.error("❌ Error al iniciar sesión:", error);
-      setError(error.response?.data?.error || "Correo o contraseña incorrectos.");
+      setError("Correo o contraseña incorrectos.");
     }
   };
 
