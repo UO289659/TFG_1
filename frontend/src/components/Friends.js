@@ -336,7 +336,7 @@ const FriendsSystem = () => {
                 {sentRequests.map(request => (
                   <div key={request.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                     <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{request.receiver?.avatar || '👤'}</div>
+                      <div className="text-2xl">{request.receiverId?.avatar || '👤'}</div>
                       <div>
                         <h4 className="font-semibold text-gray-800">
                           {request.receiverId?.name} {request.receiverId?.surname}

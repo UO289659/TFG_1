@@ -254,20 +254,30 @@ app.post("/reset-password/:token", async (req, res) => {
   }
 });
 
-app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
-    try{
-      const userId = req.user.id;
-      const user = await User.findById(userId);
-        if (!user) {
-        return res.status(401).json({ error: "Usuario no encontrado" });
-      }
-      return res.json(user.friends);
-    }catch (error) {
-      console.log(error);
-    res.status(500).json({ error: "Error del servidor" });
+app.get("/friends", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('friends.userId', 'name surname email avatar')
+      .select('friends');
+    
+    // Filtrar solo amigos activos
+    const activeFriends = user.friends
+      .filter(friend => friend.status === 'active')
+      .map(friend => ({
+        _id: friend.userId._id,
+        name: friend.userId.name,
+        surname: friend.userId.surname,
+        email: friend.userId.email,
+        avatar: friend.userId.avatar,
+        friendSince: friend.friendSince
+      }));
+    
+    res.json(activeFriends);
+  } catch (error) {
+    console.error("Error al obtener amigos:", error);
+    res.status(500).json({ error: error.message });
   }
-  });
-
+});
   app.get('/users', async (req, res)=>{
     try{
       const users = await User.find({isPremium:true});
@@ -278,6 +288,29 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
     res.status(500).json({ error: "Error del servidor" });
   }
   });
+
+  app.get('/users/:userId', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Validar que el ID sea válido
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+    
+    const user = await User.findById(userId).select('name surname email avatar _id');
+    
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    
+    console.log("✅ Usuario encontrado:", user);
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Error al obtener usuario por ID:", error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
 
   app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=>{
     try{
@@ -318,6 +351,126 @@ app.get('/friends', authMiddleware, ensurePremium, async (req, res)=>{
     res.status(500).json({ error: "Error del servidor" });
   }
   });
+
+  // Aceptar solicitud
+app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, async (req, res) => {
+  try {
+    const request = await FriendsRequest.findById(req.params.requestId)
+      .populate('senderId', 'name surname email')
+      .populate('receiverId', 'name surname email');
+        
+    if (!request) {
+      return res.status(404).json({ error: "Solicitud no encontrada" });
+    }
+        
+    if (request.receiverId._id.toString() !== req.user.id) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+
+    // Verificar que la solicitud esté pendiente
+    if (request.status !== "pending") {
+      return res.status(400).json({ error: "La solicitud ya ha sido procesada" });
+    }
+        
+    // Actualizar estado de la solicitud
+    request.status = "accepted";
+    await request.save();
+        
+    // Agregar la relación de amistad en ambos usuarios
+    const senderId = request.senderId._id;
+    const receiverId = request.receiverId._id;
+    
+    // Agregar el sender a la lista de amigos del receiver
+    await User.findByIdAndUpdate(
+      receiverId,
+      { 
+        $addToSet: { 
+          friends: {
+            userId: senderId,
+            friendSince: new Date(),
+            status: 'active'
+          }
+        }
+      }
+    );
+    
+    // Agregar el receiver a la lista de amigos del sender
+    await User.findByIdAndUpdate(
+      senderId,
+      { 
+        $addToSet: { 
+          friends: {
+            userId: receiverId,
+            friendSince: new Date(),
+            status: 'active'
+          }
+        }
+      }
+    );
+        
+    res.json({
+      message: "Solicitud aceptada y amistad creada",
+      request,
+      friendship: {
+        user1: request.senderId.name,
+        user2: request.receiverId.name,
+        createdAt: new Date()
+      }
+    });
+        
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.message,
+      name: error.name,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Rechazar solicitud
+app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, async (req, res) => {
+  try {
+    const request = await FriendsRequest.findById(req.params.requestId);
+    
+    if (!request) {
+      return res.status(404).json({ error: "Solicitud no encontrada" });
+    }
+    
+    if (request.receiverId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "No autorizado" });
+    }
+    
+    request.status = 'rejected';
+    await request.save();
+    
+    res.json({ message: "Solicitud rechazada" });
+    
+  } catch (error) {
+    console.error("Error al rechazar solicitud:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const friendId = req.params.friendId;
+    
+    // Remover de ambos usuarios
+    await User.findByIdAndUpdate(userId, {
+      $pull: { friends: { userId: friendId } }
+    });
+    
+    await User.findByIdAndUpdate(friendId, {
+      $pull: { friends: { userId: userId } }
+    });
+    
+    res.json({ message: "Amigo eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar amigo:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

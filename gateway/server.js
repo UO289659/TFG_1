@@ -391,3 +391,103 @@ app.get("/friend-requests/sent", authMiddleware, ensurePremium, async(req, res)=
     res.status(500).json({ error: "Error al obtener solicitudes enviadas" });
   }
 });
+
+app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, async(req, res) => {
+  try {
+    console.log("🔄 Gateway: Procesando aceptación de solicitud:", req.params.requestId);
+    
+    // CORREGIDO: Usar PUT en lugar de GET y pasar el requestId correctamente
+    const response = await axios.put(
+      `${userServiceUrl}/friend-requests/${req.params.requestId}/accept`, 
+      req.body, // Enviar el body si hay datos
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    console.log("✅ Gateway: Solicitud aceptada exitosamente");
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Gateway Error en /friend-requests/accept:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: error.response?.data?.error || "Error al aceptar solicitud de amistad",
+      details: error.response?.data
+    });
+  }
+});
+
+// Rechazar solicitud de amistad - NUEVA RUTA
+app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, async(req, res) => {
+  try {
+    console.log("🔄 Gateway: Procesando rechazo de solicitud:", req.params.requestId);
+    
+    const response = await axios.put(
+      `${userServiceUrl}/friend-requests/${req.params.requestId}/reject`, 
+      req.body,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    console.log("✅ Gateway: Solicitud rechazada exitosamente");
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Gateway Error en /friend-requests/reject:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: error.response?.data?.error || "Error al rechazar solicitud de amistad",
+      details: error.response?.data
+    });
+  }
+});
+// Eliminar amigo - NUEVA RUTA
+app.delete("/friends/:friendId", authMiddleware, ensurePremium, async(req, res) => {
+  try {
+    console.log("🔄 Gateway: Eliminando amigo:", req.params.friendId);
+    
+    const response = await axios.delete(
+      `${userServiceUrl}/friends/${req.params.friendId}`,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    console.log("✅ Gateway: Amigo eliminado exitosamente");
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Gateway Error en /friends/delete:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: error.response?.data?.error || "Error al eliminar amigo",
+      details: error.response?.data
+    });
+  }
+});
+
+// Obtener usuario por ID - NUEVA RUTA NECESARIA
+app.get("/users/:userId", authMiddleware, async(req, res) => {
+  try {
+    console.log("🔄 Gateway: Obteniendo usuario:", req.params.userId);
+    
+    const response = await axios.get(
+      `${userServiceUrl}/users/${req.params.userId}`,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Gateway Error en /users/:userId:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: error.response?.data?.error || "Error al obtener usuario",
+      details: error.response?.data
+    });
+  }
+});

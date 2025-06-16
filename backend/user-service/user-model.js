@@ -7,8 +7,24 @@ const UserSchema = new mongoose.Schema({
     isPremium: Boolean,
     resetToken: String,
     resetTokenExpiration: Date,
-    friends:  [{ }],
-  });
+     friends: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        friendSince: {
+            type: Date,
+            default: Date.now
+        },
+        status: {
+            type: String,
+            enum: ['active', 'blocked'],
+            default: 'active'
+        }
+    }],
+}, 
+  );
 
 const User = mongoose.model('User', UserSchema);
 module.exports = User
