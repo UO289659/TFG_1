@@ -331,7 +331,7 @@ app.get("/friends", authMiddleware, async (req, res) => {
   app.get('/friend-requests/received', authMiddleware, ensurePremium, async (req, res)=>{
     try{
       const userId = req.user.id;
-      const requests= await FriendsRequest.find({receiverId:userId})
+      const requests= await FriendsRequest.find({receiverId:userId, status:"pending"})
       .populate('senderId', 'name surname email') // Campos que quieres obtener
       .sort({ createdAt: -1 });
       res.json(requests);
