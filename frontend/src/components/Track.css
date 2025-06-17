@@ -91,7 +91,8 @@
   border-radius: 1rem;
   margin-bottom: 2rem;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  position: relative;
+   position: relative;
+  z-index: 1; /* Reducir desde auto/alto */
   overflow: hidden;
 }
 
@@ -775,6 +776,9 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+   position: relative;
+  z-index: 100;
+  overflow: visible ;
 }
 
 .period-date-picker label {
@@ -850,8 +854,9 @@
   border: none;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  overflow: visible;
   background: white;
+  
 }
 
 .react-datepicker__header {
@@ -1061,7 +1066,7 @@
 
 /* Para que el input tenga espacio para el icono */
 .date-input-wrapper input {
-  padding-right: 40px !important;
+  padding-right: 40px ;
 }
 /* Estilos adicionales para el DatePicker mejorado */
 
@@ -1122,9 +1127,7 @@
   border-radius: 16px;
 }
 
-.custom-popper {
-  z-index: 9999;
-}
+
 
 /* Efectos de transición suaves */
 .period-date-picker * {
