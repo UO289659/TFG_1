@@ -48,6 +48,7 @@ const Track = () => {
   const [customStartDate, setCustomStartDate] = useState(null);
   const [customEndDate, setCustomEndDate] = useState(null);
   const [period, setPeriod] = useState(false);
+  const [isPremium, setIsPremium] = useState(false); // Estado para verificar si el usuario es premium
   const [newEntry, setNewEntry] = useState({
   name: "",
   type: "expense",
@@ -151,6 +152,25 @@ const doughnutOptions = {
 const today = new Date();
 const options = { day: 'numeric', month: 'long' };
 const formattedDate = today.toLocaleDateString('es-ES', options); 
+
+// Verificar si el usuario es premium al cargar el componente
+useEffect(() => {
+  const checkPremiumStatus = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        // Asumiendo que el token contiene información sobre el estado premium
+        setIsPremium(decoded.isPremium || decoded.premium || false);
+      } catch (error) {
+        console.error("Error al decodificar token:", error);
+        setIsPremium(false);
+      }
+    }
+  };
+
+  checkPremiumStatus();
+}, []);
 
 useEffect(() => {
   const fetchCategorias = async () => {
@@ -426,6 +446,8 @@ const handleInputChange = (e) => {
       ...prev,
       type: value,
       category: firstCategory, // actualizar categoría automáticamente
+      // Limpiar sharedWith si cambia a income o si no es premium
+      sharedWith: (value === "expense" && isPremium) ? prev.sharedWith : [],
     }));
   } else {
     setNewEntry((prev) => ({
@@ -434,10 +456,12 @@ const handleInputChange = (e) => {
     }));
   }
 };
+
 const handleModalClose = () => {
   setModalOpen(false);
   setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸",  sharedWith: [], });
 };
+
 function IconPicker({ selectedIcon, onSelect }) {
   return (
     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
@@ -829,19 +853,30 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                 />
               </label>
 
-          <label>Compartir gasto con: </label>
-              <Select
-                  isMulti
-      
-                  value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
-                  onChange={(selectedOptions) => {
-                    const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                    setNewEntry(prev => ({ ...prev, sharedWith: selectedIds }));
-                  }}
-                  options={friendsOptions}
-                  placeholder="Selecciona amigos..."
-                  closeMenuOnSelect={false}
-                />
+              {/* Solo mostrar el campo de compartir gastos si es usuario premium Y el tipo es expense */}
+              {isPremium && newEntry.type === "expense" && (
+                <>
+                  <label>Compartir gasto con: </label>
+                  <Select
+                    isMulti
+                    value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
+                    onChange={(selectedOptions) => {
+                      const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                      setNewEntry(prev => ({ ...prev, sharedWith: selectedIds }));
+                    }}
+                    options={friendsOptions}
+                    placeholder="Selecciona amigos..."
+                    closeMenuOnSelect={false}
+                  />
+                </>
+              )}
+
+              {/* Mensaje informativo para usuarios no premium */}
+              {!isPremium && newEntry.type === "expense" && (
+                <div className="upgrade-premium-message">
+                  💎 <strong>Función Premium:</strong> Actualiza a Premium para compartir gastos con amigos
+                </div>
+              )}
 
               <label>Icono:</label>
                 <IconPicker

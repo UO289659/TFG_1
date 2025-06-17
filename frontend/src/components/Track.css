@@ -1209,3 +1209,15 @@
   z-index: -1;
 }
 
+
+.upgrade-premium-message{
+  padding: 1em; 
+  background-color: #f0f8ff; 
+  border: 1px solid #add8e6;
+  border-radius: 8px;
+  margin-bottom: 1;
+  margin-top: 1em;
+  font-size: 14px;
+  color: '#0066cc';
+                
+}
