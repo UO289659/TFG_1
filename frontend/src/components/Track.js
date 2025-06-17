@@ -56,6 +56,9 @@ const Track = () => {
   value: "",
   icon: "💸",
   sharedWith: [],
+  splitType: "equal", // o "custom"
+  customAmounts: {},  // Ejemplo: { friendId1: 10, friendId2: 5 }
+
 });
 const [friends, setFriends] = useState([]);
 
@@ -153,6 +156,8 @@ const today = new Date();
 const options = { day: 'numeric', month: 'long' };
 const formattedDate = today.toLocaleDateString('es-ES', options); 
 
+
+
 // Verificar si el usuario es premium al cargar el componente
 useEffect(() => {
   const checkPremiumStatus = () => {
@@ -216,7 +221,6 @@ useEffect(() => {
     return;
   }
 
-   console.log("Starting fetch for category:", selectedCategory);
 
   const fetchGastos = async () => {
      const token = localStorage.getItem("token");
@@ -367,7 +371,6 @@ const lineChartOptions = {
   },
 };
 
-console.log(friends);
 //para el select de amigos
 const friendsOptions = friends.map(friend => ({
   value: friend._id,
@@ -406,6 +409,17 @@ const handleSubmit = async (e) => {
       return;
     }
 
+    if (newEntry.splitType === "custom") {
+  const total = parseFloat(newEntry.value);
+  const sumCustomAmounts = Object.values(newEntry.customAmounts).reduce((acc, val) => acc + Number(val), 0);
+
+  if (sumCustomAmounts >= total) {
+    alert(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) no puede superar el valor total del gasto (${total.toFixed(2)}€).`);
+    return;
+  }
+}
+
+
   const newItem = {
     name: newEntry.name,
     type: newEntry.type,
@@ -414,6 +428,8 @@ const handleSubmit = async (e) => {
     icon: newEntry.icon,
     clientId: clientId,
     sharedWith: newEntry.sharedWith,
+    splitType: newEntry.splitType,
+    customAmounts: newEntry.splitType === "custom" ? newEntry.customAmounts : {},
   };
 
   await axios.post("http://localhost:4000/track", newItem);
@@ -459,7 +475,7 @@ const handleInputChange = (e) => {
 
 const handleModalClose = () => {
   setModalOpen(false);
-  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸",  sharedWith: [], });
+  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸",  sharedWith: [], splitType: "equal", customAmounts: {}});
 };
 
 function IconPicker({ selectedIcon, onSelect }) {
@@ -855,21 +871,75 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
 
               {/* Solo mostrar el campo de compartir gastos si es usuario premium Y el tipo es expense */}
               {isPremium && newEntry.type === "expense" && (
-                <>
-                  <label>Compartir gasto con: </label>
-                  <Select
-                    isMulti
-                    value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
-                    onChange={(selectedOptions) => {
-                      const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                      setNewEntry(prev => ({ ...prev, sharedWith: selectedIds }));
-                    }}
-                    options={friendsOptions}
-                    placeholder="Selecciona amigos..."
-                    closeMenuOnSelect={false}
-                  />
-                </>
-              )}
+  <>
+    <label>Compartir gasto con:</label>
+    <Select
+      isMulti
+      value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
+      onChange={(selectedOptions) => {
+        const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+        setNewEntry(prev => ({
+          ...prev,
+          sharedWith: selectedIds,
+          // Resetear si ya no hay amigos seleccionados
+          splitType: selectedIds.length === 0 ? "equal" : prev.splitType,
+          customAmounts: selectedIds.length === 0 ? {} : prev.customAmounts
+        }));
+      }}
+      options={friendsOptions}
+      placeholder="Selecciona amigos..."
+      closeMenuOnSelect={false}
+    />
+
+    {/* Mostrar tipo de reparto SOLO si hay amigos seleccionados */}
+    {newEntry.sharedWith.length > 0 && (
+      <>
+        <label>Tipo de reparto:</label>
+          <Select
+            value={{ label: newEntry.splitType === "equal" ? "Reparto equitativo" : "Asignar cantidades", value: newEntry.splitType }}
+            onChange={(selected) =>
+              setNewEntry(prev => ({ ...prev, splitType: selected.value }))
+            }
+            options={[
+              { value: "equal", label: "Reparto equitativo" },
+              { value: "custom", label: "Asignar cantidades" }
+            ]}
+            placeholder="Selecciona tipo de reparto..."
+            className="split-type-select"
+            isSearchable={false}
+          />
+
+          
+        
+      </>
+    )}
+    {newEntry.splitType === "custom" && newEntry.sharedWith.length > 0 && (
+      <>
+        <label>Distribución personalizada:</label>
+        {newEntry.sharedWith.map(friendId => {
+          const friend = friends.find(f => f._id === friendId);
+          return (
+            <div key={friendId}>
+              <label>{friend?.name || "Amigo"}:</label>
+              <input
+                type="number"
+                min="0"
+                value={newEntry.customAmounts[friendId] || ""}
+                onChange={(e) => {
+                  const amount = parseFloat(e.target.value) || 0;
+                  setNewEntry(prev => ({
+                    ...prev,
+                    customAmounts: { ...prev.customAmounts, [friendId]: amount }
+                  }));
+                }}
+              />
+            </div>
+          );
+        })}
+      </>
+    )}
+  </>
+)}
 
               {/* Mensaje informativo para usuarios no premium */}
               {!isPremium && newEntry.type === "expense" && (
@@ -877,6 +947,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                   💎 <strong>Función Premium:</strong> Actualiza a Premium para compartir gastos con amigos
                 </div>
               )}
+
 
               <label>Icono:</label>
                 <IconPicker
