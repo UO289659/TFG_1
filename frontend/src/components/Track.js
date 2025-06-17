@@ -19,6 +19,7 @@ import 'chartjs-adapter-date-fns';
 import { Pencil, Trash2  } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from 'react-select';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, 
   LineElement,
@@ -345,6 +346,13 @@ const lineChartOptions = {
     },
   },
 };
+
+console.log(friends);
+//para el select de amigos
+const friendsOptions = friends.map(friend => ({
+  value: friend._id,
+  label: friend.name
+}));
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -821,23 +829,19 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                 />
               </label>
 
-              <label>
-                  Compartir con:
-                  <select
-                    multiple
-                    value={newEntry.sharedWith}
-                    onChange={(e) => {
-                      const selectedOptions = Array.from(e.target.selectedOptions).map((o) => o.value);
-                      setNewEntry((prev) => ({ ...prev, sharedWith: selectedOptions }));
-                    }}
-                  >
-                    {friends.map((friend) => (
-                      <option key={friend._id} value={friend._id}>
-                        {friend.name}
-                      </option>
-                    ))}
-                  </select>
-              </label>
+          <label>Compartir gasto con: </label>
+              <Select
+                  isMulti
+      
+                  value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
+                  onChange={(selectedOptions) => {
+                    const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                    setNewEntry(prev => ({ ...prev, sharedWith: selectedIds }));
+                  }}
+                  options={friendsOptions}
+                  placeholder="Selecciona amigos..."
+                  closeMenuOnSelect={false}
+                />
 
               <label>Icono:</label>
                 <IconPicker
