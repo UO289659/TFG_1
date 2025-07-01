@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from 'react-hot-toast';
 
 const Unsubscribe = () => {
   const navigate = useNavigate();
@@ -12,10 +13,10 @@ const Unsubscribe = () => {
         { plan: "basic" }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Tu plan se ha cambiado a básico");
+      toast.success("Tu plan se ha cambiado a básico");
       navigate("/profile");
     } catch (error) {
-      alert("Error al cambiar a plan básico");
+      toast.error("Error al cambiar a plan básico");
     }
   };
 

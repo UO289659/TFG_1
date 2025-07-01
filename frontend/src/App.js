@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import Hero from "./components/Hero"; // Importamos el Hero
 import Login from "./components/Login"; // Importamos el Hero
 import Register from "./components/Register"; // Importamos el Hero
-import Chart from "./components/Chart";
 import Track from "./components/Track";
 import Navbar from "./components/Navbar";
 import Profile from "./components/Profile"
@@ -18,6 +17,7 @@ import ResetPassword from "./components/ResetPassword";
 import ExportTransactions from "./components/ExportTransactions";
 import { UserProvider } from './context/UserContext';
 import FriendsSystem from "./components/Friends";
+import { Toaster } from 'react-hot-toast';
 
 function AppWrapper() {
   const location = useLocation();
@@ -36,7 +36,6 @@ function AppWrapper() {
           <Route path="/" element={<Hero />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/statistics" element={<Chart />} />
           <Route path="/track" element={<Track />} />
            <Route path="/profile" element={<Profile />} />
            <Route path="/select-plan" element={<SelectPlan />} />
@@ -60,6 +59,7 @@ function App() {
     <UserProvider>
       <Router>
         <AppWrapper />
+         <Toaster />
       </Router>
     </UserProvider>
   );

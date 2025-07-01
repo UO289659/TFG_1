@@ -22,8 +22,10 @@ import {
   Label as TagIcon,
 } from '@mui/icons-material';
 
+import toast from 'react-hot-toast';
+
 const Contact = () => {
-const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
+  const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -64,15 +66,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-      const response = await axios.post(apiEndpoint+'/send-email', formData);
-     if (response.status === 200) {
-        alert('¡Mensaje enviado correctamente! Te responderemos pronto.');
+      const response = await axios.post(apiEndpoint + '/send-email', formData);
+      if (response.status === 200) {
+        toast.success('¡Mensaje enviado correctamente! Te responderemos pronto.');
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
         throw new Error('Error al enviar el mensaje');
       }
     } catch (error) {
-      alert('Hubo un error al enviar el mensaje. Por favor, inténtalo de nuevo.');
+      toast.error('Hubo un error al enviar el mensaje. Por favor, inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +84,6 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: 'linear-gradient(135deg, #2563eb, #7c3aed, #8b5cf6)',
         p: 4,
         display: 'flex',
         justifyContent: 'center',
@@ -90,21 +91,23 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
       }}
     >
       <Paper
-        elevation={8}
+        elevation={0}
         sx={{
           maxWidth: 900,
           width: '100%',
-          borderRadius: 3,
+          borderRadius: '20px',
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
           minHeight: 600,
           overflow: 'hidden',
+          background: 'var(--white-transparent)',
+          boxShadow: 'var(--shadow-large)',
         }}
       >
         {/* Left info panel */}
         <Box
           sx={{
-            bgcolor: 'primary.main',
+            background: 'var(--primary-gradient)',
             color: 'white',
             p: 5,
             position: 'relative',
@@ -124,12 +127,13 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
+                background: 'var(--glass-bg)',
                 borderRadius: '50%',
                 p: 1.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                backdropFilter: 'blur(10px)',
               }}
             >
               <ClockIcon />
@@ -149,12 +153,13 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
+                background: 'var(--glass-bg)',
                 borderRadius: '50%',
                 p: 1.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                backdropFilter: 'blur(10px)',
               }}
             >
               <PhoneIcon />
@@ -170,17 +175,18 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
+                background: 'var(--glass-bg)',
                 borderRadius: '50%',
                 p: 1.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.3)',
+                  background: 'var(--glass-border)',
                   transform: 'translateY(-3px)',
-                  transition: 'all 0.3s',
                 },
               }}
             >
@@ -195,20 +201,21 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                 underline="none"
                 color="inherit"
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.2)',
+                  background: 'var(--glass-bg)',
                   px: 2,
                   py: 1,
-                  borderRadius: 2,
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--glass-border)',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s ease',
                   '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
+                    background: 'var(--glass-border)',
                     transform: 'translateY(-3px)',
-                    transition: 'all 0.3s',
                   },
                   fontWeight: 'medium',
                 }}
               >
-              saldosmart.info@gmail.com
+                saldosmart.info@gmail.com
               </Link>
             </Box>
           </Box>
@@ -216,12 +223,13 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
+                background: 'var(--glass-bg)',
                 borderRadius: '50%',
                 p: 1.5,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                backdropFilter: 'blur(10px)',
               }}
             >
               <MapPinIcon />
@@ -240,15 +248,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
         </Box>
 
         {/* Right form panel */}
-        <Box sx={{ p: 5, bgcolor: 'background.paper' }}>
+        <Box sx={{ p: 5, background: 'var(--white-transparent)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-            <SendIcon color="primary" />
-            <Typography variant="h4" fontWeight="bold" color="text.primary">
+            <SendIcon sx={{ color: 'var(--purple)' }} />
+            <Typography variant="h4" fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
               ¿Hablamos?
             </Typography>
           </Box>
 
-          <Typography variant="body1" mb={4} color="text.secondary">
+          <Typography variant="body1" mb={4} sx={{ color: 'var(--text-secondary)' }}>
             Estamos aquí para ayudarte. Envíanos un mensaje y te responderemos lo antes posible.
           </Typography>
 
@@ -264,7 +272,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                   error={!!errors.name}
                   helperText={errors.name}
                   InputProps={{
-                    startAdornment: <UserIcon sx={{ mr: 1 }} />,
+                    startAdornment: <UserIcon sx={{ mr: 1, color: 'var(--purple)' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--purple)',
+                      },
+                    },
                   }}
                 />
               </Grid>
@@ -280,7 +296,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                   error={!!errors.email}
                   helperText={errors.email}
                   InputProps={{
-                    startAdornment: <MailIcon sx={{ mr: 1 }} />,
+                    startAdornment: <MailIcon sx={{ mr: 1, color: 'var(--purple)' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--purple)',
+                      },
+                    },
                   }}
                 />
               </Grid>
@@ -295,7 +319,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                   error={!!errors.subject}
                   helperText={errors.subject}
                   InputProps={{
-                    startAdornment: <TagIcon sx={{ mr: 1 }} />,
+                    startAdornment: <TagIcon sx={{ mr: 1, color: 'var(--purple)' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--purple)',
+                      },
+                    },
                   }}
                 />
               </Grid>
@@ -312,7 +344,15 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                   error={!!errors.message}
                   helperText={errors.message}
                   InputProps={{
-                    startAdornment: <MessageSquareIcon sx={{ mr: 1 }} />,
+                    startAdornment: <MessageSquareIcon sx={{ mr: 1, color: 'var(--purple)' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--purple)',
+                      },
+                    },
                   }}
                 />
               </Grid>
@@ -321,10 +361,26 @@ const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
                 <Button
                   type="submit"
                   variant="contained"
-                  color="primary"
                   fullWidth
                   disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={20} /> : <SendIcon />}
+                  startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                  sx={{
+                    background: 'var(--primary-gradient)',
+                    borderRadius: '12px',
+                    py: 1.5,
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 8px 20px rgba(102, 126, 234, 0.4)',
+                    },
+                    '&:disabled': {
+                      background: 'var(--text-secondary)',
+                      opacity: 0.7,
+                    },
+                  }}
                 >
                   {isLoading ? 'Enviando...' : 'Enviar mensaje'}
                 </Button>

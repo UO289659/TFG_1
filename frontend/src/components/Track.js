@@ -15,7 +15,8 @@ import {
   TimeScale,
 } from "chart.js";
 import 'chartjs-adapter-date-fns';
-
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { Pencil, Trash2  } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -383,6 +384,11 @@ const handleSubmit = async (e) => {
   const decoded = jwtDecode(token);
   const clientId = decoded.userId; 
   let newValue=0;
+  
+  if (!newEntry.name || !newEntry.value || isNaN(newEntry.value)) {
+    toast.error("Por favor, completa el nombre y un valor válido.");
+    return;
+  }
 
   if (newEntry._id) {
     console.log("Editando transacción:", newEntry._id);
@@ -391,11 +397,6 @@ const handleSubmit = async (e) => {
     headers: { Authorization: `Bearer ${token}` },
   });
 } else {
-  if (!newEntry.name || !newEntry.value || isNaN(newEntry.value)) {
-    alert("Por favor, completa el nombre y un valor válido.");
-    return;
-  }
-
   
   try {
       newValue = parseFloat(newEntry.value);
@@ -405,7 +406,7 @@ const handleSubmit = async (e) => {
       console.log(newValue);
     } catch (error) {
       console.log(error);  
-      alert("Valor no válido.");
+      toast.error("Valor no válido.");
       return;
     }
 
@@ -414,7 +415,7 @@ const handleSubmit = async (e) => {
   const sumCustomAmounts = Object.values(newEntry.customAmounts).reduce((acc, val) => acc + Number(val), 0);
 
   if (sumCustomAmounts >= total) {
-    alert(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) no puede superar el valor total del gasto (${total.toFixed(2)}€).`);
+    toast.error(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) no puede superar el valor total del gasto (${total.toFixed(2)}€).`);
     return;
   }
 }
@@ -444,7 +445,7 @@ const handleSubmit = async (e) => {
     setData(response2.data);
     handleModalClose();
   } catch (error) {
-    alert("Error al guardar el gasto/ingreso");
+    toast.error("Error al guardar el gasto/ingreso");
     console.error(error);
   }
 
@@ -518,10 +519,37 @@ const handleEditTransaction = (transaction) => {
 };
 
 const handleDeleteTransaction = async (id) => {
-  const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta transacción?");
-  if (!confirmDelete) return;
+  // Opcionalmente, puedes obtener datos de la transacción para mostrar más detalles
+  // const transaction = data.find(t => t._id === id);
+  
+  const result = await Swal.fire({
+    title: '¿Eliminar transacción?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true, // Pone "Cancelar" a la izquierda
+    focusCancel: true // Enfoca el botón cancelar por defecto
+  });
+
+  if (!result.isConfirmed) return;
 
   try {
+    // Mostrar loading mientras se elimina
+    Swal.fire({
+      title: 'Eliminando...',
+      text: 'Por favor espera',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
     const token = localStorage.getItem("token");
     await axios.delete(`http://localhost:4000/track/${id}`, {
       headers: {
@@ -534,15 +562,35 @@ const handleDeleteTransaction = async (id) => {
       headers: { Authorization: `Bearer ${token}` },
     });
     setData(response.data);
+
+    // Mensaje de éxito
+    Swal.fire({
+      title: '¡Eliminada!',
+      text: 'La transacción ha sido eliminada correctamente',
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    
   } catch (error) {
     console.error("Error al borrar la transacción:", error);
-    alert("Error al eliminar la transacción");
+    
+    // Mensaje de error con SweetAlert2
+    Swal.fire({
+      title: 'Error',
+      text: 'No se pudo eliminar la transacción. Inténtalo de nuevo.',
+      icon: 'error',
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#dc3545'
+    });
+    
+    toast.error("Error al eliminar la transacción");
   }
 };
 
 const fetchCustomRangeData = async () => {
   if (!customStartDate || !customEndDate) {
-    alert("Selecciona un rango de fechas válido.");
+    toast.error("Selecciona un rango de fechas válido.");
     return;
   }
 
@@ -611,7 +659,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
       {error && <div className="error-message">{error}</div>}
       
       <header className="header">
-        <h1 className="title">Control Financiero</h1>
+        <h1 className="header-title">Control Financiero</h1>
         <p className="subtitle">Gestión inteligente de gastos e ingresos</p>
       </header>
 
@@ -803,32 +851,40 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
         </div>
       </div>
 
-      <button className="add-button" onClick={handleAddGasto}>
+      <button className="add-button-track" onClick={handleAddGasto}>
         <span className="add-icon">+</span>
         <span className="add-text">Nueva Transacción</span>
       </button>
 
             {/* Modal para añadir gasto */}
       {modalOpen && (
-        <div className="modal-backdrop">
-          <div className="custom-modal">
-      
+        <div className="modal-overlay">
+          <div className="my-modal-content-wide">
+            <div className="my-modal-header">
 
-            <h2>Nuevo Gasto / Ingreso</h2>
+            <h2 className="my-modal-title">Nuevo Gasto / Ingreso</h2>
+            </div>
+            <div className="my-modal-body">
             <form onSubmit={handleSubmit}>
-              <label>
+              <div className="form-group">
+               <label className="my-form-label">
                 Nombre:
                 <input
+                placeholder="Ej: Alimentación, Salario..."
+                className="form-input"
                   type="text"
                   name="name"
                   value={newEntry.name}
                   onChange={handleInputChange}
                 />
               </label>
+          </div>
 
-              <label>
+          <div className="form-group">
+               <label className="my-form-label">
                 Tipo:
                 <select
+                className="form-select"
                   name="type"
                   value={newEntry.type}
                   onChange={handleInputChange}
@@ -837,9 +893,13 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                   <option value="income">Ingreso</option>
                 </select>
               </label>
-              <label>
+              </div>
+
+              <div className="form-group">
+               <label className="my-form-label">
                   Categoría:
                   <select
+                  className="form-select"
                     name="category"
                     value={newEntry.category}
                     onChange={handleInputChange}
@@ -855,11 +915,12 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                     )}
                   </select>
                 </label>
+              </div>
 
-
-              <label>
+               <label className="my-form-label">
                 Valor:
                 <input
+                 className="form-input"
                   type="number"
                   name="value"
                   value={newEntry.value}
@@ -872,7 +933,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
               {/* Solo mostrar el campo de compartir gastos si es usuario premium Y el tipo es expense */}
               {isPremium && newEntry.type === "expense" && (
   <>
-    <label>Compartir gasto con:</label>
+     <label className="my-form-label">Compartir gasto con:</label>
     <Select
       isMulti
       value={friendsOptions.filter(option => newEntry.sharedWith.includes(option.value))}
@@ -894,7 +955,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
     {/* Mostrar tipo de reparto SOLO si hay amigos seleccionados */}
     {newEntry.sharedWith.length > 0 && (
       <>
-        <label>Tipo de reparto:</label>
+         <label className="my-form-label">Tipo de reparto:</label>
           <Select
             value={{ label: newEntry.splitType === "equal" ? "Reparto equitativo" : "Asignar cantidades", value: newEntry.splitType }}
             onChange={(selected) =>
@@ -915,7 +976,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
     )}
     {newEntry.splitType === "custom" && newEntry.sharedWith.length > 0 && (
       <>
-        <label>Distribución personalizada:</label>
+         <label className="my-form-label">Distribución personalizada:</label>
         {newEntry.sharedWith.map(friendId => {
           const friend = friends.find(f => f._id === friendId);
           return (
@@ -949,7 +1010,7 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
               )}
 
 
-              <label>Icono:</label>
+                <label className="my-form-label">Icono:</label>
                 <IconPicker
                   selectedIcon={newEntry.icon}
                   onSelect={(icon) =>
@@ -960,13 +1021,14 @@ const incomePercent = ((balance.income / safeTotal) * 100).toFixed(1);
                   }
                 />
 
-              <div className="modal-buttons">
-                <button type="submit" className="btn btn-primary">Aceptar</button>
-                <button type="button" className="btn btn-secondary" onClick={handleModalClose}>Cancelar</button>
+              <div className="modal-actions">
+                <button type="submit" className="submit-button">Aceptar</button>
+                <button type="button" className="cancel-button" onClick={handleModalClose}>Cancelar</button>
               </div>
             </form>
           </div>
         </div>
+         </div>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Star, ArrowRight, Check  } from "lucide-react";
 import "./SelectPlan.css";
+import toast from 'react-hot-toast';
 
 const SelectPlan = () => {
   const [selectedPlan, setSelectedPlan] = useState("basic");
@@ -19,7 +20,7 @@ const SelectPlan = () => {
       );
       navigate("/subscribe");
     } catch (error) {
-      alert("Error al actualizar el plan");
+      toast.error("Error al actualizar el plan");
     }
   };
 
