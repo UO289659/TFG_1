@@ -1,80 +1,150 @@
-/* Navbar */
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 1200px;
-    padding: 20px;
-
-
-  padding: 1rem 2rem;
+@import url('../styles/variables.css');
+/* Navegación */
+.navbar-professional {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--white-transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 1rem 0;
 }
 
-.navbar-list {
-  list-style: none;
+.nav-content {
+ 
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
-  gap: 2rem; /* espacio entre items */
-  margin: 0;
-  padding: 0;
   align-items: center;
+  justify-content: space-between;
 }
 
-
-
-.navbar-list li a {
-  color: #ecf0f1; /* color claro */
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1.1rem;
-  transition: color 0.3s ease;
+.logo-container-new {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.navbar-list li a:hover {
-  color: #3498db; /* color azul al pasar el mouse */
+.logo-container-new:hover {
+  transform: scale(1.05);
 }
 
-/* Opcional: destacar la ruta activa */
-.navbar-list li a.active,
-.navbar-list li a[data-active="true"] {
-  color: #e74c3c; /* color rojo para activo */
+.logo-text-new {
+  font-size: 1.5rem;
   font-weight: 700;
+  margin: 0;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Agrega estos estilos a tu archivo Navbar.css existente */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
 
-.logout-button {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+.nav-link {
   text-decoration: none;
-  display: inline-block;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: color 0.3s ease;
+  font-size: 0.95rem;
 }
 
-.logout-button:hover {
-  background-color: #c82333;
+.nav-link:hover {
+  color: var(--text-primary);
 }
 
-.logout-button:active {
-  background-color: #bd2130;
-}
-
-/* Si quieres que el botón se vea más como un enlace */
-.logout-button.link-style {
-  background: none;
-  color: inherit;
+.btn-primary-nav {
+  background-color: var(--purple);
+  color: var(--white-transparent);
   border: none;
-  padding: 0;
-  font: inherit;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
 }
 
-.logout-button.link-style:hover {
+.btn-primary-nav:hover {
+  background-color: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.btn-secondary-nav {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-secondary-nav:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e0;
+}
+
+.mobile-menu-btn {
+  display: none;
   background: none;
-  color: #dc3545;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.menu-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  padding: 1rem 2rem;
+  background-color: var(--white-transparent);
+  backdrop-filter: blur(10px);
+}
+
+.mobile-nav-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.mobile-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.nav-link{
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .mobile-menu {
+    display: flex;
+  }
+  
+  .nav-menu {
+    display: none;
+  }
+   .nav-content {
+    padding: 0 1rem;
+  }
 }

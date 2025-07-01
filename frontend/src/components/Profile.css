@@ -1,20 +1,20 @@
 /* Profile.css - Estilos para el componente de perfil profesional */
-
+@import url('../styles/variables.css');
 /* Header principal con gradiente */
 .gradient-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   border-radius: 20px;
   color: white;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-large);
 }
 
 /* Contenedor del avatar */
 .avatar-container {
   width: 100px;
   height: 100px;
-  background: rgba(255,255,255,0.2);
+  background: var(--glass-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -32,12 +32,12 @@
   color: #b8860b;
   border-radius: 50%;
   padding: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Badge de estado básico */
 .status-badge {
-  background: rgba(255,255,255,0.2);
+  background: var(--glass-bg);
   padding: 0.5rem 1rem;
   border-radius: 25px;
   font-size: 0.9rem;
@@ -56,7 +56,7 @@
 
 /* Botón de editar en el header */
 .edit-btn {
-  background: rgba(255,255,255,0.2);
+  background: var(--glass-bg);
   border: none;
   padding: 12px;
   border-radius: 15px;
@@ -67,14 +67,14 @@
 }
 
 .edit-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: var(--glass-border);
   color: white;
   transform: scale(1.05);
 }
 
 /* Botones con gradiente principal */
 .gradient-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   border: none;
   color: white;
   padding: 12px 24px;
@@ -97,46 +97,20 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
-
 /* Cards profesionales */
 .professional-card {
-  background: white;
+  background: var(--white-transparent);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-soft);
   border: none;
   margin-bottom: 2rem;
   transition: all 0.3s ease;
 }
 
 .professional-card:hover {
-  box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-large);
   transform: translateY(-2px);
-}
-
-/* Botones con gradiente verde */
-.gradient-btn-green {
-  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-  border: none;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  width: 100%;
-  cursor: pointer;
-}
-
-.gradient-btn-green:hover {
-  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
-}
-
-.gradient-btn-green:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
 /* Headers de sección */
@@ -166,25 +140,22 @@
 }
 
 .form-control-modern:focus {
-  border-color: #667eea;
+  border-color: var(--purple);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   outline: none;
 }
 
 .form-control-modern:disabled {
   background-color: #f5f5f5;
-  color: #999;
+  color: var(--text-secondary);
   border-color: #ddd;
 }
-
-
 
 /* Contenedor principal */
 .profile-container {
   min-height: 100vh;
   background-color: #f8f9fa;
   padding: 2rem 0;
- 
 }
 
 /* Loading spinner personalizado */
@@ -232,7 +203,6 @@
     padding: 1.5rem;
   }
   
- 
   .avatar-container {
     width: 80px;
     height: 80px;
@@ -268,16 +238,16 @@
 .gradient-btn:focus-visible,
 .gradient-btn-green:focus-visible,
 .edit-btn:focus-visible {
-  outline: 2px solid #667eea;
+  outline: 2px solid var(--purple);
   outline-offset: 2px;
 }
 
-/* Estilos para etiquetas de formulario */
+/* Estilos para etiquetas de formulario 
 .form-label {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
-}
+}*/
 
 /* Espaciado consistente */
 .mb-custom {

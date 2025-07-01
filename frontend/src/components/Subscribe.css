@@ -269,16 +269,14 @@
   margin-bottom: 2rem;
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
-}
 
+/**
 .form-group label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #333;
-}
+}**/
 
 .form-control {
   width: 100%;
