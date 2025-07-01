@@ -19,7 +19,7 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    req.user = { id: decoded.id || decoded.userId };
+    req.user = { id: decoded.id || decoded.userId, email: decoded.email,isPremium: decoded.isPremium  };
     next();
   } catch (error) {
     console.log("Error verificando token:", error.message);
