@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Plus, Trash2, Tag, TrendingUp, TrendingDown, X, AlertCircle, CheckCircle } from "lucide-react";
 import "./ConfigurarCategorias.css";
+import Footer from "./Footer.js";
+
 
 const ConfigurarCategorias = () => {
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
@@ -209,7 +211,7 @@ const ConfigurarCategorias = () => {
       <div className="content-wrapper">
         {/* Header */}
         <div className="header-section">
-          <h1 className="main-title">
+          <h1 className="header-title">
             Configurar Categorías
           </h1>
           <p className="main-subtitle">
@@ -246,9 +248,9 @@ const ConfigurarCategorias = () => {
         {/* Form Modal */}
         {showForm && (
           <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3 className="modal-title">Añadir Categoría</h3>
+            <div className="my-modal-content">
+              <div className="my-modal-header">
+                <h3 className="my-modal-title">Añadir Categoría</h3>
                 <button
                   onClick={() => {
                     setShowForm(false);
@@ -261,7 +263,7 @@ const ConfigurarCategorias = () => {
                 </button>
               </div>
               
-              <div className="modal-body">
+              <div className="my-modal-body">
                 {/* Alerta del formulario */}
                 <AlertMessage 
                   message={formError} 
@@ -270,7 +272,7 @@ const ConfigurarCategorias = () => {
                 />
 
                 <div className="form-group">
-                  <label className="form-label">
+                  <label className="my-form-label">
                     Nombre de la categoría
                   </label>
                   <input
@@ -292,7 +294,7 @@ const ConfigurarCategorias = () => {
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">
+                  <label className="my-form-label">
                     Tipo de categoría
                   </label>
                   <select
@@ -365,6 +367,7 @@ const ConfigurarCategorias = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };

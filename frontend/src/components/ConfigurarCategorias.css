@@ -134,7 +134,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
   gap: 2rem;
-  margin-bottom: 4rem;
+  margin-bottom: 1rem;
 }
 
 /* Category card styles */
@@ -315,22 +315,6 @@
   font-weight: 600;
   color: var(--text-primary);
   font-size: 1.05rem;
-}
-
-.delete-button {
-  padding: 0.75rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: none;
-  cursor: pointer;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: scale(0.8);
 }
 
 .category-item:hover .delete-button {

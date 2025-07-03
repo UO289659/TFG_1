@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 
 import toast from 'react-hot-toast';
+import Footer from "./Footer.js";
 
 const Contact = () => {
   const apiEndpoint = process.env.GATEWAY_URL || 'http://localhost:4000';
@@ -82,14 +83,23 @@ const Contact = () => {
 
   return (
     <Box
-      sx={{
-        minHeight: '100vh',
-        p: 4,
+     sx={{
+       minHeight: '100vh',
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        flexDirection: 'column',
       }}
+
     >
+      {/* Contenedor centrado para el formulario */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 2,
+        }}
+      >
       <Paper
         elevation={0}
         sx={{
@@ -107,6 +117,7 @@ const Contact = () => {
         {/* Left info panel */}
         <Box
           sx={{
+            flex:1,
             background: 'var(--primary-gradient)',
             color: 'white',
             p: 5,
@@ -389,7 +400,10 @@ const Contact = () => {
           </form>
         </Box>
       </Paper>
+      </Box>
+      <Footer />
     </Box>
+   
   );
 };
 
