@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"; // Para la redirección
 import axios from "axios";
 import "./Login.css";
 import { useUserContext } from '../context/UserContext';
+import Footer from "./Footer";
 
 const Login = () => {
   const { login } = useUserContext();
@@ -41,12 +42,10 @@ const Login = () => {
   };
 
   return (
+    <>
     <div className="form-container">
       <nav className="navbar">
         <h1 className="logo">📘 Gestor de Finanzas</h1>
-        <div>
-          <button className="btn secondary" onClick={() => navigate("/register")}>Registrarse</button>
-        </div>
       </nav>
 
       <div className="login-card">
@@ -76,6 +75,8 @@ const Login = () => {
         </div>
       </div>
     </div>
+    <Footer className={"footer-forgot-password"}/>
+    </>
   );
 };
 

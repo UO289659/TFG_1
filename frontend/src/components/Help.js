@@ -38,6 +38,8 @@ import {
   Phone as PhoneIcon,
   Schedule as ScheduleIcon
 } from '@mui/icons-material';
+import '../styles/variables.css';
+import Footer from "./Footer.js";
 
 const faqData = [
   {
@@ -89,29 +91,29 @@ const faqData = [
 
 const guideSteps = [
   {
-    icon: <CheckIcon color="primary" />,
+    icon: <CheckIcon sx={{ color: 'var(--purple)' }} />,
     title: "Registro e Inicio de Sesión",
-    description: "Crea tu cuenta desde la pantalla principal y accede con tus credenciales para sincronizar tus datos en todos tus dispositivos."
+    description: "Crea tu cuenta desde la pantalla principal y accede con tus credenciales."
   },
   {
-    icon: <CategoryIcon color="primary" />,
+    icon: <CategoryIcon sx={{ color: 'var(--purple)' }} />,
     title: "Configurar Categorías",
-    description: "Personaliza tus categorías de ingresos y gastos. Puedes usar las predefinidas o crear las tuyas propias con iconos y colores personalizados."
+    description: "Personaliza tus categorías de ingresos y gastos. Puedes usar las predefinidas o crear las tuyas propias."
   },
   {
-    icon: <IncomeIcon color="success" />,
+    icon: <IncomeIcon sx={{ color: '#10b981' }} />,
     title: "Registrar Ingresos",
-    description: "Añade tus ingresos especificando monto, categoría, fecha y descripción opcional. El sistema calculará automáticamente tus totales."
+    description: "Añade tus ingresos especificando monto, categoría, nombre e icono. El sistema calculará automáticamente tus totales."
   },
   {
-    icon: <ExpenseIcon color="error" />,
+    icon: <ExpenseIcon sx={{ color: '#ef4444' }} />,
     title: "Registrar Gastos",
     description: "Registra tus gastos de manera similar a los ingresos. Usa las categorías para mantener organizadas tus finanzas."
   },
   {
-    icon: <StatsIcon color="info" />,
+    icon: <StatsIcon sx={{ color: 'var(--purple)' }} />,
     title: "Analizar Estadísticas",
-    description: "Revisa tus análisis financieros, gráficos de tendencias y resúmenes para tomar decisiones informadas sobre tu presupuesto."
+    description: "Revisa tus análisis financieros, gráficos y resúmenes para tomar decisiones informadas sobre tu presupuesto."
   }
 ];
 
@@ -151,40 +153,174 @@ export default function ProfessionalHelpPage() {
     )
   })).filter(categoria => categoria.preguntas.length > 0);
 
+  const customStyles = {
+    container: {
+      py: 4,
+     
+      minHeight: '100vh',
+      position: 'relative'
+    },
+    headerBox: {
+      mb: 4,
+      textAlign: 'center',
+      padding: '2rem',
+      borderRadius: '20px',
+      background: 'var(--glass-bg)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--glass-border)',
+      boxShadow: 'var(--shadow-soft)'
+    },
+    headerTitle: {
+    
+      fontWeight: 'bold',
+      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    },
+    headerSubtitle: {
+      color: 'var(--white-transparent)',
+      opacity: 0.9
+    },
+    tabsPaper: {
+      mb: 3,
+      background: 'var(--white-transparent)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: '15px',
+      boxShadow: 'var(--shadow-soft)'
+    },
+    customTab: {
+      color: 'var(--text-secondary)',
+      '&.Mui-selected': {
+        color: 'var(--purple)',
+        fontWeight: 'bold'
+      }
+    },
+    searchField: {
+      mb: 3,
+      '& .MuiOutlinedInput-root': {
+        background: 'var(--white-transparent)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '15px',
+        border: '1px solid var(--glass-border)',
+        '& fieldset': {
+          border: 'none'
+        },
+        '&:hover fieldset': {
+          border: 'none'
+        },
+        '&.Mui-focused fieldset': {
+          border: '2px solid var(--purple)'
+        }
+      }
+    },
+    accordion: {
+      mb: 1,
+      background: 'var(--white-transparent)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: '15px !important',
+      boxShadow: 'var(--shadow-soft)',
+      '&:before': {
+        display: 'none'
+      }
+    },
+    categoryTitle: {
+      color: 'var(--purple)',
+      fontWeight: 'bold',
+      textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      mb: 2
+    },
+    card: {
+      height: '100%',
+      background: 'var(--white-transparent)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: '20px',
+      boxShadow: 'var(--shadow-soft)',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-5px)',
+        boxShadow: 'var(--shadow-large)'
+      }
+    },
+    chip: {
+      mr: 1,
+      mb: 1,
+      background: 'var(--glass-bg)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--purple)',
+      color: 'var(--purple)',
+      '&:hover': {
+        background: 'var(--purple)',
+        color: 'white'
+      }
+    },
+    button: {
+      background: 'var(--primary-gradient)',
+      color: 'white',
+      borderRadius: '15px',
+      padding: '12px 32px',
+      fontWeight: 'bold',
+      textTransform: 'none',
+      boxShadow: 'var(--shadow-soft)',
+      '&:hover': {
+        background: 'var(--secondary-gradient)',
+        transform: 'translateY(-2px)',
+        boxShadow: 'var(--shadow-large)'
+      }
+    },
+    alert: {
+      background: 'var(--white-transparent)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: '15px',
+      boxShadow: 'var(--shadow-soft)'
+    }
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <>
+    <Container maxWidth="lg" sx={customStyles.container}>
       {/* Header */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+      <Box sx={customStyles.headerBox}>
+        <Typography variant="h3" component="h1" gutterBottom sx={customStyles.headerTitle}>
           Centro de Ayuda
         </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={customStyles.headerSubtitle}>
           Encuentra respuestas rápidas y aprende a usar todas las funcionalidades
         </Typography>
       </Box>
 
       {/* Navigation Tabs */}
-      <Paper elevation={1} sx={{ mb: 3 }}>
+      <Paper elevation={0} sx={customStyles.tabsPaper}>
         <Tabs 
           value={tabIndex} 
           onChange={(e, newValue) => setTabIndex(newValue)}
           variant="fullWidth"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          TabIndicatorProps={{
+            style: {
+              backgroundColor: 'var(--purple)',
+              height: '3px',
+              borderRadius: '3px'
+            }
+          }}
         >
           <Tab 
             icon={<HelpIcon />} 
             label="Preguntas Frecuentes" 
             iconPosition="start"
+            sx={customStyles.customTab}
           />
           <Tab 
             icon={<GuideIcon />} 
             label="Guía de Inicio" 
             iconPosition="start"
+            sx={customStyles.customTab}
           />
           <Tab 
             icon={<TutorialIcon />} 
             label="Tutoriales" 
             iconPosition="start"
+            sx={customStyles.customTab}
           />
         </Tabs>
       </Paper>
@@ -200,23 +336,23 @@ export default function ProfessionalHelpPage() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon sx={{ color: 'var(--purple)' }} />
                 </InputAdornment>
               ),
             }}
-            sx={{ mb: 3 }}
+            sx={customStyles.searchField}
           />
         </Box>
 
         {filteredFAQ.length === 0 && searchTerm && (
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert severity="info" sx={customStyles.alert}>
             No se encontraron resultados para "{searchTerm}". Intenta con otros términos de búsqueda.
           </Alert>
         )}
 
         {filteredFAQ.map((categoria, catIndex) => (
           <Box key={catIndex} sx={{ mb: 3 }}>
-            <Typography variant="h5" gutterBottom color="primary" fontWeight="medium">
+            <Typography variant="h5" gutterBottom sx={customStyles.categoryTitle}>
               {categoria.categoria}
             </Typography>
             {categoria.preguntas.map((item, index) => (
@@ -224,15 +360,22 @@ export default function ProfessionalHelpPage() {
                 key={`${catIndex}-${index}`}
                 expanded={expandedAccordion === `${catIndex}-${index}`}
                 onChange={handleAccordionChange(`${catIndex}-${index}`)}
-                sx={{ mb: 1 }}
+                sx={customStyles.accordion}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h6" fontWeight="medium">
+                <AccordionSummary 
+                  expandIcon={<ExpandMoreIcon sx={{ color: 'var(--purple)' }} />}
+                  sx={{ 
+                    '& .MuiAccordionSummary-content': {
+                      margin: '16px 0'
+                    }
+                  }}
+                >
+                  <Typography variant="h6" fontWeight="medium" sx={{ color: 'var(--text-primary)' }}>
                     {item.pregunta}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <Typography paragraph>
+                  <Typography paragraph sx={{ color: 'var(--text-secondary)' }}>
                     {item.respuesta}
                   </Typography>
                   <Box sx={{ mt: 2 }}>
@@ -242,7 +385,7 @@ export default function ProfessionalHelpPage() {
                         label={tag}
                         size="small"
                         variant="outlined"
-                        sx={{ mr: 1, mb: 1 }}
+                        sx={customStyles.chip}
                         onClick={() => handleTagClick(tag)} 
                       />
                     ))}
@@ -259,15 +402,15 @@ export default function ProfessionalHelpPage() {
         <Grid container spacing={3}>
           {guideSteps.map((step, index) => (
             <Grid item xs={12} md={6} key={index}>
-              <Card elevation={2} sx={{ height: '100%' }}>
+              <Card elevation={0} sx={customStyles.card}>
                 <CardContent>
                   <Box display="flex" alignItems="center" mb={2}>
                     <Box mr={2}>{step.icon}</Box>
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
                       {index + 1}. {step.title}
                     </Typography>
                   </Box>
-                  <Typography color="text.secondary">
+                  <Typography sx={{ color: 'var(--text-secondary)' }}>
                     {step.description}
                   </Typography>
                 </CardContent>
@@ -276,11 +419,13 @@ export default function ProfessionalHelpPage() {
           ))}
         </Grid>
 
-        <Alert severity="success" sx={{ mt: 4 }}>
-          <Typography variant="h6" gutterBottom>
+        <Alert severity="success" sx={{ ...customStyles.alert, mt: 4 }}>
+          <Typography variant="h6" gutterBottom sx={{ color: 'var(--text-primary)' }}>
             ¡Consejo Pro!
           </Typography>
-          Para obtener mejores resultados, dedica unos minutos al inicio para configurar tus categorías personalizadas. Esto hará que el seguimiento de tus finanzas sea más preciso y útil.
+          <Typography sx={{ color: 'var(--text-secondary)' }}>
+            Para obtener mejores resultados, dedica unos minutos al inicio para configurar tus categorías personalizadas. Esto hará que el seguimiento de tus finanzas sea más preciso y útil.
+          </Typography>
         </Alert>
       </TabPanel>
 
@@ -288,36 +433,48 @@ export default function ProfessionalHelpPage() {
       <TabPanel value={tabIndex} index={2}>
         <Grid container spacing={4}>
           <Grid item xs={12} md={8}>
-            <Card elevation={2}>
+            <Card elevation={0} sx={customStyles.card}>
               <CardContent>
-                <Typography variant="h5" gutterBottom fontWeight="bold">
+                <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
                   Tutoriales en Video
                 </Typography>
-                <Typography paragraph color="text.secondary">
+                <Typography paragraph sx={{ color: 'var(--text-secondary)' }}>
                   Estamos preparando una serie completa de tutoriales en video para ayudarte a dominar todas las funcionalidades de la aplicación.
                 </Typography>
                 
-                <Alert severity="info" sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom>
+                <Alert severity="info" sx={{ ...customStyles.alert, mb: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ color: 'var(--text-primary)' }}>
                     Próximamente disponibles:
                   </Typography>
                   <List dense>
                     <ListItem>
-                      <ListItemText primary="• Configuración inicial y personalización" />
+                      <ListItemText 
+                        primary="• Configuración inicial y personalización" 
+                        sx={{ '& .MuiListItemText-primary': { color: 'var(--text-secondary)' } }}
+                      />
                     </ListItem>
                     <ListItem>
-                      <ListItemText primary="• Gestión avanzada de categorías" />
+                      <ListItemText 
+                        primary="• Gestión avanzada de categorías" 
+                        sx={{ '& .MuiListItemText-primary': { color: 'var(--text-secondary)' } }}
+                      />
                     </ListItem>
                     <ListItem>
-                      <ListItemText primary="• Análisis de estadísticas y reportes" />
+                      <ListItemText 
+                        primary="• Análisis de estadísticas y reportes" 
+                        sx={{ '& .MuiListItemText-primary': { color: 'var(--text-secondary)' } }}
+                      />
                     </ListItem>
                     <ListItem>
-                      <ListItemText primary="• Tips y trucos para usuarios avanzados" />
+                      <ListItemText 
+                        primary="• Tips y trucos para usuarios avanzados" 
+                        sx={{ '& .MuiListItemText-primary': { color: 'var(--text-secondary)' } }}
+                      />
                     </ListItem>
                   </List>
                 </Alert>
 
-                <Button variant="contained" color="primary" size="large">
+                <Button variant="contained" size="large" sx={customStyles.button}>
                   Notificarme cuando estén listos
                 </Button>
               </CardContent>
@@ -325,51 +482,63 @@ export default function ProfessionalHelpPage() {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <Card elevation={2}>
+            <Card elevation={0} sx={customStyles.card}>
               <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
+                <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
                   ¿Necesitas ayuda personalizada?
                 </Typography>
                 
                 <List>
                   <ListItem>
                     <ListItemIcon>
-                      <EmailIcon color="primary" />
+                      <EmailIcon sx={{ color: 'var(--purple)' }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary="Email"
                       secondary={
-                        <a href={`mailto:${supportInfo.email}`} style={{ color: 'inherit' }}>
+                        <a href={`mailto:${supportInfo.email}`} style={{ color: 'var(--purple)', textDecoration: 'none' }}>
                           {supportInfo.email}
                         </a>
                       }
+                      sx={{ 
+                        '& .MuiListItemText-primary': { color: 'var(--text-primary)' },
+                        '& .MuiListItemText-secondary': { color: 'var(--text-secondary)' }
+                      }}
                     />
                   </ListItem>
                   
                   <ListItem>
                     <ListItemIcon>
-                      <PhoneIcon color="primary" />
+                      <PhoneIcon sx={{ color: 'var(--purple)' }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary="Teléfono"
                       secondary={supportInfo.phone}
+                      sx={{ 
+                        '& .MuiListItemText-primary': { color: 'var(--text-primary)' },
+                        '& .MuiListItemText-secondary': { color: 'var(--text-secondary)' }
+                      }}
                     />
                   </ListItem>
                   
                   <ListItem>
                     <ListItemIcon>
-                      <ScheduleIcon color="primary" />
+                      <ScheduleIcon sx={{ color: 'var(--purple)' }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary="Horario"
                       secondary={supportInfo.hours}
+                      sx={{ 
+                        '& .MuiListItemText-primary': { color: 'var(--text-primary)' },
+                        '& .MuiListItemText-secondary': { color: 'var(--text-secondary)' }
+                      }}
                     />
                   </ListItem>
                 </List>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2, borderColor: 'var(--glass-border)' }} />
                 
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                   Nuestro equipo de soporte está aquí para ayudarte. No dudes en contactarnos si tienes preguntas específicas o necesitas asistencia técnica.
                 </Typography>
               </CardContent>
@@ -378,5 +547,7 @@ export default function ProfessionalHelpPage() {
         </Grid>
       </TabPanel>
     </Container>
+     <Footer/>
+     </>
   );
 }

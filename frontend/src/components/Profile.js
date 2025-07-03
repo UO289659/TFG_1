@@ -4,6 +4,7 @@ import { User, Mail, Shield, Key, Check, Star, Crown, Settings, Edit3, Save, X, 
 import "./Profile.css"
 import PlanCard from "./PlanCard";
 import { useNavigate } from "react-router-dom";
+import Footer from "./Footer";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -389,7 +390,7 @@ const Profile = () => {
                   
                   <button
                     type="submit"
-                    className="gradient-btn-green d-flex align-items-center justify-content-center"
+                    className="btn btn-primary w-100"
                   >
                     <Key size={20} className="me-2" />
                     Actualizar Contraseña
@@ -399,6 +400,7 @@ const Profile = () => {
             </div>
           </div>
       </div>
+      <Footer/>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; 
+import Footer from "./Footer.js";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ const ForgotPassword = () => {
   };
 
   return (
+    <>
     <div className="form-container">
       <nav className="navbar">
         <h1 className="logo">📘 Gestor de Finanzas</h1>
@@ -54,7 +56,10 @@ const ForgotPassword = () => {
           <button type="submit" className="btn primary full-width">Enviar enlace</button>
         </form>
       </div>
+     
     </div>
+      <Footer className="footer-forgot-password"/>
+  </>
   );
 };
 
