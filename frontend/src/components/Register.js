@@ -41,7 +41,7 @@ const Register = () => {
   return (
     <div className="form-container">
       <nav className="navbar navbar-light w-100 px-5">
-        <h1 className="navbar-brand">📘 Gestor de Finanzas</h1>
+        <h1 className="logo">📘 Gestor de Finanzas</h1>
       </nav>
 
       <div className="login-card" >

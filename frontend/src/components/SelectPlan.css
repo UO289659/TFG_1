@@ -1,8 +1,9 @@
 /* SelectPlan.css */
+@import url('../styles/variables.css');
 
 /* Botón principal - Continuar con plan */
 .btn-continue {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+  background: var(--primary-gradient);
   border: none !important;
   transition: all 0.2s ease;
 }
@@ -10,7 +11,7 @@
 .btn-continue:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3) !important;
-  background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
+  background: var(--purple);
 }
 
 .btn-continue:focus {
@@ -26,7 +27,7 @@
 .info-icon {
   width: 16px;
   height: 16px;
-  background-color: #007bff;
+  background-color: var(--purple);
   border-radius: 50%;
   display: flex;
   align-items: center;

@@ -200,15 +200,15 @@ const Subscribe = () => {
               Tu suscripción Premium ha sido activada. Ya puedes disfrutar de todas las funciones avanzadas.
             </p>
             <div className="success-features">
-              <div className="feature-item">
+              <div className="feature-item-subscribe">
                 <Crown size={20} />
                 <span>Acceso Premium</span>
               </div>
-              <div className="feature-item">
+              <div className="feature-item-subscribe">
                 <Zap size={20} />
                 <span>Funciones Avanzadas</span>
               </div>
-              <div className="feature-item">
+              <div className="feature-item-subscribe">
                 <Users size={20} />
                 <span>Soporte Prioritario</span>
               </div>

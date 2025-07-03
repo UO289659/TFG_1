@@ -30,7 +30,7 @@ const SelectPlan = () => {
   };
 
   return (
-    <div className="container-fluid py-5">
+    <div className="container-fluid">
             <div className="section-header">
               <div className="section-icon">
                 <Star size={24} />
@@ -56,7 +56,7 @@ const SelectPlan = () => {
         </div>
       </div>
       {/* Sección de acciones principales */}
-      <div className="row mt-5">
+      <div className="row">
         <div className="col-12">
           <div className="card border-0 shadow-sm">
             <div className="card-body p-4">

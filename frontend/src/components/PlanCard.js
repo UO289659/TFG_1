@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, Crown, Check } from "lucide-react";
+import { Shield, Crown, Check, CircleX } from "lucide-react";
 import "./PlanCard.css";
 
 const PlanCard = ({ type, isSelected, onSelect }) => {
@@ -8,14 +8,26 @@ const PlanCard = ({ type, isSelected, onSelect }) => {
       icon: <Shield size={28} />,
       title: "Plan Básico",
       description: "Funciones esenciales",
-      features: ["Acceso a funciones básicas", "Soporte por email", "Almacenamiento limitado"],
+      features: [
+        { icon: <Check size={16} color="#10b981" />, text: "Acceso a funciones básicas" },
+        { icon: <Check size={16} color="#10b981" />, text: "Soporte por email" },
+        { icon: <CircleX size={16} color="#ef4444" />, text: "Añadir amigos" },
+        { icon: <CircleX size={16} color="#ef4444" />, text: "Gastos compartidos" },
+        { icon: <CircleX size={16} color="#ef4444" />, text: "Exportar transacciones" },
+      ],
       buttonLabel: "Cambiar a Plan Básico"
     },
     premium: {
       icon: <Crown size={28} />,
       title: "Plan Premium",
       description: "Experiencia completa",
-      features: ["Acceso completo a todas las funciones", "Soporte prioritario 24/7", "Almacenamiento ilimitado", "Funciones avanzadas", "Exportar transacciones"],
+      features: [
+        { icon: <Check size={16} color="#10b981" />, text: "Acceso completo a todas las funciones" },
+        { icon: <Check size={16} color="#10b981" />, text: "Soporte prioritario 24/7" },
+        { icon: <Check size={16} color="#10b981" />, text: "Añadir amigos" },
+        { icon: <Check size={16} color="#10b981" />, text: "Gastos compartidos" },
+        { icon: <Check size={16} color="#10b981" />, text: "Exportar transacciones" }
+      ],
       buttonLabel: "Actualizar a Premium"
     }
   };
@@ -32,15 +44,15 @@ const PlanCard = ({ type, isSelected, onSelect }) => {
       <ul className="feature-list">
         {features.map((feature, idx) => (
           <li key={idx} className="feature-item">
-            <Check size={16} className="feature-check" />
-            {feature}
+            <span className="feature-icon">{feature.icon}</span>
+            <span className="feature-text">{feature.text}</span>
           </li>
         ))}
       </ul>
 
       {/* Botón solo si el plan NO está seleccionado */}
       {!isSelected && (
-        <button className="gradient-btn mt-3" onClick={onSelect}>
+        <button className="gradient-btn" onClick={onSelect}>
           {buttonLabel}
         </button>
       )}
