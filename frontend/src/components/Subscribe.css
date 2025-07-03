@@ -1,8 +1,8 @@
 /* Subscribe.css */
-
+@import url('../styles/variables.css');
 .subscribe-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   padding: 2rem 0;
 }
 
@@ -42,18 +42,18 @@
   transform: translateY(-1px);
 }
 
-.header-content h1 {
+.header-content-subscribe h1 {
   font-size: 2.5rem;
   font-weight: 700;
   margin: 1rem 0 0.5rem;
-  color: #333;
+  color: white;
 }
 
-.header-content p {
+.header-content-subscribe p {
   font-size: 1.1rem;
   opacity: 0.9;
   margin-bottom: 0;
-  color: #333;
+  color: white;
 }
 
 .premium-badge-large {
@@ -114,7 +114,7 @@
 
 .toggle-buttons button.active {
   background: white;
-  color: #007bff;
+  color: var(--purple);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -134,7 +134,7 @@
   text-align: center;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: var(--primary-gradient);
   border-radius: 16px;
   color: white;
 }
@@ -175,8 +175,6 @@
   color: #333;
 }
 
-
-
 .feature-item-subscribe {
   display: flex;
   align-items: center;
@@ -185,22 +183,19 @@
   font-size: 0.95rem;
 }
 
-.feature-item svg {
+.feature-item-subscribe svg {
   color: #28a745;
   flex-shrink: 0;
 }
-**/
+
 /* Security Badge */
 .security-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 2rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #666;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  
 }
 
 .security-badge svg {
@@ -310,7 +305,7 @@
 .subscribe-btn {
   width: 100%;
   padding: 1rem;
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: var(--primary-gradient);
   color: white;
   border: none;
   border-radius: 12px;
@@ -400,7 +395,7 @@
   flex-wrap: wrap;
 }
 
-.success-features .feature-item {
+.success-features .feature-item-subscribe {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -409,7 +404,7 @@
   color: #666;
 }
 
-.success-features .feature-item svg {
+.success-features .feature-item-subscribe svg {
   color: #007bff;
 }
 
@@ -435,7 +430,7 @@
     margin-bottom: 1rem;
   }
   
-  .header-content h1 {
+  .header-content-subscribe h1 {
     font-size: 2rem;
   }
   

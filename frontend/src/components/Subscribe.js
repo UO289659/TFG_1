@@ -230,7 +230,7 @@ const Subscribe = () => {
         <div className="subscribe-header">
     
           
-          <div className="header-content">
+          <div className="header-content-subscribe">
             <div className="premium-badge-large">
               <Crown size={24} />
             </div>
@@ -281,23 +281,19 @@ const Subscribe = () => {
               {/* Features */}
               <div className="features-list">
                 <h4>Incluye:</h4>
-                <div className="feature-item">
+                <div className="feature-item-subscribe">
                   <CheckCircle size={16} />
                   <span>Acceso ilimitado a todas las funciones</span>
                 </div>
-                <div className="feature-item">
+                <div className="feature-item-subscribe">
                   <CheckCircle size={16} />
                   <span>Soporte prioritario 24/7</span>
                 </div>
-                <div className="feature-item">
+                <div className="feature-item-subscribe">
                   <CheckCircle size={16} />
-                  <span>Funciones avanzadas de análisis</span>
+                  <span>Funciones avanzadas</span>
                 </div>
-                <div className="feature-item">
-                  <CheckCircle size={16} />
-                  <span>Sin límites de uso</span>
-                </div>
-                <div className="feature-item">
+                <div className="feature-item-subscribe">
                   <CheckCircle size={16} />
                   <span>Actualizaciones prioritarias</span>
                 </div>
