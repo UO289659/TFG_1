@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Check, X, Users, Bell, Trash2, Mail } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, UserPlus, Check, X, Users, Bell, Trash2, Mail, MessageCircle } from 'lucide-react';
 import axios from "axios";
+import toast from 'react-hot-toast';
+import "./Friends.css";
+import Swal from 'sweetalert2';
+import Footer from "./Footer.js";
 
 const FriendsSystem = () => {
   const [activeTab, setActiveTab] = useState('friends');
@@ -99,26 +103,72 @@ const FriendsSystem = () => {
     }
   };
 
-  // Buscar usuarios
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
+   // Función para verificar si un usuario ya es amigo
+  const isAlreadyFriend = (userId) => {
+    return friends.some(friend => friend._id === userId);
+  };
+  // Función para verificar si ya se envió una solicitud a este usuario
+  const hasSentRequest = (userId) => {
+    return sentRequests.some(request => 
+      request.receiverId === userId || request.receiverId?._id === userId
+    );
+  };
+
+  // Función para verificar si hay una solicitud pendiente de este usuario
+  const hasReceivedRequest = (userId) => {
+    return friendRequests.some(request => 
+      request.senderId === userId || request.senderId?._id === userId
+    );
+  };
+
+  // Función de búsqueda optimizada con filtrado
+  const performSearch = useCallback(async (term) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
+    }
     
     setLoading(true);
     try {
       const result = await axios.get("http://localhost:4000/users");
       const users = result.data
-        .filter(user => user._id !== currentUserId) 
+        .filter(user => user._id !== currentUserId) // Excluir usuario actual
         .filter(user => 
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+          user.name.toLowerCase().includes(term.toLowerCase()) ||
+          user.surname.toLowerCase().includes(term.toLowerCase()) ||
+          user.email.toLowerCase().includes(term.toLowerCase())
+        )
+        .filter(user => !isAlreadyFriend(user._id)) // Excluir amigos existentes
+        .filter(user => !hasSentRequest(user._id)) // Excluir usuarios con solicitudes enviadas
+        .filter(user => !hasReceivedRequest(user._id)); // Excluir usuarios con solicitudes recibidas
+
       setSearchResults(users);
     } catch (error) {
       console.error("Error en búsqueda:", error);
     } finally {
       setLoading(false);
     }
+  }, [currentUserId, friends, sentRequests, friendRequests]);
+
+  // Debounce para la búsqueda en tiempo real
+  useEffect(() => {
+    if (activeTab !== 'search') return;
+
+    const debounceTimer = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 300); // 300ms de delay
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, performSearch, activeTab]);
+
+  // Buscar usuarios (mantener para compatibilidad)
+  const handleSearch = async () => {
+    performSearch(searchTerm);
+  };
+
+  // Manejar cambio en el input de búsqueda
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
   };
 
   // Enviar solicitud de amistad
@@ -138,10 +188,10 @@ const FriendsSystem = () => {
       }]);
       
       setSearchResults(prev => prev.filter(u => u._id !== userId));
-      alert('Solicitud enviada correctamente');
+      toast.success('Solicitud enviada correctamente');
     } catch (error) {
       console.error("❌ Error al enviar solicitud:", error);
-      alert('Error al enviar solicitud');
+      toast.error('Error al enviar solicitud');
     }
   };
 
@@ -158,10 +208,10 @@ const FriendsSystem = () => {
       setFriends(prev => [...prev, request.senderId]);
       setFriendRequests(prev => prev.filter(r => r._id !== requestId));
       
-      alert('Solicitud aceptada');
+      toast.success('Solicitud aceptada');
     } catch (error) {
       console.error('Error al aceptar solicitud:', error);
-      alert('Error al aceptar solicitud');
+      toast.error('Error al aceptar solicitud');
     }
   };
 
@@ -173,261 +223,303 @@ const FriendsSystem = () => {
       });
       
       setFriendRequests(prev => prev.filter(r => r._id !== requestId));
-      alert('Solicitud rechazada');
+      toast.success('Solicitud rechazada');
     } catch (error) {
       console.error('Error al rechazar solicitud:', error);
-      alert('Error al rechazar solicitud');
+      toast.error('Error al rechazar solicitud');
     }
   };
 
   // Eliminar amigo
   const removeFriend = async (friendId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este amigo?')) {
+    const friend = friends.find(f => f._id === friendId);
+    
+    const result = await Swal.fire({
+      title: '¿Eliminar amigo?',
+      text: `¿Estás seguro de que quieres eliminar a ${friend?.name} ${friend?.surname} de tu lista de amigos?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      footer: '<small>Esta acción no se puede deshacer</small>'
+    });
+
+    if (result.isConfirmed) {
       try {
         await axios.delete(`http://localhost:4000/friends/${friendId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setFriends(prev => prev.filter(f => f._id !== friendId));
-        alert('Amigo eliminado');
+        
+        Swal.fire({
+          title: '¡Amigo eliminado!',
+          text: `${friend?.name} ha sido eliminado de tu lista de amigos`,
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        
       } catch (error) {
         console.error('Error al eliminar amigo:', error);
-        alert('Error al eliminar amigo');
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo eliminar el amigo. Inténtalo de nuevo.',
+          icon: 'error'
+        });
       }
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Gestión de Amigos</h1>
-        <p className="text-gray-600">Conecta con otros usuarios y comparte tus finanzas</p>
-      </div>
+   
+      <div className="friends-container">
+        <div className="header-section">
+          <h1 className="header-title">Gestión de Amigos</h1>
+          <p className="friend-header-subtitle">
+            Conecta con otros usuarios y comparte tus experiencias financieras de manera segura
+          </p>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
-        <button
-          onClick={() => setActiveTab('friends')}
-          className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'friends' 
-              ? 'bg-blue-500 text-white' 
-              : 'text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <Users className="w-4 h-4 mr-2" />
-          Mis Amigos ({friends.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('requests')}
-          className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'requests' 
-              ? 'bg-blue-500 text-white' 
-              : 'text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <Bell className="w-4 h-4 mr-2" />
-          Solicitudes ({friendRequests.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('search')}
-          className={`flex items-center px-4 py-2 rounded-md transition-colors ${
-            activeTab === 'search' 
-              ? 'bg-blue-500 text-white' 
-              : 'text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <Search className="w-4 h-4 mr-2" />
-          Buscar Amigos
-        </button>
-      </div>
+        <div className="tabs-container">
+          <button
+            onClick={() => setActiveTab('friends')}
+            className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
+          >
+            <Users size={18} />
+            Mis Amigos
+            <span className="badge">{friends.length}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`tab-button ${activeTab === 'requests' ? 'active' : ''}`}
+          >
+            <Bell size={18} />
+            Solicitudes
+            <span className="badge">{friendRequests.length}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('search')}
+            className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
+          >
+            <Search size={18} />
+            Buscar Amigos
+          </button>
+        </div>
 
-      {/* Contenido según tab activo */}
-      {activeTab === 'friends' && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Mis Amigos</h2>
-          {friends.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Aún no tienes amigos agregados</p>
-              <p className="text-sm">¡Busca usuarios y envía solicitudes de amistad!</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {friends.map(friend => (
-                <div key={friend._id} className="bg-gray-50 p-4 rounded-lg border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{friend.avatar || '👤'}</div>
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{friend.name} {friend.surname}</h3>
-                        <p className="text-sm text-gray-600">{friend.email}</p>
+        <div className="content-section">
+          {activeTab === 'friends' && (
+            <div>
+              <h2 className="section-title">
+                <Users size={24} />
+                Mis Amigos
+              </h2>
+              {friends.length === 0 ? (
+                <div className="empty-state">
+                  <Users className="empty-state-icon" size={80} />
+                  <h3>Aún no tienes amigos agregados</h3>
+                  <p>¡Comienza a buscar usuarios y envía solicitudes de amistad para construir tu red!</p>
+                </div>
+              ) : (
+                <div className="cards-grid">
+                  {friends.map(friend => (
+                    <div key={friend._id} className="friend-card">
+                      <div className="card-content">
+                        <div className="avatar">{friend.avatar}</div>
+                        <div className="user-info">
+                          <div className="user-name">{friend.name} {friend.surname}</div>
+                          <div className="user-email">
+                            <Mail size={14} />
+                            {friend.email}
+                          </div>
+                        </div>
+                        <div className="card-actions">
+                          <button className="action-button message-btn" title="Enviar mensaje">
+                            <MessageCircle size={18} />
+                          </button>
+                          <button
+                            className="action-button delete-btn"
+                            onClick={() => removeFriend(friend._id)}
+                            title="Eliminar amigo"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeFriend(friend._id)}
-                      className="text-red-500 hover:text-red-700 p-1 rounded"
-                      title="Eliminar amigo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'requests' && (
+            <div>
+              <h2 className="section-title">
+                <Bell size={24} />
+                Solicitudes de Amistad
+              </h2>
+              
+              <div style={{ marginBottom: '2.5rem' }}>
+                <h3 className="subsection-title">Solicitudes Recibidas</h3>
+                {friendRequests.length === 0 ? (
+                  <div className="empty-state">
+                    <Bell className="empty-state-icon" size={60} />
+                    <h3>No tienes solicitudes pendientes</h3>
+                    <p>Las nuevas solicitudes de amistad aparecerán aquí</p>
+                  </div>
+                ) : (
+                  <div className="requests-list">
+                    {friendRequests.map(request => (
+                      <div key={request._id} className="request-card request-received">
+                        <div className="card-content">
+                          <div className="avatar">{request.senderId?.avatar}</div>
+                          <div className="user-info">
+                            <div className="user-name">
+                              {request.senderId?.name} {request.senderId?.surname}
+                            </div>
+                            <div className="user-email">
+                              <Mail size={14} />
+                              {request.senderId?.email}
+                            </div>
+                            <div className="user-date">
+                              Enviada el {new Date(request.createdAt).toLocaleDateString('es-ES')}
+                            </div>
+                          </div>
+                          <div className="card-actions">
+                            <button
+                              className="action-button accept-btn"
+                              onClick={() => acceptRequest(request._id)}
+                              title="Aceptar solicitud"
+                            >
+                              <Check size={18} />
+                            </button>
+                            <button
+                              className="action-button reject-btn"
+                              onClick={() => rejectRequest(request._id)}
+                              title="Rechazar solicitud"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="subsection-title">Solicitudes Enviadas</h3>
+                {sentRequests.length === 0 ? (
+                  <div className="empty-state">
+                    <UserPlus className="empty-state-icon" size={60} />
+                    <h3>No has enviado solicitudes</h3>
+                    <p>Las solicitudes que envíes aparecerán aquí</p>
+                  </div>
+                ) : (
+                  <div className="requests-list">
+                    {sentRequests.map(request => (
+                      <div key={request.id} className="request-card request-sent">
+                        <div className="card-content">
+                          <div className="avatar">{request.receiverId?.avatar}</div>
+                          <div className="user-info">
+                            <div className="user-name">
+                              {request.receiverId?.name} {request.receiverId?.surname}
+                            </div>
+                            <div className="user-email">
+                              <Mail size={14} />
+                              {request.receiverId?.email}
+                            </div>
+                            <div className="user-date">Enviada el {new Date(request.createdAt).toLocaleDateString('es-ES')}</div>
+                          </div>
+                          <div className="card-actions">
+                            <span className="status-badge">Pendiente</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'search' && (
+            <div>
+              <h2 className="section-title">
+                <Search size={24} />
+                Buscar Nuevos Amigos
+              </h2>
+              
+              <div className="search-section">
+                <div className="search-container">
+                  <div className="search-input-wrapper">
+                    <Search className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre, apellido o email..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="search-input"
+                    />
+                    {loading && <div className="search-loading">🔍</div>}
+                  </div>
+                  <button
+                    onClick={handleSearch}
+                    disabled={loading || !searchTerm.trim()}
+                    className="search-button"
+                  >
+                    {loading ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+              </div>
+
+              {searchResults.length > 0 && (
+                <div>
+                  <h3 className="subsection-title">Resultados de búsqueda</h3>
+                  <div className="cards-grid">
+                    {searchResults.map(user => (
+                      <div key={user._id} className="friend-card">
+                        <div className="card-content">
+                          <div className="avatar">{user.avatar}</div>
+                          <div className="user-info">
+                            <div className="user-name">{user.name} {user.surname}</div>
+                            <div className="user-email">
+                              <Mail size={14} />
+                              {user.email}
+                            </div>
+                          </div>
+                          <div className="card-actions">
+                            <button
+                              onClick={() => sendFriendRequest(user._id)}
+                              className="add-friend-btn"
+                            >
+                              <UserPlus size={16} />
+                              Agregar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {searchTerm && searchResults.length === 0 && !loading && (
+                <div className="empty-state">
+                  <Search className="empty-state-icon" size={80} />
+                  <h3>No se encontraron usuarios</h3>
+                  <p>Intenta con otro término de búsqueda o verifica la ortografía</p>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
-
-      {activeTab === 'requests' && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Solicitudes de Amistad</h2>
-          
-          {/* Solicitudes recibidas */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3 text-gray-700">Solicitudes Recibidas</h3>
-            {friendRequests.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No tienes solicitudes pendientes</p>
-            ) : (
-              <div className="space-y-3">
-                {friendRequests.map(request => (
-                  <div key={request._id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-2xl">{request.senderId?.avatar || '👤'}</div>
-                        <div>
-                          <h4 className="font-semibold text-gray-800">
-                            {request.senderId?.name} {request.senderId?.surname}
-                          </h4>
-                          <p className="text-sm text-gray-600">{request.senderId?.email}</p>
-                          <p className="text-xs text-gray-500">
-                            Enviada el {new Date(request.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => acceptRequest(request._id)}
-                          className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors"
-                          title="Aceptar"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => rejectRequest(request._id)}
-                          className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                          title="Rechazar"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Solicitudes enviadas */}
-          <div>
-            <h3 className="text-lg font-medium mb-3 text-gray-700">Solicitudes Enviadas</h3>
-            {sentRequests.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No has enviado solicitudes</p>
-            ) : (
-              <div className="space-y-3">
-                {sentRequests.map(request => (
-                  <div key={request.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{request.receiverId?.avatar || '👤'}</div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">
-                          {request.receiverId?.name} {request.receiverId?.surname}
-                        </h4>
-                        <p className="text-sm text-gray-600">{request.receiverId?.email}</p>
-                        <p className="text-xs text-gray-500">Enviada el {request.createdAt}</p>
-                      </div>
-                      <div className="ml-auto">
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                          Pendiente
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'search' && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Buscar Nuevos Amigos</h2>
-          
-          {/* Buscador */}
-          <div className="mb-6">
-            <div className="flex space-x-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre o email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                disabled={loading || !searchTerm.trim()}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Buscando...' : 'Buscar'}
-              </button>
-            </div>
-          </div>
-
-          {/* Resultados */}
-          {searchResults.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium mb-3">Resultados de búsqueda</h3>
-              <div className="space-y-3">
-                {searchResults.map(user => (
-                  <div key={user._id} className="bg-gray-50 p-4 rounded-lg border">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-2xl">{user.avatar || '👤'}</div>
-                        <div>
-                          <h4 className="font-semibold text-gray-800">{user.name} {user.surname}</h4>
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <Mail className="w-3 h-3 mr-1" />
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => sendFriendRequest(user._id)}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        <span>Agregar</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {searchTerm && searchResults.length === 0 && !loading && (
-            <div className="text-center py-8 text-gray-500">
-              <Search className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>No se encontraron usuarios</p>
-              <p className="text-sm">Intenta con otro término de búsqueda</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        <Footer/>
+      </div>
+    
   );
 };
 
