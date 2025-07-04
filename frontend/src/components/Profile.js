@@ -13,12 +13,6 @@ const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  // Estados para errores específicos
-  const [profileError, setProfileError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [profileSuccess, setProfileSuccess] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,14 +63,10 @@ const Profile = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    // Limpiar errores cuando el usuario empiece a escribir
-    if (profileError) setProfileError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setProfileError("");
-    setProfileSuccess("");
     
     try {
       const token = localStorage.getItem("token");
@@ -86,12 +76,33 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setProfileSuccess("Perfil actualizado con éxito");
-      // Limpiar el mensaje de éxito después de 3 segundos
-      setTimeout(() => setProfileSuccess(""), 3000);
+     toast.success('Perfil actualizado con éxito', {
+        duration: 3000,
+        position: 'top-right',
+        style: {
+          background: '#10b981',
+          color: 'white',
+        },
+        iconTheme: {
+          primary: 'white',
+          secondary: '#10b981',
+        },
+      });
     } catch (err) {
       console.error('Error al actualizar perfil:', err);
-      setProfileError(err.response?.data?.message || "Error al actualizar perfil");
+      // Mostrar toast de error
+      toast.error(err.response?.data?.message || "Error al actualizar perfil", {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#ef4444',
+          color: 'white',
+        },
+        iconTheme: {
+          primary: 'white',
+          secondary: '#ef4444',
+        },
+      });
     }
   };
 
@@ -100,23 +111,25 @@ const Profile = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    // Limpiar errores cuando el usuario empiece a escribir
-    if (passwordError) setPasswordError("");
   };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    setPasswordError("");
-    setPasswordSuccess("");
 
     if (passwordData.newPassword !== passwordData.repeatNewPassword) {
-      setPasswordError("Las contraseñas no coinciden");
+       toast.error("Las contraseñas no coinciden", {
+        duration: 3000,
+        position: 'top-right',
+      });
       return;
     }
 
     const passwordRegex = /^(?=.*\d).{8,}$/;
     if (!passwordRegex.test(passwordData.newPassword)) {
-      setPasswordError("La contraseña debe tener al menos 8 caracteres y contener al menos un número.");
+      toast.error("La contraseña debe tener al menos 8 caracteres y contener al menos un número.", {
+        duration: 4000,
+        position: 'top-right',
+      });
       return;
     }
 
@@ -130,17 +143,38 @@ const Profile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setPasswordSuccess("Contraseña actualizada con éxito");
+      // Mostrar toast de éxito
+      toast.success('Contraseña actualizada con éxito', {
+        duration: 3000,
+        position: 'top-right',
+        style: {
+          background: '#10b981',
+          color: 'white',
+        },
+        iconTheme: {
+          primary: 'white',
+          secondary: '#10b981',
+        },
+      });
       setPasswordData({
         actualPassword: "",
         newPassword: "",
         repeatNewPassword: "",
       });
-      // Limpiar el mensaje de éxito después de 3 segundos
-      setTimeout(() => setPasswordSuccess(""), 3000);
     } catch (err) {
       console.error('Error al actualizar contraseña:', err);
-      setPasswordError(err.response?.data?.message || "Error al actualizar contraseña");
+      toast.error(err.response?.data?.message || "Error al actualizar contraseña", {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#ef4444',
+          color: 'white',
+        },
+        iconTheme: {
+          primary: 'white',
+          secondary: '#ef4444',
+        },
+      });
     }
   };
 
@@ -230,26 +264,6 @@ const Profile = () => {
         confirmButtonColor: '#dc3545'
       });
     }
-  };
-
-  // Componente para mostrar alertas
-  const AlertMessage = ({ message, type = "danger", onClose }) => {
-    if (!message) return null;
-    
-    return (
-      <div className={`alert alert-${type} alert-dismissible fade show`} role="alert">
-        <AlertCircle size={16} className="me-2" />
-        {message}
-        {onClose && (
-          <button
-            type="button"
-            className="btn-close"
-            onClick={onClose}
-            aria-label="Close"
-          ></button>
-        )}
-      </div>
-    );
   };
 
   if (loading) {
@@ -360,18 +374,6 @@ const Profile = () => {
                   <h2 className="h4 mb-0">Información Personal</h2>
                 </div>
 
-                {/* Alertas para el perfil */}
-                <AlertMessage 
-                  message={profileError} 
-                  type="danger" 
-                  onClose={() => setProfileError("")}
-                />
-                <AlertMessage 
-                  message={profileSuccess} 
-                  type="success" 
-                  onClose={() => setProfileSuccess("")}
-                />
-
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Nombre</label>
@@ -424,18 +426,6 @@ const Profile = () => {
                   </div>
                   <h2 className="h4 mb-0">Cambiar Contraseña</h2>
                 </div>
-
-                {/* Alertas para la contraseña */}
-                <AlertMessage 
-                  message={passwordError} 
-                  type="danger" 
-                  onClose={() => setPasswordError("")}
-                />
-                <AlertMessage 
-                  message={passwordSuccess} 
-                  type="success" 
-                  onClose={() => setPasswordSuccess("")}
-                />
 
                 <form onSubmit={handlePasswordChange}>
                   <div className="mb-3">
