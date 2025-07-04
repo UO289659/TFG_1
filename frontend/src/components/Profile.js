@@ -5,6 +5,8 @@ import "./Profile.css"
 import PlanCard from "./PlanCard";
 import { useNavigate } from "react-router-dom";
 import Footer from "./Footer";
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -146,6 +148,90 @@ const Profile = () => {
     navigate("/subscribe");
   };
 
+  // Función para mostrar confirmación de cancelación con SweetAlert2
+  const handleUnsubscribe = async () => {
+    const result = await Swal.fire({
+      title: '¿Cancelar suscripción Premium?',
+      html: `
+        <div class="text-start">
+          <p><strong>Perderás acceso a:</strong></p>
+          <ul class="text-muted">
+            <li>Funciones avanzadas</li>
+            <li>Soporte prioritario</li>
+            <li>Características premium exclusivas</li>
+          </ul>
+          <p class="text-muted mt-3">Tu plan se cambiará inmediatamente a básico.</p>
+        </div>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, cancelar suscripción',
+      cancelButtonText: 'No, mantener Premium',
+      reverseButtons: true,
+      focusCancel: true,
+      customClass: {
+        popup: 'swal2-popup-custom',
+        title: 'swal2-title-custom',
+        htmlContainer: 'swal2-html-custom'
+      }
+    });
+
+    if (result.isConfirmed) {
+      await handleConfirmUnsubscribe();
+    }
+  };
+
+  // Función para confirmar la cancelación de suscripción
+  const handleConfirmUnsubscribe = async () => {
+    try {
+      // Mostrar loading
+      Swal.fire({
+        title: 'Procesando...',
+        text: 'Cambiando tu plan a básico',
+        icon: 'info',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const token = localStorage.getItem("token");
+      
+      await axios.post("http://localhost:4000/subscribe", 
+        { plan: "basic" }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Actualizar el estado local del usuario
+      setUserData(prev => ({ ...prev, isPremium: false }));
+      
+      // Mostrar éxito
+      await Swal.fire({
+        title: '¡Listo!',
+        text: 'Tu plan se ha cambiado a básico exitosamente',
+        icon: 'success',
+        confirmButtonColor: '#28a745',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      
+    } catch (error) {
+      console.error('Error al cambiar a plan básico:', error);
+      
+      // Mostrar error
+      await Swal.fire({
+        title: 'Error',
+        text: 'Hubo un problema al cambiar tu plan. Por favor, intenta nuevamente.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  };
+
   // Componente para mostrar alertas
   const AlertMessage = ({ message, type = "danger", onClose }) => {
     if (!message) return null;
@@ -228,7 +314,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Plans Section */}
+           {/* Plans Section */}
           <div className="mb-5">
             <div className="section-header">
               <div className="section-icon">
@@ -244,7 +330,7 @@ const Profile = () => {
                   isSelected={!isPremium}
                   onSelect={() => {
                     if (isPremium) {
-                      navigate("/unsubscribe");
+                      handleUnsubscribe();
                     }
                   }}
                 />
