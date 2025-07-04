@@ -229,3 +229,10 @@ html {
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   letter-spacing: -0.02em;
 }
+.footer-forgot-password {
+  background-color:white;
+    padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  margin-top: 1rem;
+}

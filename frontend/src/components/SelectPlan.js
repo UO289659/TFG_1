@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Star, ArrowRight, Check  } from "lucide-react";
 import "./SelectPlan.css";
 import toast from 'react-hot-toast';
+import Footer from "./Footer";
 
 const SelectPlan = () => {
   const [selectedPlan, setSelectedPlan] = useState("basic");
@@ -102,6 +103,7 @@ const SelectPlan = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 };

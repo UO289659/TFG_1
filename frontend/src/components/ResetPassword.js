@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
+
 const ResetPassword = () => {
   const { token } = useParams(); // Obtener el token de la URL
   const [password, setPassword] = useState("");

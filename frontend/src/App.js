@@ -23,7 +23,7 @@ function AppWrapper() {
   const location = useLocation();
 
   // Rutas donde NO queremos mostrar la Navbar
-  const noNavbarRoutes = ["/", "/login", "/register"];
+  const noNavbarRoutes = ["/", "/login", "/register", "/forgot-password"];
 
   const showNavbar = !noNavbarRoutes.includes(location.pathname);
 

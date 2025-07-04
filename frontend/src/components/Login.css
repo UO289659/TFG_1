@@ -355,11 +355,3 @@ input::placeholder {
     }
 }
 
-.footer-forgot-password {
-  background-color:white;
-    padding: 1rem;
-  position: relative;
-  overflow: hidden;
-  border-radius: 1rem;
-  margin-top: 1rem;
-}

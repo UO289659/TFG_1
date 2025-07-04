@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "./Login.css";
+import Footer from "./Footer";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -39,6 +39,7 @@ const Register = () => {
   };
 
   return (
+    <>
     <div className="form-container">
       <nav className="navbar navbar-light w-100 px-5">
         <h1 className="logo">📘 Gestor de Finanzas</h1>
@@ -69,6 +70,8 @@ const Register = () => {
         </form>
       </div>
     </div>
+     <Footer className={"footer-forgot-password"} />
+     </>
   );
 };
 

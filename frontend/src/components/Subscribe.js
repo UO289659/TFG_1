@@ -16,6 +16,7 @@ import {
   Download
 } from "lucide-react";
 import "./Subscribe.css";
+import Footer from "./Footer";
 
 const Subscribe = () => {
   const navigate = useNavigate();
@@ -433,6 +434,7 @@ const Subscribe = () => {
           </div>
         </div>
       </div>
+      <Footer className={"footer-forgot-password"}/>
     </div>
   );
 };

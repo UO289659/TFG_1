@@ -1,46 +1,109 @@
 // components/Navbar.js
-import React , { useContext }from "react";
+import React, { useContext, useState } from "react";
 import "./Navbar.css";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { UserContext } from '../context/UserContext';
+import {Menu, X } from "lucide-react";
+import SaldoSmartLogo from "./SaldoSmartLogo";
 
 const Navbar = () => {
   const { user, logout } = useContext(UserContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
  
   const handleLogout = () => {
     logout();            // limpia token y user en el contexto
     navigate('/login');  // redirige al login
+    setIsMenuOpen(false); // cierra el menú móvil
   };
 
-console.log('Navbar user:', user);
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleNavClick = () => {
+    setIsMenuOpen(false); // cierra el menú móvil al hacer clic en un enlace
+  };
+
+  console.log('Navbar user:', user);
+  
   return (
-   
-    <nav className="navbar">
-      <ul className="navbar-list">
-        <li><Link to="/">Inicio</Link></li>
-        <li><Link to="/track">Track</Link></li>
-        <li><Link to="/profile">Perfil</Link></li>
-         <li><Link to="/categories">Categorias</Link></li>
-         <li><Link to="/contact">Contacto</Link></li>
-         <li><Link to="/help">Ayuda</Link></li>
+    <nav className="navbar-professional">
+      <div className="nav-content">
+        {/* Logo section - descomentado para mejor estructura */}
+        <div className="logo-container-new" onClick={() => navigate('/')}>
+          { <SaldoSmartLogo size={45} /> }
+          <h1 className="logo-text-new">SaldoSmart</h1>
+        </div>
+         {/* Menú de navegación */}
+        <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
+          <a className="nav-link" href="/" >Inicio</a>
+          <a className="nav-link" href="/track" >Track</a>
+          <a className="nav-link" href="/profile" >Perfil</a>
+          <a className="nav-link" href="/categories" >Categorias</a>
+          <a className="nav-link" href="/contact" >Contacto</a>
+          <a className="nav-link" href="/help" >Ayuda</a>
+          
           {user.isPremium && (
-          <li><a href="/export-transactions">Exportar Transacciones</a></li>
-        )}
-        
-        {user.isPremium && (
-          <li><a href="/friends">Amigos</a></li>
-        )}
-         {/* Si el usuario está logueado (email existe), mostramos Cerrar sesión */}
-        {user.email && (
-          <li>
-            <button onClick={handleLogout} className="logout-button">
+            <a className="nav-link" href="/export-transactions">
+              Exportar Transacciones
+            </a>
+          )}
+          
+          {user.isPremium && (
+            <a className="nav-link" href="/friends" >Amigos</a>
+          )}
+          
+          {/* Si el usuario está logueado (email existe), mostramos Cerrar sesión */}
+          {user.email && (
+            <button onClick={handleLogout} className="btn-primary-nav">
               Cerrar sesión
             </button>
-          </li>
           )}
-      </ul>
+        </div>
+
+        {/* Botón móvil */}
+          <button 
+            className="mobile-menu-btn"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="menu-icon" /> : <Menu className="menu-icon" />}
+          </button>
+           </div>
+       
+        {/* Menú móvil */}
+        {isMenuOpen && (
+          <div className="mobile-menu">
+            <a className="mobile-nav-link" href="/" >Inicio</a>
+          <a className="mobile-nav-link" href="/track" >Track</a>
+          <a className="mobile-nav-link" href="/profile" >Perfil</a>
+          <a className="mobile-nav-link" href="/categories" >Categorias</a>
+          <a className="mobile-nav-link" href="/contact" >Contacto</a>
+          <a className="mobile-nav-link" href="/help" >Ayuda</a>
+           {user.isPremium && (
+            <a className="mobile-nav-link" href="/export-transactions">
+              Exportar Transacciones
+            </a>
+          )}
+          
+          {user.isPremium && (
+            <a className="mobile-nav-link" href="/friends" >Amigos</a>
+          )}
+          
+          {/* Si el usuario está logueado (email existe), mostramos Cerrar sesión */}
+          {user.email && (
+            <div className="mobile-buttons">
+            <button onClick={handleLogout} className="btn-primary-nav">
+              Cerrar sesión
+            </button>
+            </div>
+          )}
+          </div>
+        )}
+
+       
+     
     </nav>
   );
 };
