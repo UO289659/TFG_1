@@ -225,6 +225,7 @@ const Subscribe = () => {
   }
 
   return (
+    <>
     <div className="subscribe-container">
       <div className="container">
         {/* Header */}
@@ -434,8 +435,10 @@ const Subscribe = () => {
           </div>
         </div>
       </div>
-      <Footer className={"footer-forgot-password"}/>
+     
     </div>
+     <Footer className={"footer-forgot-password"}/>
+     </>
   );
 };
 
