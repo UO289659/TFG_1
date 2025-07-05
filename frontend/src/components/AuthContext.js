@@ -1,30 +1,58 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Crear el contexto
-export const AuthContext = createContext();
+// 1. Crea el contexto
+export const UserContext = createContext();
 
-// Proveedor del contexto
-export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+// 2. Provider
+export function UserProvider({ children }) {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [user, setUser] = useState({ isPremium: false, email: null, _id: null });
 
-  // Guarda el token en localStorage cuando cambia
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
+    if (!token) {
+      setUser({ isPremium: false, email: null, _id: null });
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const id = payload.userId || payload.id || null;
+
+      setUser({
+        isPremium: !!payload.isPremium,
+        email: payload.email || null,
+        _id: id
+      });
+      // Guardar userId en localStorage
+      localStorage.setItem('userId', id);
+    } catch {
+      setUser({ isPremium: false, email: null, _id: null });
     }
   }, [token]);
 
-  // Función para limpiar sesión (logout)
+  const login = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
+
   const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, setToken, logout }}>
+    <UserContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      updatePremiumStatus 
+    }}>
       {children}
-    </AuthContext.Provider>
+    </UserContext.Provider>
   );
-};
-export default AuthContext;
+}
+
+// 3. Exporta el hook para consumir el contexto
+export function useUserContext() {
+  return useContext(UserContext);
+}

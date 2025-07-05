@@ -161,20 +161,94 @@ app.put("/password", authMiddleware, async(req, res) => {
  
 });
 
+// EN EL SERVICIO DE USUARIOS
+// Reemplaza completamente el endpoint /subscribe con este código
 app.post("/subscribe", authMiddleware, async (req, res) => {
+ 
+  
   try {
     const clientId = req.user.id;
     const { plan } = req.body;
 
+    
+    
+    // Validar el plan
+    if (!plan || !['basic', 'premium'].includes(plan)) {
+     
+      return res.status(400).json({ 
+        message: "Plan inválido. Debe ser 'basic' o 'premium'" 
+      });
+    }
+
+    
+    
     const user = await User.findById(clientId);
-    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+   
+    
+    if (!user) {
+      
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
 
-    user.isPremium = plan === 'premium'; // Si eligió premium, marcarlo
+    
+    
+    // Actualizar el plan del usuario
+    user.isPremium = plan === 'premium';
+    
+    
     await user.save();
+    
+    
+    // Generar un NUEVO token con la información actualizada
+    const tokenPayload = { 
+      userId: user._id,
+      email: user.email,
+      isPremium: user.isPremium 
+    };
+    
+  
+    
+    const newToken = jwt.sign(
+      tokenPayload,
+     process.env.SECRET_KEY,
+      { expiresIn: '7d' }
+    );
+    
+   
+    
+    // Preparar respuesta
+    const responseData = { 
+      message: "Plan actualizado correctamente",
+      token: newToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        surname: user.surname,
+        isPremium: user.isPremium
+      }
+    };
+    
+   
+    
+    // UNA SOLA RESPUESTA
+    res.json(responseData);
+    
+    
 
-    res.json({ message: "Plan actualizado correctamente", user });
   } catch (error) {
-    res.status(500).json({ message: "Error al actualizar plan" });
+    
+    
+    // Verificar si ya se envió una respuesta
+    if (res.headersSent) {
+      console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
+      return;
+    }
+    
+    res.status(500).json({ 
+      message: "Error al actualizar plan",
+      error: error.message 
+    });
   }
 });
 

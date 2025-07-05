@@ -7,9 +7,27 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
+import { useUserContext } from "../context/UserContext"; 
 
 const Profile = () => {
   const navigate = useNavigate();
+  
+  // Usar el contexto de usuario con manejo de errores
+  let userContext;
+  try {
+    userContext = useUserContext();
+  } catch (error) {
+    return (
+      <div className="loading-container">
+        <div className="alert alert-danger">
+          <AlertCircle size={20} className="me-2" />
+          Error: Inténtelo más tarde
+        </div>
+      </div>
+    );
+  }
+  
+  const { user, login } = userContext;
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -182,6 +200,8 @@ const Profile = () => {
     navigate("/subscribe");
   };
 
+  
+
   // Función para mostrar confirmación de cancelación con SweetAlert2
   const handleUnsubscribe = async () => {
     const result = await Swal.fire({
@@ -235,13 +255,23 @@ const Profile = () => {
 
       const token = localStorage.getItem("token");
       
-      await axios.post("http://localhost:4000/subscribe", 
+      const response= await axios.post("http://localhost:4000/subscribe", 
         { plan: "basic" }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      // Actualizar el estado local del usuario
-      setUserData(prev => ({ ...prev, isPremium: false }));
+       // El servidor devuelve un NUEVO token
+        const { token: newToken, user: updatedUser, message } = response.data;
+    
+    // Actualizar el token en el contexto
+    if (newToken) {
+      login(newToken);
+    }
+    
+    // Actualizar el estado local del usuario
+    setUserData(prev => ({ 
+      ...prev, 
+      isPremium: updatedUser.isPremium 
+    }));
       
       // Mostrar éxito
       await Swal.fire({
