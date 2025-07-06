@@ -4,7 +4,7 @@ import axios from "axios";
 import { Plus, Trash2, Tag, TrendingUp, TrendingDown, X, AlertCircle, CheckCircle } from "lucide-react";
 import "./ConfigurarCategorias.css";
 import Footer from "./Footer.js";
-
+import toast, { Toaster } from 'react-hot-toast';
 
 const ConfigurarCategorias = () => {
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
@@ -13,11 +13,6 @@ const ConfigurarCategorias = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  
-  // Estados para manejo de errores y éxitos
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [formError, setFormError] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -25,7 +20,6 @@ const ConfigurarCategorias = () => {
     const fetchCategorias = async () => {
       try {
         setInitialLoading(true);
-        setError(""); // Limpiar errores previos
         
         const res = await axios.get("http://localhost:4000/categories", {
           headers: { Authorization: `Bearer ${token}` },
@@ -33,7 +27,7 @@ const ConfigurarCategorias = () => {
         setCategorias(res.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        setError(error.response?.data?.message || "Error al cargar las categorías");
+       toast.error(error.response?.data?.message || "Error al cargar las categorías");
       } finally {
         setInitialLoading(false);
       }
@@ -43,7 +37,7 @@ const ConfigurarCategorias = () => {
 
   const handleAddCategoria = async () => {
     if (!nuevoNombre.trim()) {
-      setFormError("El nombre de la categoría es obligatorio");
+       toast.error("El nombre de la categoría es obligatorio");
       return;
     }
 
@@ -53,13 +47,11 @@ const ConfigurarCategorias = () => {
     );
     
     if (categoriaExiste) {
-      setFormError("Esta categoría ya existe");
+      toast.error("Esta categoría ya existe");
       return;
     }
 
     setIsLoading(true);
-    setFormError("");
-    setError("");
 
     try {
       const res = await axios.post("http://localhost:4000/categories", {
@@ -76,22 +68,17 @@ const ConfigurarCategorias = () => {
       
       setNuevoNombre("");
       setShowForm(false);
-      setSuccess(`Categoría "${nuevoNombre.trim()}" añadida correctamente`);
+      toast.success(`Categoría "${nuevoNombre.trim()}" añadida correctamente`);
       
-      // Limpiar mensaje de éxito después de 3 segundos
-      setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error adding category:", error);
-      setFormError(error.response?.data?.message || "Error al añadir la categoría");
+      toast.error(error.response?.data?.message || "Error al añadir la categoría");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteCategoria = async (type, name) => {
-    setError("");
-    setSuccess("");
-
     try {
       const res = await axios.delete("http://localhost:4000/categorie", {
         headers: { Authorization: `Bearer ${token}` },
@@ -103,44 +90,13 @@ const ConfigurarCategorias = () => {
         [type]: prev[type].filter((cat) => cat !== name),
       }));
       
-      setSuccess(`Categoría "${name}" eliminada correctamente`);
-      
-      // Limpiar mensaje de éxito después de 3 segundos
-      setTimeout(() => setSuccess(""), 3000);
+      toast.success(`Categoría "${name}" eliminada correctamente`);
     } catch (error) {
       console.error("Error deleting category:", error);
-      setError(error.response?.data?.message || "Error al eliminar la categoría");
+      toast.error(error.response?.data?.message || "Error al eliminar la categoría");
     }
   };
 
-  // Componente para mostrar alertas
-  const AlertMessage = ({ message, type = "danger", onClose }) => {
-    if (!message) return null;
-    
-    const iconMap = {
-      danger: AlertCircle,
-      success: CheckCircle,
-      warning: AlertCircle,
-      info: AlertCircle
-    };
-    
-    const Icon = iconMap[type] || AlertCircle;
-    
-    return (
-      <div className={`alert alert-${type} alert-dismissible fade show mb-3`} role="alert">
-        <Icon size={16} className="me-2" />
-        {message}
-        {onClose && (
-          <button
-            type="button"
-            className="btn-close"
-            onClick={onClose}
-            aria-label="Close"
-          ></button>
-        )}
-      </div>
-    );
-  };
 
   const CategoryCard = ({ tipo, categorias: cats }) => (
     <div className="category-card">
@@ -206,8 +162,9 @@ const ConfigurarCategorias = () => {
     );
   }
 
-  return (
+   return (
     <div className="main-container">
+      
       <div className="content-wrapper">
         {/* Header */}
         <div className="header-section">
@@ -219,24 +176,11 @@ const ConfigurarCategorias = () => {
           </p>
         </div>
 
-        {/* Alertas globales */}
-        <AlertMessage 
-          message={error} 
-          type="danger" 
-          onClose={() => setError("")}
-        />
-        <AlertMessage 
-          message={success} 
-          type="success" 
-          onClose={() => setSuccess("")}
-        />
-
         {/* Action Button */}
         <div className="action-section">
           <button
             onClick={() => {
               setShowForm(!showForm);
-              setFormError(""); // Limpiar errores del formulario al abrir/cerrar
             }}
             className="add-button"
           >
@@ -254,7 +198,6 @@ const ConfigurarCategorias = () => {
                 <button
                   onClick={() => {
                     setShowForm(false);
-                    setFormError("");
                     setNuevoNombre("");
                   }}
                   className="close-button"
@@ -264,13 +207,6 @@ const ConfigurarCategorias = () => {
               </div>
               
               <div className="my-modal-body">
-                {/* Alerta del formulario */}
-                <AlertMessage 
-                  message={formError} 
-                  type="danger" 
-                  onClose={() => setFormError("")}
-                />
-
                 <div className="form-group">
                   <label className="my-form-label">
                     Nombre de la categoría
@@ -281,8 +217,6 @@ const ConfigurarCategorias = () => {
                     value={nuevoNombre}
                     onChange={(e) => {
                       setNuevoNombre(e.target.value);
-                      // Limpiar error cuando el usuario empiece a escribir
-                      if (formError) setFormError("");
                     }}
                     className="form-input"
                     autoFocus
@@ -311,7 +245,6 @@ const ConfigurarCategorias = () => {
                   <button
                     onClick={() => {
                       setShowForm(false);
-                      setFormError("");
                       setNuevoNombre("");
                     }}
                     className="cancel-button"
