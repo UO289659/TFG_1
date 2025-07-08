@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 const expenseSchema = new mongoose.Schema({
-  clientId: { type: String, required: true },  // o ObjectId si tienes usuarios en otra colección
+  clientId: { type: String, required: true },
   name: { type: String, required: true },
   type: { type: String, enum: ["expense", "income"], required: true },
   category: { type: String, required: true },
@@ -10,11 +10,10 @@ const expenseSchema = new mongoose.Schema({
   icon: { type: String },
   createdAt: { type: Date, default: Date.now },
 
-   // Nuevos campos para gastos compartidos
- 
+  // Campos para gastos compartidos
   sharedWith: [{ 
     userId: mongoose.Schema.Types.ObjectId,
-    amount: Number, // Cantidad que debe esta persona
+    amount: Number,
     isPaid: { type: Boolean, default: false }
   }],
   splitType: { 
@@ -23,9 +22,19 @@ const expenseSchema = new mongoose.Schema({
     default: 'equal' 
   },
   totalParticipants: Number,
-  createdBy: mongoose.Schema.Types.ObjectId, // Quien creó el gasto compartido
-  groupName: String // Opcional: nombre del grupo de gasto
-
+  createdBy: mongoose.Schema.Types.ObjectId,
+  groupName: String,
+  
+  // NUEVO CAMPO: Para agrupar transacciones compartidas
+  sharedTransactionId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    default: null 
+  },
+  // Flag para identificar si es una transacción compartida
+  isShared: { 
+    type: Boolean, 
+    default: false 
+  }
 });
 
 module.exports = mongoose.model("Transaction", expenseSchema);
