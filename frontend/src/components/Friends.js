@@ -335,9 +335,6 @@ const FriendsSystem = () => {
                           </div>
                         </div>
                         <div className="card-actions">
-                          <button className="action-button message-btn" title="Enviar mensaje">
-                            <MessageCircle size={18} />
-                          </button>
                           <button
                             className="action-button delete-btn"
                             onClick={() => removeFriend(friend._id)}
