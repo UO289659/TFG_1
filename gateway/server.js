@@ -11,6 +11,7 @@ app.use(express.json());
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000';
 const statsServiceUrl = process.env.STATS_SERVICE_URL || 'http://localhost:5001';
 const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
+const paymentsServiceUrl = process.env.PAYMENTS_SERVICE_URL || 'http://localhost:5003';
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
@@ -141,34 +142,49 @@ app.put("/profile", authMiddleware, async (req, res) => {
 });
 
 app.put("/password", authMiddleware, async (req, res) => {
-  try{
-     const response = await axios.put(userServiceUrl + "/password",req.body, // datos a enviar en el body
-  {
-    headers: {
-      Authorization: req.headers.authorization, // envías el header correcto
-    },
-    params: {
-      clientId: req.user.userId, // si usas params, pero parece que no es necesario para editar perfil
-    },
-  }
-); 
+  try {
+    const response = await axios.put(userServiceUrl + "/password", req.body, {
+      headers: {
+        Authorization: req.headers.authorization,
+      },
+      params: {
+        clientId: req.user.userId,
+      },
+    });
+    
     res.json(response.data);
   } catch (error) {
     console.error("Error en /password:", error.message);
-    res.status(500).json({ error: "Error al editar contraseña" });
+    
+    // Si el error viene del microservicio de usuarios
+    if (error.response) {
+      // El microservicio respondió con un código de error
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      // Propagar el mismo status y mensaje del microservicio
+      return res.status(status).json(data);
+    
+    } else {
+      // Error en la configuración de la petición
+      console.error("Error interno:", error.message);
+      return res.status(500).json({ 
+        message: "Error interno del servidor" 
+      });
+    }
   }
 });
 
-app.post("/subscribe", authMiddleware, async (req, res) => {
-  try {
-    const response = await axios.post(userServiceUrl + "/subscribe", req.body, {
-      headers: { Authorization: req.headers.authorization }
-    });
-    res.json(response.data);
-  } catch (error) {
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
+// app.post("/subscribe", authMiddleware, async (req, res) => {
+//   try {
+//     const response = await axios.post(userServiceUrl + "/subscribe", req.body, {
+//       headers: { Authorization: req.headers.authorization }
+//     });
+//     res.json(response.data);
+//   } catch (error) {
+//     res.status(error.response?.status || 500).json({ error: error.message });
+//   }
+// });
 
 app.post('/send-email', async (req, res) => {
    console.log("📩 Recibida solicitud de envío de email:", req.body); // 👈 agrega esto
@@ -490,4 +506,111 @@ app.get("/users/:userId", authMiddleware, async(req, res) => {
       details: error.response?.data
     });
   }
+});
+
+app.post("/create-checkout-session", authMiddleware, async(req, res) => {
+  try { 
+    const response = await axios.post(
+      `${paymentsServiceUrl}/create-checkout-session`, req.body,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+  console.error("❌ Gateway Error en /create-checkout-session:");
+  console.error("message:", error.message);
+  console.error("code:", error.code);
+  console.error("config:", error.config);
+  console.error("response:", error.response?.data);
+
+  res.status(error.response?.status || 500).json({
+    error: error.message,
+    code: error.code,
+    response: error.response?.data
+  });
+}
+});
+app.post("/create-checkout-session", authMiddleware, async(req, res) => {
+  try { 
+    const response = await axios.post(
+      `${paymentsServiceUrl}/create-checkout-session`, req.body,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+  console.error("❌ Gateway Error en /create-checkout-session:");
+  console.error("message:", error.message);
+  console.error("code:", error.code);
+  console.error("config:", error.config);
+  console.error("response:", error.response?.data);
+
+  res.status(error.response?.status || 500).json({
+    error: error.message,
+    code: error.code,
+    response: error.response?.data
+  });
+}
+});
+
+app.post("/verify-payment", authMiddleware, async(req, res) => {
+  try { 
+    const response = await axios.post(
+      `${paymentsServiceUrl}/verify-payment`, req.body,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+  console.error("❌ Gateway Error en /verify-payment");
+  console.error("message:", error.message);
+  console.error("code:", error.code);
+  console.error("config:", error.config);
+  console.error("response:", error.response?.data);
+
+  res.status(error.response?.status || 500).json({
+    error: error.message,
+    code: error.code,
+    response: error.response?.data
+  });
+}
+});
+
+app.post("/cancel-subscription", authMiddleware, async(req, res) => {
+  try { 
+    const response = await axios.post(
+      `${paymentsServiceUrl}/cancel-subscription`, {},
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+  console.error("❌ Gateway Error en /cancel-subscription");
+  console.error("message:", error.message);
+  console.error("code:", error.code);
+  console.error("config:", error.config);
+  console.error("response:", error.response?.data);
+
+  res.status(error.response?.status || 500).json({
+    error: error.message,
+    code: error.code,
+    response: error.response?.data
+  });
+}
 });
