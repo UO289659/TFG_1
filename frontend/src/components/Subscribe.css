@@ -596,7 +596,7 @@
 }
 
 .plan-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-gradient);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
@@ -650,15 +650,15 @@
 
 .security-subtitle {
   font-size: 0.8rem;
-  color: #6c757d;
+  color:var(--text-secondary);
   margin: 0;
 }
 
 .checkout-btn {
   width: 100%;
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--primary-gradient);
+  color: var(--white-transparent);
   border: none;
   border-radius: 12px;
   font-size: 1.1rem;
