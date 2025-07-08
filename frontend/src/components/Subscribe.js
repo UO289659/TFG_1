@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { loadStripe } from '@stripe/stripe-js';
 import { 
   Crown, 
   CreditCard, 
@@ -17,6 +18,44 @@ import {
 } from "lucide-react";
 import "./Subscribe.css";
 import Footer from "./Footer";
+import { useUserContext } from "../context/UserContext"; 
+
+// Inicializar Stripe con validación más robusta
+let stripePromise = null;
+
+const initializeStripe = () => {
+  try {
+    const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+    
+    // Verificar que la key existe y no es undefined/null/empty
+    if (!stripeKey || stripeKey === 'undefined' || stripeKey.trim() === '') {
+      console.error('Stripe publishable key is not defined or empty in environment variables');
+      console.error('Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in your .env file');
+      return null;
+    }
+    
+    // Verificar formato de la key
+    if (!stripeKey.startsWith('pk_')) {
+      console.error('Invalid Stripe publishable key format. Key should start with "pk_"');
+      console.error('Received key:', stripeKey.substring(0, 10) + '...');
+      return null;
+    }
+    
+    // Solo cargar Stripe si la key es válida
+    return loadStripe(stripeKey);
+  } catch (error) {
+    console.error('Error initializing Stripe:', error);
+    return null;
+  }
+};
+
+// Inicializar Stripe de forma segura
+try {
+  stripePromise = initializeStripe();
+} catch (error) {
+  console.error('Failed to initialize Stripe:', error);
+  stripePromise = null;
+}
 
 const Subscribe = () => {
   const navigate = useNavigate();
@@ -27,23 +66,52 @@ const Subscribe = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("card");
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [stripeError, setStripeError] = useState(false);
+  const { login } = useUserContext();
   
-  // Datos de la tarjeta
-  const [cardData, setCardData] = useState({
-    number: "",
-    expiry: "",
-    cvc: "",
-    name: "",
-    email: "",
-  });
-
   // Precios
   const prices = {
     monthly: { amount: 9.99, currency: "EUR" },
     yearly: { amount: 99.99, currency: "EUR", savings: "17%" }
   };
+
+  // Verificar Stripe al cargar el componente
+  useEffect(() => {
+    // Verificar que las variables de entorno estén cargadas
+    const checkStripeConfig = () => {
+      const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+      const monthlyPriceId = process.env.REACT_APP_STRIPE_MONTHLY_PRICE_ID;
+      const yearlyPriceId = process.env.REACT_APP_STRIPE_YEARLY_PRICE_ID;
+      
+      console.log('Checking Stripe configuration...');
+      console.log('Stripe Key exists:', !!stripeKey);
+      console.log('Monthly Price ID exists:', !!monthlyPriceId);
+      console.log('Yearly Price ID exists:', !!yearlyPriceId);
+      
+      if (!stripeKey || stripeKey === 'undefined') {
+        setStripeError(true);
+        setError("Stripe no está configurado. Verifica las variables de entorno.");
+        return false;
+      }
+      
+      if (!monthlyPriceId || !yearlyPriceId) {
+        setStripeError(true);
+        setError("Los precios de Stripe no están configurados correctamente.");
+        return false;
+      }
+      
+      if (!stripePromise) {
+        setStripeError(true);
+        setError("Error al inicializar Stripe. Verifica la configuración.");
+        return false;
+      }
+      
+      return true;
+    };
+    
+    checkStripeConfig();
+  }, []);
 
   // Obtener datos del usuario
   useEffect(() => {
@@ -60,10 +128,6 @@ const Subscribe = () => {
         });
         
         setUserData(response.data);
-        setCardData(prev => ({
-          ...prev,
-          email: response.data.email
-        }));
       } catch (err) {
         setError("Error al cargar datos del usuario");
       }
@@ -72,107 +136,37 @@ const Subscribe = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Manejar cambios en los inputs de la tarjeta
-  const handleCardInputChange = (e) => {
-    let { name, value } = e.target;
+  // Manejar el éxito del pago (cuando regresa de Stripe)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const sessionId = urlParams.get('session_id');
     
-    // Formatear número de tarjeta
-    if (name === "number") {
-      value = value.replace(/\D/g, "").substring(0, 16);
-      value = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+    if (sessionId) {
+      handlePaymentSuccess(sessionId);
     }
-    
-    // Formatear fecha de expiración
-    if (name === "expiry") {
-      value = value.replace(/\D/g, "").substring(0, 4);
-      if (value.length >= 2) {
-        value = value.substring(0, 2) + "/" + value.substring(2);
-      }
-    }
-    
-    // Formatear CVC
-    if (name === "cvc") {
-      value = value.replace(/\D/g, "").substring(0, 3);
-    }
+  }, [location]);
 
-    setCardData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Validar datos de la tarjeta
-  const validateCardData = () => {
-    const { number, expiry, cvc, name } = cardData;
-    
-    if (!number || number.replace(/\s/g, "").length !== 16) {
-      throw new Error("Número de tarjeta inválido");
-    }
-    
-    if (!expiry || expiry.length !== 5) {
-      throw new Error("Fecha de expiración inválida");
-    }
-    
-    if (!cvc || cvc.length !== 3) {
-      throw new Error("CVC inválido");
-    }
-    
-    if (!name.trim()) {
-      throw new Error("Nombre del titular requerido");
-    }
-  };
-
-  // Procesar pago
-  const handleSubscribe = async () => {
+  const handlePaymentSuccess = async (sessionId) => {
     try {
-      setLoading(true);
-      setError("");
-
-      // Validar datos
-      validateCardData();
-
       const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No hay sesión activa");
-      }
-
-      // Simular procesamiento de pago con Stripe
-      // En producción, esto se haría con Stripe Elements o similar
-      const paymentData = {
-        plan: "premium",
-        billingCycle,
-        amount: prices[billingCycle].amount,
-        currency: prices[billingCycle].currency,
-        paymentMethod: {
-          type: paymentMethod,
-          card: {
-            number: cardData.number.replace(/\s/g, ""),
-            expiry: cardData.expiry,
-            cvc: cardData.cvc,
-            name: cardData.name
-          }
-        }
-      };
-
-      // Llamada al backend para procesar el pago
+      
+      // Verificar el pago con el backend
       const response = await axios.post(
-        "http://localhost:4000/process-payment",
-        paymentData,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        "http://localhost:4000/verify-payment",
+        { sessionId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
+        const { token: newToken, user: updatedUser } = response.data;
+        
+        // Actualizar el token si es necesario
+        if (newToken) {
+          login(newToken);
+        }
+        
         setSuccess(true);
         
-        // Actualizar el plan del usuario
-        await axios.post(
-          "http://localhost:4000/subscribe",
-          { plan: "premium" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
         // Redirigir después de 3 segundos
         setTimeout(() => {
           navigate("/profile", { 
@@ -181,11 +175,97 @@ const Subscribe = () => {
         }, 3000);
       }
     } catch (err) {
-      setError(err.message || "Error al procesar el pago");
-    } finally {
+      setError("Error al verificar el pago");
+    }
+  };
+
+  // Crear sesión de Stripe Checkout
+  const handleCheckout = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Verificar que Stripe esté disponible
+      if (!stripePromise) {
+        throw new Error("Stripe no está configurado correctamente");
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No hay sesión activa");
+      }
+
+      // Verificar que las variables de entorno estén definidas
+      const monthlyPriceId = process.env.REACT_APP_STRIPE_MONTHLY_PRICE_ID;
+      const yearlyPriceId = process.env.REACT_APP_STRIPE_YEARLY_PRICE_ID;
+
+      if (!monthlyPriceId || !yearlyPriceId) {
+        throw new Error("IDs de precios de Stripe no configurados");
+      }
+
+      // Crear sesión de checkout en el backend
+      const response = await axios.post(
+        "http://localhost:4000/create-checkout-session",
+        {
+          priceId: billingCycle === "monthly" ? monthlyPriceId : yearlyPriceId,
+          billingCycle,
+          plan: "premium"
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const { sessionId } = response.data;
+      
+      // Obtener instancia de Stripe
+      const stripe = await stripePromise;
+      
+      if (!stripe) {
+        throw new Error("Error al cargar Stripe");
+      }
+
+      // Redirigir a Stripe Checkout
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: sessionId
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err.message || "Error al crear la sesión de pago");
       setLoading(false);
     }
   };
+
+  // Si hay error de configuración de Stripe
+  if (stripeError) {
+    return (
+      <div className="subscribe-container">
+        <div className="container">
+          <div className="error-card">
+            <div className="error-icon">
+              <AlertCircle size={64} />
+            </div>
+            <h1 className="error-title">Error de Configuración</h1>
+            <p className="error-message">
+              Hay un problema con la configuración de pagos. Por favor, contacta con soporte técnico.
+            </p>
+            <button 
+              className="back-btn"
+              onClick={() => navigate("/profile")}
+            >
+              <ArrowLeft size={20} />
+              Volver al Perfil
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Si el pago fue exitoso
   if (success) {
@@ -226,219 +306,205 @@ const Subscribe = () => {
 
   return (
     <>
-    <div className="subscribe-container">
-      <div className="container">
-        {/* Header */}
-        <div className="subscribe-header">
-    
-          
-          <div className="header-content-subscribe">
-            <div className="premium-badge-large">
-              <Crown size={24} />
+      <div className="subscribe-container">
+        <div className="container">
+          {/* Header */}
+          <div className="subscribe-header">
+            <div className="header-content-subscribe">
+              <div className="premium-badge-large">
+                <Crown size={24} />
+              </div>
+              <h1>Actualizar a Premium</h1>
+              <p>Desbloquea todas las funciones avanzadas</p>
             </div>
-            <h1>Actualizar a Premium</h1>
-            <p>Desbloquea todas las funciones avanzadas</p>
+          </div>
+
+          <div className="row">
+            {/* Plan Details */}
+            <div className="col-lg-5">
+              <div className="plan-summary">
+                <h3>Plan Premium</h3>
+                
+                {/* Billing Cycle Toggle */}
+                <div className="billing-toggle">
+                  <div className="toggle-buttons">
+                    <button
+                      className={billingCycle === "monthly" ? "active" : ""}
+                      onClick={() => setBillingCycle("monthly")}
+                    >
+                      Mensual
+                    </button>
+                    <button
+                      className={billingCycle === "yearly" ? "active" : ""}
+                      onClick={() => setBillingCycle("yearly")}
+                    >
+                      Anual
+                      <span className="savings-badge">Ahorra {prices.yearly.savings}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Price Display */}
+                <div className="price-display">
+                  <div className="price">
+                    <span className="currency">€</span>
+                    <span className="amount">{prices[billingCycle].amount}</span>
+                    <span className="period">/{billingCycle === "monthly" ? "mes" : "año"}</span>
+                  </div>
+                  {billingCycle === "yearly" && (
+                    <div className="yearly-note">
+                      Equivale a €8.33/mes
+                    </div>
+                  )}
+                </div>
+
+                {/* Features */}
+                <div className="features-list">
+                  <h4>Incluye:</h4>
+                  <div className="feature-item-subscribe">
+                    <CheckCircle size={16} />
+                    <span>Acceso ilimitado a todas las funciones</span>
+                  </div>
+                  <div className="feature-item-subscribe">
+                    <CheckCircle size={16} />
+                    <span>Soporte prioritario 24/7</span>
+                  </div>
+                  <div className="feature-item-subscribe">
+                    <CheckCircle size={16} />
+                    <span>Funciones avanzadas</span>
+                  </div>
+                  <div className="feature-item-subscribe">
+                    <CheckCircle size={16} />
+                    <span>Actualizaciones prioritarias</span>
+                  </div>
+                </div>
+
+                {/* Security Badge */}
+                <div className="security-badge">
+                  <Lock size={16} />
+                  <span>Pago 100% seguro con Stripe</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Section */}
+            <div className="col-lg-7">
+              <div className="payment-form">
+                <h3>Proceder al Pago</h3>
+                
+                {error && (
+                  <div className="error-alert">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="checkout-info">
+                  <div className="payment-method-info">
+                    <CreditCard size={24} />
+                    <div>
+                      <h4>Pago Seguro con Stripe</h4>
+                      <p>Serás redirigido a Stripe para completar tu pago de forma segura. Aceptamos todas las tarjetas principales.</p>
+                    </div>
+                  </div>
+
+
+               <div className="billing-summary">
+        <div className="summary-header">
+          <Shield size={20} className="text-primary" />
+          <span className="summary-title">Resumen de Facturación</span>
+        </div>
+        
+        <div className="summary-item">
+          <div className="item-label">Cliente:</div>
+          <div className="user-info">
+            <div className="user-info-text">{userData?.email}</div>
           </div>
         </div>
+        
+        <div className="summary-item">
+          <div className="item-label">Plan:</div>
+          <div className="plan-badge">
+            <Crown size={12} />
+            Premium
+          </div>
+        </div>
+        
+        <div className="summary-item">
+          <div className="item-label">Ciclo de facturación:</div>
+          <div className="item-value">
+            {billingCycle === "monthly" ? "Mensual" : "Anual"}
+          </div>
+        </div>
+        
+        <div className="summary-item">
+          <div className="item-label">Precio del plan:</div>
+          <div className="item-value">€{prices[billingCycle].amount}</div>
+        </div>
+        
+        {billingCycle === "yearly" && (
+          <div className="summary-item">
+            <div className="item-label">Descuento anual:</div>
+            <div className="discount-badge">-17%</div>
+          </div>
+        )}
+        
+        <div className="summary-item">
+          <div className="item-label">Total a pagar:</div>
+          <div className="item-value">€{prices[billingCycle].amount}</div>
+        </div>
+      </div>
 
-        <div className="row">
-          {/* Plan Details */}
-          <div className="col-lg-5">
-            <div className="plan-summary">
-              <h3>Plan Premium</h3>
-              
-              {/* Billing Cycle Toggle */}
-              <div className="billing-toggle">
-                <div className="toggle-buttons">
-                  <button
-                    className={billingCycle === "monthly" ? "active" : ""}
-                    onClick={() => setBillingCycle("monthly")}
-                  >
-                    Mensual
-                  </button>
-                  <button
-                    className={billingCycle === "yearly" ? "active" : ""}
-                    onClick={() => setBillingCycle("yearly")}
-                  >
-                    Anual
-                    <span className="savings-badge">Ahorra {prices.yearly.savings}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Price Display */}
-              <div className="price-display">
-                <div className="price">
-                  <span className="currency">€</span>
-                  <span className="amount">{prices[billingCycle].amount}</span>
-                  <span className="period">/{billingCycle === "monthly" ? "mes" : "año"}</span>
-                </div>
-                {billingCycle === "yearly" && (
-                  <div className="yearly-note">
-                    Equivale a €8.33/mes
-                  </div>
-                )}
-              </div>
-
-              {/* Features */}
-              <div className="features-list">
-                <h4>Incluye:</h4>
-                <div className="feature-item-subscribe">
-                  <CheckCircle size={16} />
-                  <span>Acceso ilimitado a todas las funciones</span>
-                </div>
-                <div className="feature-item-subscribe">
-                  <CheckCircle size={16} />
-                  <span>Soporte prioritario 24/7</span>
-                </div>
-                <div className="feature-item-subscribe">
-                  <CheckCircle size={16} />
-                  <span>Funciones avanzadas</span>
-                </div>
-                <div className="feature-item-subscribe">
-                  <CheckCircle size={16} />
-                  <span>Actualizaciones prioritarias</span>
-                </div>
-              </div>
-
-              {/* Security Badge */}
-              <div className="security-badge">
-                <Lock size={16} />
-                <span>Pago 100% seguro y encriptado</span>
-              </div>
+      <div className="security-notice">
+        <div className="security-content">
+          <div className="security-icon">
+            <Lock size={20} />
+          </div>
+          <div className="security-text">
+            <div className="security-title">Pago 100% Seguro</div>
+            <div className="security-subtitle">
+              Procesado por Stripe con encriptación SSL. Tus datos están protegidos.
             </div>
           </div>
-
-          {/* Payment Form */}
-          <div className="col-lg-7">
-            <div className="payment-form">
-              <h3>Información de Pago</h3>
-              
-              {error && (
-                <div className="error-alert">
-                  <AlertCircle size={16} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Payment Method Selection */}
-              <div className="payment-methods">
-                <div className="method-option">
-                  <input
-                    type="radio"
-                    id="card"
-                    name="paymentMethod"
-                    value="card"
-                    checked={paymentMethod === "card"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-                  <label htmlFor="card">
-                    <CreditCard size={20} />
-                    <span>Tarjeta de Crédito/Débito</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Card Details Form */}
-              <div className="card-form">
-                <div className="form-group">
-                  <label>Número de Tarjeta</label>
-                  <input
-                    type="text"
-                    name="number"
-                    value={cardData.number}
-                    onChange={handleCardInputChange}
-                    placeholder="1234 5678 9012 3456"
-                    className="form-control"
-                  />
+        </div>
+      </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Fecha de Expiración</label>
-                    <input
-                      type="text"
-                      name="expiry"
-                      value={cardData.expiry}
-                      onChange={handleCardInputChange}
-                      placeholder="MM/YY"
-                      className="form-control"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>CVC</label>
-                    <input
-                      type="text"
-                      name="cvc"
-                      value={cardData.cvc}
-                      onChange={handleCardInputChange}
-                      placeholder="123"
-                      className="form-control"
-                    />
-                  </div>
+                {/* Checkout Button */}
+                <button
+                  className="subscribe-btn"
+                  onClick={handleCheckout}
+                  disabled={loading || stripeError}
+                >
+                  {loading ? (
+                    <>
+                      <Loader className="spinner" size={20} />
+                      Creando sesión...
+                    </>
+                  ) : (
+                    <>
+                      <Crown size={20} />
+                      Continuar con Stripe Checkout
+                    </>
+                  )}
+                </button>
+
+                {/* Terms */}
+                <div className="terms">
+                  <p>
+                    Al continuar, aceptas nuestros{" "}
+                    <a href="/terms">Términos de Servicio</a> y{" "}
+                    <a href="/privacy">Política de Privacidad</a>.
+                    Tu suscripción se renovará automáticamente.
+                  </p>
                 </div>
-
-                <div className="form-group">
-                  <label>Nombre del Titular</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={cardData.name}
-                    onChange={handleCardInputChange}
-                    placeholder="Juan Pérez"
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Email de Facturación</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={cardData.email}
-                    onChange={handleCardInputChange}
-                    className="form-control"
-                    disabled
-                  />
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                className="subscribe-btn"
-                onClick={handleSubscribe}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader className="spinner" size={20} />
-                    Procesando Pago...
-                  </>
-                ) : (
-                  <>
-                    <Crown size={20} />
-                    Suscribirse por €{prices[billingCycle].amount}
-                  </>
-                )}
-              </button>
-
-              {/* Terms */}
-              <div className="terms">
-                <p>
-                  Al continuar, aceptas nuestros{" "}
-                  <a href="/terms">Términos de Servicio</a> y{" "}
-                  <a href="/privacy">Política de Privacidad</a>.
-                  Tu suscripción se renovará automáticamente.
-                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-     
-    </div>
-     <Footer className={"footer-forgot-password"}/>
-     </>
+      <Footer className={"footer-forgot-password"}/>
+    </>
   );
 };
 
