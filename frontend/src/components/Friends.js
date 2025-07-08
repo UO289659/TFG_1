@@ -184,7 +184,7 @@ const FriendsSystem = () => {
       setSentRequests(prev => [...prev, {
         id: Date.now(),
         receiverId: user,
-        created_at: new Date().toISOString().split('T')[0]
+        createdAt: new Date().toISOString().split('T')[0]
       }]);
       
       setSearchResults(prev => prev.filter(u => u._id !== userId));
@@ -304,7 +304,7 @@ const FriendsSystem = () => {
             className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
           >
             <Search size={18} />
-            Buscar Amigos
+            Buscar amigos
           </button>
         </div>
 
@@ -362,7 +362,7 @@ const FriendsSystem = () => {
               </h2>
               
               <div style={{ marginBottom: '2.5rem' }}>
-                <h3 className="subsection-title">Solicitudes Recibidas</h3>
+                <h3 className="subsection-title">Solicitudes recibidas</h3>
                 {friendRequests.length === 0 ? (
                   <div className="empty-state">
                     <Bell className="empty-state-icon" size={60} />
@@ -411,7 +411,7 @@ const FriendsSystem = () => {
               </div>
 
               <div>
-                <h3 className="subsection-title">Solicitudes Enviadas</h3>
+                <h3 className="subsection-title">Solicitudes enviadas</h3>
                 {sentRequests.length === 0 ? (
                   <div className="empty-state">
                     <UserPlus className="empty-state-icon" size={60} />
