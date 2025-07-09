@@ -14,11 +14,11 @@ const SelectPlan = () => {
   const handleSubscribe = async (plan) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        "http://localhost:4000/subscribe",
-        { plan },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // await axios.post(
+      //   "http://localhost:4000/subscribe",
+      //   { plan },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
       navigate("/subscribe");
     } catch (error) {
       toast.error("Error al actualizar el plan");

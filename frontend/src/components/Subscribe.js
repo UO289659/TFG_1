@@ -401,7 +401,6 @@ const Subscribe = () => {
 
                 <div className="checkout-info">
                   <div className="payment-method-info">
-                    <CreditCard size={24} />
                     <div>
                       <h4>Pago Seguro con Stripe</h4>
                       <p>Serás redirigido a Stripe para completar tu pago de forma segura. Aceptamos todas las tarjetas principales.</p>

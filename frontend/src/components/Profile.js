@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { User, Mail, Shield, Key, Check, Star, Crown, Settings, Edit3, Save, X, AlertCircle } from "lucide-react";
 import "./Profile.css"
@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
-import { useUserContext } from "../context/UserContext"; 
+import { useUserContext} from "../context/UserContext"; 
+
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -93,6 +94,13 @@ const Profile = () => {
       await axios.put("http://localhost:4000/profile", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      setUserData(prev => ({
+      ...prev,
+      name: formData.name,
+      surname: formData.surname,
+      // email no se actualiza porque está deshabilitado
+    }));
 
      toast.success('Perfil actualizado con éxito', {
         duration: 3000,
@@ -181,6 +189,9 @@ const Profile = () => {
       });
     } catch (err) {
       console.error('Error al actualizar contraseña:', err);
+  console.log('Status:', err.response?.status);
+  console.log('Data:', err.response?.data);
+  console.log('Message:', err.response?.data?.message);
       toast.error(err.response?.data?.message || "Error al actualizar contraseña", {
         duration: 4000,
         position: 'top-right',
@@ -255,28 +266,19 @@ const Profile = () => {
 
       const token = localStorage.getItem("token");
       
-      const response= await axios.post("http://localhost:4000/subscribe", 
-        { plan: "basic" }, 
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response= await axios.post("http://localhost:4000/cancel-subscription",
+        {}, // cuerpo vacío (o null)
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
-       // El servidor devuelve un NUEVO token
-        const { token: newToken, user: updatedUser, message } = response.data;
-    
-    // Actualizar el token en el contexto
-    if (newToken) {
-      login(newToken);
-    }
-    
-    // Actualizar el estado local del usuario
-    setUserData(prev => ({ 
-      ...prev, 
-      isPremium: updatedUser.isPremium 
-    }));
-      
+          
       // Mostrar éxito
       await Swal.fire({
         title: '¡Listo!',
-        text: 'Tu plan se ha cambiado a básico exitosamente',
+        text: 'Tu plan se cambiará cuando llegue tu fecha de expiración',
         icon: 'success',
         confirmButtonColor: '#28a745',
         timer: 2000,
@@ -329,7 +331,7 @@ const Profile = () => {
               <div className="d-flex align-items-center">
                 <div className="avatar-container me-4">
                   <User size={40} />
-                  {isPremium && (
+                  {user.isPremium && (
                     <div className="premium-badge">
                       <Crown size={16} />
                     </div>
@@ -342,7 +344,7 @@ const Profile = () => {
                     {userData?.email}
                   </p>
                   <div>
-                    {isPremium ? (
+                    {user.isPremium ? (
                       <span className="premium-status-badge d-inline-flex align-items-center">
                         <Crown size={14} className="me-1" />
                         Premium
@@ -371,7 +373,7 @@ const Profile = () => {
               <div className="col-md-6">
                 <PlanCard 
                   type="basic" 
-                  isSelected={!isPremium}
+                  isSelected={!user.isPremium}
                   onSelect={() => {
                     if (isPremium) {
                       handleUnsubscribe();
@@ -382,7 +384,7 @@ const Profile = () => {
               <div className="col-md-6">
                 <PlanCard 
                   type="premium" 
-                  isSelected={isPremium}
+                  isSelected={user.isPremium}
                   onSelect={() => {
                     if (!isPremium) {
                       navigate("/subscribe");

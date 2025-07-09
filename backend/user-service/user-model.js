@@ -7,6 +7,24 @@ const UserSchema = new mongoose.Schema({
     isPremium: Boolean,
     resetToken: String,
     resetTokenExpiration: Date,
+     planExpirationDate: {
+        type: Date,
+        default: null
+    },
+      billingCycle: {
+        type: String,
+        enum: ['monthly', 'yearly'],
+        default: null
+    },
+     stripeCustomerId: {
+        type: String,
+        default: null
+    },
+    
+    stripeSubscriptionId: {
+        type: String,
+        default: null
+    },
      friends: [{
         userId: {
             type: mongoose.Schema.Types.ObjectId,

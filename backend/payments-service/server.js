@@ -1,18 +1,135 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken'); // ❌ FALTA: Agregar JWT
+const jwt = require('jsonwebtoken'); 
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config();
 const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
 const User = require('./user-model');
 const axios = require("axios");
 
-// ❌ PROBLEMA CRÍTICO: Falta inicializar Stripe
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
+const server = http.createServer(app);
 
-// ❌ PROBLEMA: El webhook debe ir ANTES de express.json()
+// Configurar Socket.IO con CORS
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+const userConnections = new Map();
+
+// Middleware para autenticar conexiones Socket.IO
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  
+  if (!token) {
+    return next(new Error('No token provided'));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    socket.userId = decoded.userId || decoded.id;
+    socket.userEmail = decoded.email;
+    next();
+  } catch (error) {
+    console.error('Socket authentication error:', error);
+    next(new Error('Invalid token'));
+  }
+});
+
+
+// Manejar conexiones Socket.IO
+io.on('connection', (socket) => {
+  console.log(`🔌 Usuario conectado: ${socket.userEmail} (${socket.userId})`);
+  
+  // Guardar la conexión del usuario
+  userConnections.set(socket.userId, socket);
+
+  // Evento para actualizar token
+  socket.on('request-token-update', async () => {
+    try {
+      const user = await User.findById(socket.userId);
+      if (user) {
+        const newToken = jwt.sign(
+          { 
+            userId: user._id, 
+            email: user.email, 
+            isPremium: user.isPremium || false,
+          },
+          process.env.SECRET_KEY,
+          { expiresIn: '24h' }
+        );
+        
+        socket.emit('token-updated', { 
+          token: newToken,
+          user: {
+            userId: user._id,
+            email: user.email,
+            name: user.name,
+            isPremium: user.isPremium || false,
+            subscriptionActive: user.subscriptionActive || false,
+            planExpirationDate: user.planExpirationDate
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating token:', error);
+      socket.emit('token-update-error', { error: 'Error updating token' });
+    }
+  });
+
+  // Limpiar conexión cuando el usuario se desconecta
+  socket.on('disconnect', () => {
+    console.log(`🔌 Usuario desconectado: ${socket.userEmail} (${socket.userId})`);
+    userConnections.delete(socket.userId);
+  });
+});
+
+// Función para notificar actualización de token a un usuario específico
+const notifyTokenUpdate = async (userId) => {
+  const socket = userConnections.get(userId);
+  if (socket) {
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        const newToken = jwt.sign(
+          { 
+            userId: user._id, 
+            email: user.email, 
+            isPremium: user.isPremium || false,
+          },
+          process.env.SECRET_KEY,
+          { expiresIn: '24h' }
+        );
+        
+        socket.emit('token-updated', { 
+          token: newToken,
+          user: {
+            userId: user._id,
+            email: user.email,
+            name: user.name,
+            isPremium: user.isPremium || false,
+            subscriptionActive: user.subscriptionActive || false,
+            planExpirationDate: user.planExpirationDate
+          }
+        });
+        
+        console.log(`✅ Token actualizado enviado a usuario: ${user.email}`);
+      }
+    } catch (error) {
+      console.error('Error notifying token update:', error);
+    }
+  }
+};
+
 // Stripe webhook necesita raw body
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -42,7 +159,10 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
       console.log('Subscription cancelled:', subscription.id);
-      await handleSubscriptionCancellation(subscription);
+      const cancelledUserId = await handleSubscriptionCancellation(subscription);
+      if (cancelledUserId) {
+        await notifyTokenUpdate(cancelledUserId);
+      }
       break;
 
     default:
@@ -313,16 +433,7 @@ async function handleSubscriptionCancellation(subscription) {
         user.planExpirationDate = null;
         user.stripeSubscriptionId=null;
         await user.save();
-
-         const token = jwt.sign(
-      { 
-        id: user._id, 
-        email: user.email, 
-        isPremium: false,
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: '24h' }
-    );
+        return subscription.metadata.userId;
       }
     }
   } catch (error) {
@@ -369,7 +480,7 @@ app.get('/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5003;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Payment service corriendo en puerto ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });

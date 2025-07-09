@@ -59,7 +59,7 @@ const PlanCard = ({ type, isSelected, onSelect }) => {
 
       {/* Badge si el plan está activo */}
       {isSelected && (
-        <div className="active-plan-badge mt-3">Plan Activo</div>
+        <div className="active-plan-badge mt-3">Plan activo</div>
       )}
     </div>
   );
