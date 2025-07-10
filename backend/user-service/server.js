@@ -573,7 +573,7 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
       return res.status(400).json({ error: "ID de usuario inválido" });
     }
     
-    const user = await User.findById(userId).select('name surname email avatar _id');
+    const user = await User.findById(userId).select('name surname email avatar _id stripeSubscriptionId');
     
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
