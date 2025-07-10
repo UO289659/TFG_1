@@ -153,6 +153,9 @@ app.put("/password", authMiddleware, async(req, res) => {
   user.password=newHashedPassword;
   await user.save();
   res.json({ message: "Contraseña actualizada correctamente" });
+ }else{
+  console.log("la contrasela actual es incorrecta");
+  return res.status(400).json({ message: "La contraseña actual es incorrecta." });
  }
   }catch (error) {
     console.error(error);
@@ -161,43 +164,30 @@ app.put("/password", authMiddleware, async(req, res) => {
  
 });
 
-// EN EL SERVICIO DE USUARIOS
-// Reemplaza completamente el endpoint /subscribe con este código
 app.post("/subscribe", authMiddleware, async (req, res) => {
- 
-  
   try {
     const clientId = req.user.id;
     const { plan } = req.body;
-
-    
     
     // Validar el plan
     if (!plan || !['basic', 'premium'].includes(plan)) {
-     
       return res.status(400).json({ 
         message: "Plan inválido. Debe ser 'basic' o 'premium'" 
       });
-    }
-
-    
-    
+    }  
     const user = await User.findById(clientId);
-   
-    
-    if (!user) {
-      
+  
+    if (!user) {    
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    
-    
     // Actualizar el plan del usuario
     user.isPremium = plan === 'premium';
-    
-    
-    await user.save();
-    
+    user.billingCycle = null;
+    user.planExpirationDate = null;
+    user.stripeSubscriptionId=null;
+   
+    await user.save();  
     
     // Generar un NUEVO token con la información actualizada
     const tokenPayload = { 
@@ -206,15 +196,11 @@ app.post("/subscribe", authMiddleware, async (req, res) => {
       isPremium: user.isPremium 
     };
     
-  
-    
     const newToken = jwt.sign(
       tokenPayload,
      process.env.SECRET_KEY,
       { expiresIn: '7d' }
     );
-    
-   
     
     // Preparar respuesta
     const responseData = { 
@@ -229,16 +215,9 @@ app.post("/subscribe", authMiddleware, async (req, res) => {
       }
     };
     
-   
-    
     // UNA SOLA RESPUESTA
     res.json(responseData);
-    
-    
-
   } catch (error) {
-    
-    
     // Verificar si ya se envió una respuesta
     if (res.headersSent) {
       console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
@@ -275,7 +254,6 @@ app.post("/forgot-password", async (req, res) => {
     user.resetTokenExpiration = Date.now() + 3600000; // 1 hora de validez
 
     await user.save();
-
 
   // Enviar el correo a través del mail-service
     const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
@@ -363,25 +341,58 @@ app.get("/friends", authMiddleware, async (req, res) => {
   }
   });
 
-  app.get('/users/:userId', authMiddleware, async (req, res) => {
+
+// Endpoint para actualizar datos de usuario (usado por payments-service)
+app.patch('/users/:userId', async (req, res, next) => {
+  // Permitir acceso si la clave interna es válida
+  if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
+    return next();
+  }
+  // Si no, usar el authMiddleware normal
+  return authMiddleware(req, res, next);
+}, async (req, res) => {
   try {
     const userId = req.params.userId;
-    
     // Validar que el ID sea válido
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: "ID de usuario inválido" });
     }
-    
-    const user = await User.findById(userId).select('name surname email avatar _id');
-    
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    
-    console.log("✅ Usuario encontrado:", user);
-    res.json(user);
+    // Campos que se pueden actualizar desde payments-service
+    const allowedFields = [
+      'isPremium',  
+      'planExpirationDate', 
+      'subscriptionActive', 
+      'stripeCustomerId', 
+      'stripeSubscriptionId', 
+      'billingCycle'
+    ];
+    // Actualizar solo los campos permitidos
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+    await user.save();
+    console.log(`✅ Usuario ${user.email} actualizado desde payments-service`);
+    res.json({ 
+      message: "Usuario actualizado correctamente",
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        surname: user.surname,
+        isPremium: user.isPremium,
+        planExpirationDate: user.planExpirationDate,
+        subscriptionActive: user.subscriptionActive,
+        billingCycle: user.billingCycle
+      }
+    });
   } catch (error) {
-    console.error("❌ Error al obtener usuario por ID:", error);
+    console.error("❌ Error al actualizar usuario:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
@@ -546,7 +557,47 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
   }
 });
 
+  app.get('/users/:userId', async (req, res, next) => {
+     // Permitir acceso si la clave interna es válida
+  if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
+    return next();
+  }
+  // Si no, usar el authMiddleware normal
+  return authMiddleware(req, res, next);
+}, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Validar que el ID sea válido
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+    
+    const user = await User.findById(userId).select('name surname email avatar _id');
+    
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    
+    console.log("✅ Usuario encontrado:", user);
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Error al obtener usuario por ID:", error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+});
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
   });
+
+// Agregar INTERNAL_API_KEY a las variables requeridas
+const requiredEnvVars = [
+  'MONGO_URI', 'SECRET_KEY', 'INTERNAL_API_KEY'
+];
+requiredEnvVars.forEach(varName => {
+  if (!process.env[varName]) {
+    console.error(`❌ Variable de entorno requerida no encontrada: ${varName}`);
+    process.exit(1);
+  }
+});

@@ -6,7 +6,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 require('dotenv').config();
 const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
-const User = require('./user-model');
+
 const axios = require("axios");
 
 
@@ -56,11 +56,17 @@ io.on('connection', (socket) => {
   // Evento para actualizar token
   socket.on('request-token-update', async () => {
     try {
-      const user = await User.findById(socket.userId);
+      const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${socket.userId}`, {
+        headers: {
+           'x-internal-api-key': process.env.INTERNAL_API_KEY
+        }
+      });
+      const user = userResponse.data;
+      
       if (user) {
         const newToken = jwt.sign(
           { 
-            userId: user._id, 
+            userId: user.id, 
             email: user.email, 
             isPremium: user.isPremium || false,
           },
@@ -71,7 +77,7 @@ io.on('connection', (socket) => {
         socket.emit('token-updated', { 
           token: newToken,
           user: {
-            userId: user._id,
+            userId: user.id,
             email: user.email,
             name: user.name,
             isPremium: user.isPremium || false,
@@ -98,11 +104,17 @@ const notifyTokenUpdate = async (userId) => {
   const socket = userConnections.get(userId);
   if (socket) {
     try {
-      const user = await User.findById(userId);
+      const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY
+        }
+      });
+      const user = userResponse.data;
+      
       if (user) {
         const newToken = jwt.sign(
           { 
-            userId: user._id, 
+            userId: user.id, 
             email: user.email, 
             isPremium: user.isPremium || false,
           },
@@ -113,7 +125,7 @@ const notifyTokenUpdate = async (userId) => {
         socket.emit('token-updated', { 
           token: newToken,
           user: {
-            userId: user._id,
+            userId: user.id,
             email: user.email,
             name: user.name,
             isPremium: user.isPremium || false,
@@ -147,19 +159,19 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     case 'checkout.session.completed':
       const session = event.data.object;
       console.log('Checkout session completed:', session.id);
-      await handleSuccessfulPayment(session);
+      await handleSuccessfulPayment(req, session);
       break;
 
     case 'invoice.payment_succeeded':
       const invoice = event.data.object;
       console.log('Invoice payment succeeded:', invoice.id);
-      await handleSubscriptionRenewal(invoice);
+      await handleSubscriptionRenewal(req, invoice);
       break;
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
       console.log('Subscription cancelled:', subscription.id);
-      const cancelledUserId = await handleSubscriptionCancellation(subscription);
+      const cancelledUserId = await handleSubscriptionCancellation(req, subscription);
       if (cancelledUserId) {
         await notifyTokenUpdate(cancelledUserId);
       }
@@ -183,7 +195,7 @@ mongoose
   .catch((err) => console.error("❌ [Payments Service] Error al conectar:", err));
 
 // ✅ VERIFICAR: Variables de entorno al iniciar
-const requiredEnvVars = ['MONGO_URI', 'STRIPE_SECRET_KEY', 'SECRET_KEY'];
+const requiredEnvVars = ['MONGO_URI', 'STRIPE_SECRET_KEY', 'SECRET_KEY', 'USER_SERVICE_URL'];
 requiredEnvVars.forEach(varName => {
   if (!process.env[varName]) {
     console.error(`❌ Variable de entorno requerida no encontrada: ${varName}`);
@@ -211,7 +223,14 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
 
     console.log('Mongoose readyState at request time:', mongoose.connection.readyState);
 
-    const user = await User.findById(userId);
+    // Obtener usuario vía user-service
+    const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+      headers: {
+        Authorization: req.headers.authorization, // reenvías el token JWT
+      }
+    });
+    const user = userResponse.data;
+    
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -304,7 +323,14 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Sesión no válida para este usuario' });
     }
 
-    const user = await User.findById(userId);
+    // Obtener usuario vía user-service
+    const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+      headers: {
+        Authorization: req.headers.authorization, // reenvías el token JWT
+      }
+    });
+    const user = userResponse.data;
+    
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -317,23 +343,28 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
       expirationDate.setFullYear(expirationDate.getFullYear() + 1);
     }
 
-    // Actualizar usuario con el plan premium
-    user.isPremium = true;
-    user.planExpirationDate = expirationDate;
-    user.subscriptionActive = true;
-    user.stripeCustomerId = session.customer;
-    user.stripeSubscriptionId = session.subscription;
-    user.billingCycle = session.metadata.billingCycle;
+    // Actualizar usuario vía user-service
+    const updateResponse = await axios.patch(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+      isPremium: true,
+      planExpirationDate: expirationDate,
+      subscriptionActive: true,
+      stripeCustomerId: session.customer,
+      stripeSubscriptionId: session.subscription,
+      billingCycle: session.metadata.billingCycle
+    }, {
+      headers: {
+        Authorization: req.headers.authorization, // reenvías el token JWT
+      }
+    });
 
-    await user.save();
-
-    console.log('✅ Usuario actualizado a Premium:', user.email);
+    const updatedUser = updateResponse.data.user;
+    console.log('✅ Usuario actualizado a Premium:', updatedUser.email);
 
     // Generar nuevo token con la información actualizada
     const token = jwt.sign(
       { 
-        userId: user._id, 
-        email: user.email, 
+        userId: updatedUser.id, 
+        email: updatedUser.email, 
         isPremium: true,
       },
       process.env.SECRET_KEY,
@@ -345,12 +376,11 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
       message: 'Suscripción activada exitosamente',
       token: token,
       user: {
-        userId: user._id,
-        email: user.email,
-        name: user.name,
-        plan: user.plan,
-        subscriptionActive: user.subscriptionActive,
-        planExpirationDate: user.planExpirationDate
+        userId: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        subscriptionActive: updatedUser.subscriptionActive,
+        planExpirationDate: updatedUser.planExpirationDate
       }
     });
 
@@ -371,70 +401,88 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
 });
 
 // ✅ Las funciones auxiliares permanecen igual...
-async function handleSuccessfulPayment(session) {
+async function handleSuccessfulPayment(req, session) {
   try {
     if (session.metadata && session.metadata.userId) {
-      const user = await User.findById(session.metadata.userId).maxTimeMS(5000);
-      if (user) {
-        if (!user.subscriptionActive) {
-          const expirationDate = new Date();
-          if (session.metadata.billingCycle === 'monthly') {
-            expirationDate.setMonth(expirationDate.getMonth() + 1);
-          } else {
-            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-          }
-
-          user.plan = session.metadata.plan;
-          user.planExpirationDate = expirationDate;
-          user.subscriptionActive = true;
-          user.stripeCustomerId = session.customer;
-          user.stripeSubscriptionId = session.subscription;
-          user.billingCycle = session.metadata.billingCycle;
-
-          await user.save();
-        }
+      const userId = session.metadata.userId;
+      // Calcular fecha de expiración
+      const expirationDate = new Date();
+      if (session.metadata.billingCycle === 'monthly') {
+        expirationDate.setMonth(expirationDate.getMonth() + 1);
+      } else {
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
       }
+
+      // Actualizar usuario vía user-service
+      await axios.patch(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+        isPremium: true,
+        planExpirationDate: expirationDate,
+        subscriptionActive: true,
+        stripeCustomerId: session.customer,
+        stripeSubscriptionId: session.subscription,
+        billingCycle: session.metadata.billingCycle,
+        plan: session.metadata.plan
+      }, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY
+        }
+      });
     }
   } catch (error) {
     console.error('Error handling successful payment:', error);
   }
 }
 
-async function handleSubscriptionRenewal(invoice) {
+async function handleSubscriptionRenewal(req, invoice) {
   try {
     if (invoice.subscription_details && invoice.subscription_details.metadata) {
       const userId = invoice.subscription_details.metadata.userId;
-      const user = await User.findById(userId).maxTimeMS(5000);
-      
-      if (user) {
-        const expirationDate = new Date();
-        if (user.billingCycle === 'monthly') {
-          expirationDate.setMonth(expirationDate.getMonth() + 1);
-        } else {
-          expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+
+      // Obtener usuario para saber el billingCycle
+      const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY
         }
-        
-        user.planExpirationDate = expirationDate;
-        await user.save();
+      });
+      const user = userResponse.data;
+
+      const expirationDate = new Date();
+      if (user.billingCycle === 'monthly') {
+        expirationDate.setMonth(expirationDate.getMonth() + 1);
+      } else {
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
       }
+
+      await axios.patch(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+        planExpirationDate: expirationDate
+      }, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY
+        }
+      });
     }
   } catch (error) {
     console.error('Error handling subscription renewal:', error);
   }
 }
 
-async function handleSubscriptionCancellation(subscription) {
+async function handleSubscriptionCancellation(req, subscription) {
   try {
     if (subscription.metadata && subscription.metadata.userId) {
-      const user = await User.findById(subscription.metadata.userId).maxTimeMS(5000);
-      if (user) {
-        user.isPremium=false;
-        user.billingCycle = null;
-        user.planExpirationDate = null;
-        user.stripeSubscriptionId=null;
-        await user.save();
-        return subscription.metadata.userId;
-      }
+      const userId = subscription.metadata.userId;
+
+      await axios.patch(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+        isPremium: false,
+        billingCycle: null,
+        planExpirationDate: null,
+        stripeSubscriptionId: null
+      }, {
+        headers: {
+          'x-internal-api-key': process.env.INTERNAL_API_KEY
+        }
+      });
+
+      return userId;
     }
   } catch (error) {
     console.error('Error handling subscription cancellation:', error);
@@ -445,7 +493,14 @@ async function handleSubscriptionCancellation(subscription) {
 app.post('/cancel-subscription', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId).maxTimeMS(5000);
+    
+    // Obtener usuario vía user-service
+    const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
+      headers: {
+        Authorization: req.headers.authorization, // reenvías el token JWT
+      }
+    });
+    const user = userResponse.data;
 
     if (!user || !user.stripeSubscriptionId) {
       return res.status(404).json({ error: 'Suscripción no encontrada' });
