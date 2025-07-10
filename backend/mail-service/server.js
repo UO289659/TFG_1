@@ -20,13 +20,16 @@ mongoose
 
 // Configura tu transporte de correo con Nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Puedes usar otros servicios como SendGrid, Mailgun, etc.
+  host: 'smtp.gmail.com',        
+  port: 587,                     
+  secure: false,                 
   auth: {
-    user: process.env.MAIL_USER, // Usa la variable de entorno para el correo
-    pass: process.env.MAIL_PASS, // Usa la variable de entorno para la contraseña
-    },
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
   tls: {
-    rejectUnauthorized: false, // 👈 esto permite certificados autofirmados
+    rejectUnauthorized: false,   
+    ciphers: 'SSLv3'            
   }
 });
 
@@ -36,12 +39,30 @@ app.post('/send-email', (req, res) => {
      console.log("📨 Microservicio de correo recibió:", req.body); // 👈 agrega esto
   const { name, email, subject, message } = req.body;
 
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({ error: 'Faltan campos requeridos' });
+  }
+
     const mailOptions = {
-        from:`"${name} (desde formulario web)" <${process.env.MAIL_USER}>`,
+        from: process.env.MAIL_USER,
         to: "saldosmart.info@gmail.com",   // Correo de destino (fijo o dinámico)
-        subject,
-        text:message,
-  };
+        subject: `[Contacto Web] ${subject} - ${name}`,
+        replyTo: email,
+        text:`
+        📧 NUEVO MENSAJE DE CONTACTO
+
+        👤 Información del contacto:
+          • Nombre: ${name}
+          • Email: ${email}
+          • Asunto: ${subject}
+
+        💬 Mensaje:
+        ${message}
+
+        ---
+        📅 Enviado: ${new Date().toLocaleString('es-ES')}
+            `
+          };
 
   // Enviar el correo
   transporter.sendMail(mailOptions, (error, info) => {
