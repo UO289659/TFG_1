@@ -327,12 +327,12 @@ const FriendsSystem = () => {
                     <div key={friend._id} className="friend-card">
                       <div className="card-content">
                         <div className="avatar">{friend.avatar}</div>
-                        <div className="user-info">
+                       
                           <div className="user-name">{friend.name} {friend.surname}</div>
                           <div className="user-email">
                             <Mail size={14} />
                             {friend.email}
-                          </div>
+                         
                         </div>
                         <div className="card-actions">
                           <button
