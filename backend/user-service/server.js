@@ -586,6 +586,52 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     res.status(500).json({ error: "Error del servidor" });
   }
 });
+
+app.patch("/delete-all-friends/:userId", async (req, res, next) => {
+  // Verificar si es una llamada interna
+  if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
+    return next();
+  }
+  // Si no, usar el authMiddleware normal
+  return authMiddleware(req, res, next);
+}, async (req, res) => {
+  try {
+    const userId = req.params.userId; // Corregido: era friendId
+    
+    // Verificar que el usuario existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Usuario no encontrado' 
+      });
+    }
+    
+    // Eliminar todos los amigos del usuario especificado
+    await User.findByIdAndUpdate(userId, {
+      $set: { friends: [] }
+    });
+
+    // Eliminar al usuario de las listas de amigos de otros usuarios
+    await User.updateMany(
+      { 'friends.userId': userId }, // condición: usuarios que tengan a userId en sus amigos
+      { $pull: { friends: { userId: userId } } } // acción: eliminar ese objeto del array
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Todos los amigos han sido eliminados correctamente'
+    });
+
+  } catch (error) {
+    console.error('Error al eliminar todos los amigos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+});
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
