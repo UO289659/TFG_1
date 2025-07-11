@@ -115,17 +115,16 @@ const Hero = () => {
           </h1>
           
           <p className="hero-subtitle">
-            Toma control total de tu dinero con nuestra plataforma. 
-            Análisis en tiempo real para maximizar tu patrimonio.
+            Toma control total de tu dinero con nuestra plataforma y disfruta de las ventajas de la salud financiera. 
           </p>
 
           <div className="hero-buttons-new">
             <button className="btn-primary-large" onClick={() => navigate("/login")}>
-              Comenzar Gratis
+              Comenzar gratis
               <ArrowRight className="button-icon" />
             </button>
             <button className="btn-secondary-large">
-              Ver Demo
+              Ver demo
             </button>
           </div>
 
@@ -144,7 +143,7 @@ const Hero = () => {
         <div className="chart-section">
           <div className="chart-container-new">
             <div className="chart-header">
-              <h3 className="chart-title">Evolución de tu Patrimonio</h3>
+              <h3 className="chart-title">Evolución de tu patrimonio</h3>
               <div className="chart-value">
                 €{animatedValue.toLocaleString()}
               </div>
@@ -188,7 +187,7 @@ const Hero = () => {
                   fillOpacity={1}
                   fill="url(#colorBalance)"
                   strokeWidth={3}
-                  name="Balance Total"
+                  name="Balance total"
                 />
                 <Area
                   type="monotone"
