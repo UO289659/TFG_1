@@ -3,7 +3,7 @@ const cors = require("cors");
 const mongoose = require('mongoose');
 require('dotenv').config();
 const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
-
+const dayjs = require('dayjs');
 const seedCategorias = require("./seedCategories");
 const seedIconos= require("./seedIcons");
 const app = express();
@@ -11,8 +11,29 @@ const Transaction = require("../statistics-service/statistics-model")
 const Categoria = require("./category-model")
 const UserCategory=require("./user-category");
 const Icono = require("./icon-model")
+const User = require("../user-service/user-model");
 app.use(cors());
 app.use(express.json());
+
+const localizedFormat = require('dayjs/plugin/localizedFormat');
+const es = require('dayjs/locale/es'); // Importa el idioma español
+
+dayjs.extend(localizedFormat);
+dayjs.locale('es');
+
+const userSchemaLocal = new mongoose.Schema({
+  name: { type: String, required: true },
+  surname: { type: String, required: true },
+  email: { type: String, required: true }
+}, {
+  collection: 'users', // Asegúrate de que apunte a la misma colección que tu microservicio de usuarios
+  _id: true, // Asegurar que se reconozca el _id
+  versionKey: false // Opcional: remover __v
+});
+
+// Crear el modelo User local
+const UserLocal = mongoose.model("UserLocal", userSchemaLocal);
+
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(async () => {
@@ -29,6 +50,8 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   .catch((err) => {
     console.error("❌ Error al conectar a MongoDB:", err);
   });
+
+  
 
   app.get('/gastos/rango', authMiddleware, async (req, res) => {
   const { start, end } = req.query;
@@ -790,19 +813,70 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/export', authMiddleware, ensurePremium, async(req, res)=>{
+app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
   console.log("entra por export de stats");
-  try{
-    const clientId= req.user.id;
-    console.log(clientId);
-    const response= await Transaction.find({clientId}, 
-    { _id: 0, clientId: 0, icon: 0, __v: 0 } );
+  try {
+    const clientId = req.user.id;
+    
+    // Obtener todas las transacciones del usuario
+    const transactions = await Transaction.find({ clientId })
+      .select('-_id -clientId -icon -__v -createdBy -sharedTransactionId -groupName')
+      .lean();
 
-    console.log(response);
-     res.status(200).json(response);
-  }catch(err){
-    console.log(err);
-    res.status(500).json({ message: "Error: no se puedo extraer transacciones: "});
+    // Crear un Set con todos los userIds únicos de sharedWith
+    const userIds = new Set();
+    transactions.forEach(tx => {
+      if (tx.sharedWith && Array.isArray(tx.sharedWith)) {
+        tx.sharedWith.forEach(share => {
+          if (share.userId) {
+            userIds.add(share.userId.toString());
+          }
+        });
+      }
+    });
+
+    // Obtener información de usuarios en lote
+    const users = await UserLocal.find({
+      _id: { $in: Array.from(userIds) }
+    }).select('name surname').lean();
+
+    // Crear un mapa de userId -> userData para acceso rápido
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user._id.toString()] = `${user.name} ${user.surname}`;
+    });
+
+    // Formatear las transacciones
+    const formattedResponse = transactions.map(tx => {
+      // Formatear fecha
+      if (tx.createdAt) {
+        tx.createdAt = dayjs(tx.createdAt).format('D [de] MMMM [de] YYYY');
+      }
+      
+      // Formatear sharedWith
+      if (tx.sharedWith && Array.isArray(tx.sharedWith) && tx.sharedWith.length > 0) {
+        tx.sharedWith = tx.sharedWith
+          .map(share => {
+            if (share.userId) {
+              const userId = share.userId.toString();
+              return userMap[userId] || `Usuario ${userId}`;
+            }
+            return '';
+          })
+          .filter(name => name !== '') // Filtrar nombres vacíos
+          .join(', ');
+      } else {
+        tx.sharedWith = ''; // String vacío si no hay usuarios compartidos
+      }
+      
+      return tx;
+    });
+
+    console.log("Transacciones formateadas:", formattedResponse);
+    res.status(200).json(formattedResponse);
+    
+  } catch(err) {
+    console.error("Error en export:", err);
+    res.status(500).json({ message: "Error: no se pudo extraer transacciones" });
   }
-   
 });
