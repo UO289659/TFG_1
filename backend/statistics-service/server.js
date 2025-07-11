@@ -836,26 +836,34 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     });
 
     // Obtener información de usuarios en lote
-    const users = await UserLocal.find({
-      _id: { $in: Array.from(userIds) }
-    }).select('name surname').lean();
+    let userMap = {};
+    if (userIds.size > 0) {
+      const users = await UserLocal.find({
+        _id: { $in: Array.from(userIds) }
+      }).select('name surname').lean();
 
-    // Crear un mapa de userId -> userData para acceso rápido
-    const userMap = {};
-    users.forEach(user => {
-      userMap[user._id.toString()] = `${user.name} ${user.surname}`;
-    });
+      // Crear un mapa de userId -> userData para acceso rápido
+      users.forEach(user => {
+        userMap[user._id.toString()] = `${user.name} ${user.surname}`;
+      });
+    }
 
     // Formatear las transacciones
     const formattedResponse = transactions.map(tx => {
+      // Crear una copia del objeto para evitar mutaciones
+      const formattedTx = { ...tx };
+      
       // Formatear fecha
-      if (tx.createdAt) {
-        tx.createdAt = dayjs(tx.createdAt).format('D [de] MMMM [de] YYYY');
+      if (formattedTx.createdAt) {
+        formattedTx.createdAt = dayjs(formattedTx.createdAt).format('D [de] MMMM [de] YYYY');
       }
       
+      // Verificar si el gasto es compartido
+      const isSharedExpense = formattedTx.sharedWith && Array.isArray(formattedTx.sharedWith) && formattedTx.sharedWith.length > 0;
+      
       // Formatear sharedWith
-      if (tx.sharedWith && Array.isArray(tx.sharedWith) && tx.sharedWith.length > 0) {
-        tx.sharedWith = tx.sharedWith
+      if (isSharedExpense) {
+        formattedTx.sharedWith = formattedTx.sharedWith
           .map(share => {
             if (share.userId) {
               const userId = share.userId.toString();
@@ -866,10 +874,30 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
           .filter(name => name !== '') // Filtrar nombres vacíos
           .join(', ');
       } else {
-        tx.sharedWith = ''; // String vacío si no hay usuarios compartidos
+        formattedTx.sharedWith = 'N/A'; // N/A si no hay usuarios compartidos
       }
       
-      return tx;
+      // Formatear campos relacionados con gastos compartidos
+      if (!isSharedExpense) {
+        // Si no es compartido, estos campos deben mostrar N/A
+        formattedTx.splitType = 'N/A';
+        formattedTx.totalParticipants = 'N/A';
+      } else {
+        // Si es compartido, formatear campos apropiadamente
+        formattedTx.splitType = formattedTx.splitType || 'N/A';
+        formattedTx.totalParticipants = formattedTx.totalParticipants || 'N/A';
+        formattedTx.isShared = formattedTx.isShared ? 'Sí' : 'No';
+        formattedTx.groupName = formattedTx.groupName || 'N/A';
+        
+        // Formatear customAmounts
+        if (formattedTx.customAmounts && typeof formattedTx.customAmounts === 'object') {
+          formattedTx.customAmounts = JSON.stringify(formattedTx.customAmounts);
+        } else {
+          formattedTx.customAmounts = 'N/A';
+        }
+      }
+      
+      return formattedTx;
     });
 
     console.log("Transacciones formateadas:", formattedResponse);
