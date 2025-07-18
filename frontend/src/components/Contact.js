@@ -155,8 +155,6 @@ const Contact = () => {
               </Typography>
               <Typography sx={{ opacity: 0.9 }}>
                 Lunes a Viernes: 09:00h - 18:00h
-                <br />
-                Sábados: 09:00h - 14:00h
               </Typography>
             </Box>
           </Box>
@@ -179,7 +177,7 @@ const Contact = () => {
               <Typography variant="h6" fontWeight="bold" mb={1}>
                 Teléfono
               </Typography>
-              <Typography sx={{ opacity: 0.9 }}>+34 91 234 56 78</Typography>
+              <Typography sx={{ opacity: 0.9 }}>+34 673 48 56 78</Typography>
             </Box>
           </Box>
 
