@@ -194,6 +194,7 @@ async function createSharedTransactions({
       type,
       category,
       value: amounts[participantId] || 0, // Su parte individual
+      originalValue: value,
       icon,
       sharedWith: completeSharedWith, // TODOS tienen la misma info completa
       splitType,
@@ -538,6 +539,7 @@ async function createIndividualTransaction({
     type,
     category,
     value,
+    originalValue: value, 
     icon,
     sharedWith: [],
     splitType: null,
@@ -557,6 +559,7 @@ app.post('/track', async (req, res) => {
     type,
     category,
     value,
+    originalValue,
     icon,
     clientId,
     sharedWith = [],
@@ -592,6 +595,7 @@ app.post('/track', async (req, res) => {
       type,
       category,
       value,
+      originalValue,
       icon,
       clientId,
       sharedWith,
