@@ -7,12 +7,13 @@ const expenseSchema = new mongoose.Schema({
   type: { type: String, enum: ["expense", "income"], required: true },
   category: { type: String, required: true },
   value: { type: Number, required: true },
+  originalValue: { type: Number, required: false },
   icon: { type: String },
   createdAt: { type: Date, default: Date.now },
 
   // Campos para gastos compartidos
   sharedWith: [{ 
-    userId: mongoose.Schema.Types.ObjectId,
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     amount: Number,
     isPaid: { type: Boolean, default: false }
   }],
@@ -22,7 +23,7 @@ const expenseSchema = new mongoose.Schema({
     default: 'equal' 
   },
   totalParticipants: Number,
-  createdBy: mongoose.Schema.Types.ObjectId,
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   groupName: String,
   
   // NUEVO CAMPO: Para agrupar transacciones compartidas
@@ -36,5 +37,6 @@ const expenseSchema = new mongoose.Schema({
     default: false 
   }
 });
+
 
 module.exports = mongoose.model("Transaction", expenseSchema);

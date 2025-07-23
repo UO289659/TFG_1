@@ -49,13 +49,79 @@ const TransactionForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // 🔧 CORRECCIÓN: Limpiar customAmounts antes de enviar
+    const cleanedFormData = { ...formData };
+    
+    if (formData.splitType === 'custom') {
+      // Filtrar solo los montos válidos (> 0)
+      const validCustomAmounts = {};
+      
+      Object.entries(formData.customAmounts).forEach(([participantId, amount]) => {
+        const numAmount = parseFloat(amount);
+        if (!isNaN(numAmount) && numAmount > 0) {
+          validCustomAmounts[participantId] = numAmount;
+        }
+      });
+      
+      cleanedFormData.customAmounts = validCustomAmounts;
+      
+      // También filtrar sharedWith para que coincida con los que tienen montos válidos
+      cleanedFormData.sharedWith = formData.sharedWith.filter(friendId => 
+        validCustomAmounts[friendId] > 0
+      );
+      
+      console.log("🧹 Datos limpiados antes del submit:", {
+        original: formData.customAmounts,
+        cleaned: validCustomAmounts,
+        sharedWithFiltered: cleanedFormData.sharedWith
+      });
+    }
+    
+    onSubmit(cleanedFormData);
   };
 
   const friendsOptions = friends.map(friend => ({
     value: friend._id,
     label: friend.name
   }));
+
+  // 🔧 CORRECCIÓN: Función helper para manejar cambios en customAmounts
+  const handleCustomAmountChange = (participantId, inputValue) => {
+    console.log(`💰 Cambiando monto para ${participantId}: "${inputValue}"`);
+    
+    if (inputValue === "" || inputValue === null || inputValue === undefined) {
+      // Si el campo está vacío, remover la entrada en lugar de poner 0
+      setFormData(prev => {
+        const newCustomAmounts = { ...prev.customAmounts };
+        delete newCustomAmounts[participantId];
+        
+        console.log("🗑️ Removiendo entrada vacía:", {
+          participantId,
+          newCustomAmounts
+        });
+        
+        return {
+          ...prev,
+          customAmounts: newCustomAmounts
+        };
+      });
+    } else {
+      const amount = parseFloat(inputValue);
+      
+      if (!isNaN(amount) && amount > 0) {
+        // Solo guardar si es un número válido y mayor que 0
+        setFormData(prev => ({
+          ...prev,
+          customAmounts: { ...prev.customAmounts, [participantId]: amount }
+        }));
+        
+        console.log("✅ Guardando monto válido:", { participantId, amount });
+      } else {
+        console.log("❌ Monto inválido, no se guarda:", { participantId, inputValue, amount });
+      }
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -111,23 +177,18 @@ const TransactionForm = ({
       </div>
 
       <label className="my-form-label">
-  {formData.sharedWith.length > 0 ? "Valor total del gasto:" : "Valor:"}
-  <input
-    className="form-input"
-    type="number"
-    name="value"
-    value={formData.value}
-    onChange={handleInputChange}
-    min="0.01" 
-    step="0.01"
-    required
-  />
-  {formData.sharedWith.length > 0 && (
-    <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: '4px' }}>
-      💡 Este es el monto total que será dividido entre los participantes
-    </small>
-  )}
-</label>
+        Valor:
+        <input
+          className="form-input"
+          type="number"
+          name="value"
+          value={formData.value}
+          onChange={handleInputChange}
+          min="0.01" 
+          step="0.01"
+          required
+        />
+      </label>
 
       {/* Funcionalidad Premium - Compartir gastos */}
       {isPremium && formData.type === "expense" && (
@@ -172,38 +233,39 @@ const TransactionForm = ({
               {formData.splitType === "custom" && (
                 <>
                   <label className="my-form-label">Distribución personalizada:</label>
-                  {/* Mostrar campos para todos los participantes */}
-                  {(() => {
-                    // Crear lista de todos los participantes únicos
-                    const allParticipants = [...formData.sharedWith];
-                    if (isEditing && formData.clientId && !allParticipants.includes(formData.clientId)) {
-                      allParticipants.push(formData.clientId);
-                    }
-                    
-                    return allParticipants.map(participantId => {
-                      const friend = friends.find(f => f._id === participantId);
-                      const isCreator = participantId === formData.clientId;
-                      
-                      return (
-                        <div key={participantId}>
-                          <label>{isCreator ? "Tú (creador)" : (friend?.name || `Usuario ${participantId}`)}:</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={formData.customAmounts[participantId] || ""}
-                            onChange={(e) => {
-                              const amount = parseFloat(e.target.value) || 0;
-                              setFormData(prev => ({
-                                ...prev,
-                                customAmounts: { ...prev.customAmounts, [participantId]: amount }
-                              }));
-                            }}
-                          />
-                        </div>
-                      );
-                    });
-                  })()}
+                  {/* Mostrar campo para el creador si estamos editando */}
+                  {isEditing && (
+                    <div>
+                      <label>Tú (creador):</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.customAmounts[formData.clientId] || ""}
+                        onChange={(e) => {
+                          handleCustomAmountChange(formData.clientId, e.target.value);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {/* Mostrar campos para los amigos */}
+                  {formData.sharedWith.map(friendId => {
+                    const friend = friends.find(f => f._id === friendId);
+                    return (
+                      <div key={friendId}>
+                        <label>{friend?.name || "Amigo"}:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.customAmounts[friendId] || ""}
+                          onChange={(e) => {
+                            handleCustomAmountChange(friendId, e.target.value);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </>
