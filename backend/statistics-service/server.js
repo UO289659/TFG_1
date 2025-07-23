@@ -211,6 +211,7 @@ async function createSharedTransactions({
 }
 
 // Función helper para actualizar transacciones (individuales o compartidas)
+// Función helper mejorada para actualizar transacciones (individuales o compartidas)
 async function updateTransaction(transactionId, updateData) {
   try {
     // Obtener la transacción original
@@ -283,14 +284,14 @@ async function updateTransaction(transactionId, updateData) {
         // SINCRONIZAR TODAS LAS TRANSACCIONES DEL GRUPO
         if (originalTransaction.createdBy) {
           const createdBy = originalTransaction.createdBy;
-          const originalClientId = originalTransaction.clientId.toString(); // Guardar el clientId original
+          const originalClientId = originalTransaction.clientId.toString();
           
           console.log("Sincronizando grupo con createdBy:", createdBy);
           
           // 1️⃣ Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
           const groupTransactions = await Transaction.find({ 
             createdBy,
-            name: originalTransaction.name // Asegurar que es el mismo gasto
+            name: originalTransaction.name
           });
 
           console.log("Transacciones del grupo encontradas:", groupTransactions.length);
@@ -333,28 +334,49 @@ async function updateTransaction(transactionId, updateData) {
               // El usuario sigue participando => actualizar su transacción
               console.log("Actualizando transacción de usuario:", txUserId);
               
-              // Preparar sharedWith actualizado (excluyendo al propio usuario)
-              const updatedSharedWith = preparedData.sharedWith
-                .filter(item => {
-                  const itemUserId = typeof item === 'object' ? item.userId.toString() : item.toString();
-                  return itemUserId !== txUserId;
-                })
-                .map(item => {
-                  if (typeof item === 'object' && item.userId) {
+              // 🔧 SOLUCIÓN: Preservar correctamente sharedWith según el tipo de división
+              let updatedSharedWith;
+              
+              if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
+                // Para división personalizada: mantener información completa de montos
+                updatedSharedWith = currentParticipantIds
+                  .filter(participantId => participantId !== txUserId) // Excluir al propio usuario
+                  .map(participantId => {
+                    // Buscar si este participante ya estaba en sharedWith original
+                    const existingShare = tx.sharedWith?.find(share => 
+                      share.userId?.toString() === participantId
+                    );
+                    
                     return {
-                      userId: new mongoose.Types.ObjectId(item.userId),
-                      amount: item.amount || 0,
-                      isPaid: item.isPaid || false,
+                      userId: new mongoose.Types.ObjectId(participantId),
+                      amount: preparedData.customAmounts[participantId] || 0,
+                      isPaid: existingShare?.isPaid || false
                     };
-                  } else if (typeof item === 'string') {
-                    return {
-                      userId: new mongoose.Types.ObjectId(item),
-                      amount: 0,
-                      isPaid: false
-                    };
-                  }
-                  return item;
-                });
+                  });
+              } else {
+                // Para división equitativa: usar la lógica original
+                updatedSharedWith = preparedData.sharedWith
+                  .filter(item => {
+                    const itemUserId = typeof item === 'object' ? item.userId.toString() : item.toString();
+                    return itemUserId !== txUserId;
+                  })
+                  .map(item => {
+                    if (typeof item === 'object' && item.userId) {
+                      return {
+                        userId: new mongoose.Types.ObjectId(item.userId),
+                        amount: item.amount || 0,
+                        isPaid: item.isPaid || false,
+                      };
+                    } else if (typeof item === 'string') {
+                      return {
+                        userId: new mongoose.Types.ObjectId(item),
+                        amount: 0,
+                        isPaid: false
+                      };
+                    }
+                    return item;
+                  });
+              }
 
               // Actualizar los campos de la transacción
               const updateFields = {
@@ -367,14 +389,22 @@ async function updateTransaction(transactionId, updateData) {
                 isShared: true
               };
 
-              // Calcular el nuevo valor si hay cambios en el monto o división
-              if (preparedData.value && preparedData.value !== tx.value) {
+              // 🔧 SOLUCIÓN: Calcular correctamente el valor según el tipo de división
+              if (preparedData.value !== undefined) {
                 if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
+                  // Para división personalizada: usar el monto específico del usuario
                   updateFields.value = preparedData.customAmounts[txUserId] || 0;
+                  updateFields.originalValue = preparedData.value; // Mantener el valor total original
                 } else {
-                  // División equitativa
+                  // Para división equitativa: dividir por igual
                   updateFields.value = preparedData.value / currentParticipantIds.length;
+                  updateFields.originalValue = preparedData.value;
                 }
+              }
+
+              // 🔧 SOLUCIÓN: Preservar customAmounts si es división personalizada
+              if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
+                updateFields.customAmounts = preparedData.customAmounts;
               }
 
               const updatedTx = await Transaction.findByIdAndUpdate(tx._id, updateFields, { new: true });
@@ -395,17 +425,30 @@ async function updateTransaction(transactionId, updateData) {
             console.log("Creando transacciones para nuevos participantes:", newParticipants);
             
             for (const newUserId of newParticipants) {
-              const newValue = preparedData.splitType === 'custom' && preparedData.customAmounts
-                ? preparedData.customAmounts[newUserId] || 0
-                : (preparedData.value || originalTransaction.value) / currentParticipantIds.length;
-
-              const newSharedWith = currentParticipantIds
-                .filter(id => id !== newUserId)
-                .map(id => ({
-                  userId: new mongoose.Types.ObjectId(id),
-                  amount: 0,
-                  isPaid: false
-                }));
+              let newValue;
+              let newSharedWith;
+              
+              if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
+                // División personalizada
+                newValue = preparedData.customAmounts[newUserId] || 0;
+                newSharedWith = currentParticipantIds
+                  .filter(id => id !== newUserId)
+                  .map(id => ({
+                    userId: new mongoose.Types.ObjectId(id),
+                    amount: preparedData.customAmounts[id] || 0,
+                    isPaid: id === creatorId // Solo el creador ha pagado inicialmente
+                  }));
+              } else {
+                // División equitativa
+                newValue = (preparedData.value || originalTransaction.value) / currentParticipantIds.length;
+                newSharedWith = currentParticipantIds
+                  .filter(id => id !== newUserId)
+                  .map(id => ({
+                    userId: new mongoose.Types.ObjectId(id),
+                    amount: newValue,
+                    isPaid: id === creatorId
+                  }));
+              }
 
               const newTransaction = new Transaction({
                 clientId: new mongoose.Types.ObjectId(newUserId),
@@ -413,12 +456,14 @@ async function updateTransaction(transactionId, updateData) {
                 type: preparedData.type || originalTransaction.type,
                 category: preparedData.category || originalTransaction.category,
                 value: newValue,
+                originalValue: preparedData.value || originalTransaction.value,
                 icon: preparedData.icon || originalTransaction.icon,
                 sharedWith: newSharedWith,
                 splitType: preparedData.splitType || originalTransaction.splitType,
                 totalParticipants: currentParticipantIds.length,
                 createdBy: originalTransaction.createdBy,
                 isShared: true,
+                customAmounts: preparedData.customAmounts || originalTransaction.customAmounts,
                 groupName: preparedData.groupName || originalTransaction.groupName || "Gasto compartido"
               });
 
@@ -500,6 +545,7 @@ async function updateTransaction(transactionId, updateData) {
       preparedData.totalParticipants = 1;
       preparedData.groupName = null;
       preparedData.isShared = false;
+      preparedData.customAmounts = null; // Limpiar customAmounts también
       
       // Actualizar la transacción actual y retornar
       const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
