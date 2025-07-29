@@ -590,6 +590,8 @@ app.post("/verify-payment", authMiddleware, async(req, res) => {
 
 app.post("/cancel-subscription", authMiddleware, async(req, res) => {
   try { 
+    console.log("🔄 Gateway: Procesando cancelación de suscripción para usuario:", req.user.id);
+    
     const response = await axios.post(
       `${paymentsServiceUrl}/cancel-subscription`, {},
       {
@@ -599,6 +601,7 @@ app.post("/cancel-subscription", authMiddleware, async(req, res) => {
       }
     );
     
+    console.log("✅ Gateway: Suscripción cancelada exitosamente");
     res.json(response.data);
   } catch (error) {
   console.error("❌ Gateway Error en /cancel-subscription");
@@ -613,4 +616,25 @@ app.post("/cancel-subscription", authMiddleware, async(req, res) => {
     response: error.response?.data
   });
 }
+});
+
+app.get('track/:id/details', authMiddleware, async(req, res) => {
+  try { 
+    const response = await axios.get(
+      `${statsServiceUrl}/track/${req.params.id}/details`,
+      {
+        headers: {
+          Authorization: req.headers.authorization
+        }
+      }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error("❌ Gateway Error en /track/:transactionId/details:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: error.response?.data?.error || "Error al obtener usuario",
+      details: error.response?.data
+    });
+  }
 });
