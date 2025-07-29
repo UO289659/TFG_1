@@ -116,8 +116,7 @@ function transformSharedWithData(sharedWith) {
     if (typeof item === 'object' && item.userId && item.amount !== undefined) {
       return {
         userId: new mongoose.Types.ObjectId(item.userId),
-        amount: item.amount,
-        isPaid: item.isPaid || false,
+        amount: item.amount
       };
     }
     
@@ -125,8 +124,7 @@ function transformSharedWithData(sharedWith) {
     if (typeof item === 'string') {
       return {
         userId: new mongoose.Types.ObjectId(item),
-        amount: 0,
-        isPaid: false,
+        amount: 0
       };
     }
     
@@ -134,8 +132,7 @@ function transformSharedWithData(sharedWith) {
     if (item.userId && typeof item.userId === 'string') {
       return {
         userId: new mongoose.Types.ObjectId(item.userId),
-        amount: item.amount || 0,
-        isPaid: item.isPaid || false,
+        amount: item.amount || 0
       };
     }
     
@@ -181,8 +178,7 @@ async function createSharedTransactions({
   // Contiene TODOS los participantes con sus montos
   const completeSharedWith = allParticipants.map(userId => ({
     userId,
-    amount: amounts[userId] || 0,
-    isPaid: userId === clientId // Solo el creador ha pagado inicialmente
+    amount: amounts[userId] || 0
   }));
   
   // Crear una transacción para cada participante
@@ -358,8 +354,7 @@ async function updateTransaction(transactionId, updateData) {
                     
                     return {
                       userId: new mongoose.Types.ObjectId(participantId),
-                      amount: preparedData.customAmounts[participantId] || 0,
-                      isPaid: existingShare?.isPaid || false
+                      amount: preparedData.customAmounts[participantId] || 0
                     };
                   });
               } else {
@@ -373,14 +368,12 @@ async function updateTransaction(transactionId, updateData) {
                     if (typeof item === 'object' && item.userId) {
                       return {
                         userId: new mongoose.Types.ObjectId(item.userId),
-                        amount: item.amount || 0,
-                        isPaid: item.isPaid || false,
+                        amount: item.amount || 0
                       };
                     } else if (typeof item === 'string') {
                       return {
                         userId: new mongoose.Types.ObjectId(item),
-                        amount: 0,
-                        isPaid: false
+                        amount: 0
                       };
                     }
                     return item;
@@ -444,8 +437,7 @@ async function updateTransaction(transactionId, updateData) {
                   .filter(id => id !== newUserId)
                   .map(id => ({
                     userId: new mongoose.Types.ObjectId(id),
-                    amount: preparedData.customAmounts[id] || 0,
-                    isPaid: id === creatorId // Solo el creador ha pagado inicialmente
+                    amount: preparedData.customAmounts[id] || 0
                   }));
               } else {
                 // División equitativa
@@ -454,8 +446,7 @@ async function updateTransaction(transactionId, updateData) {
                   .filter(id => id !== newUserId)
                   .map(id => ({
                     userId: new mongoose.Types.ObjectId(id),
-                    amount: newValue,
-                    isPaid: id === creatorId
+                    amount: newValue
                   }));
               }
 

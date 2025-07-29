@@ -14,12 +14,11 @@ const expenseSchema = new mongoose.Schema({
   // Campos para gastos compartidos
   sharedWith: [{ 
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    amount: Number,
-    isPaid: { type: Boolean, default: false }
+    amount: Number
   }],
   splitType: { 
     type: String, 
-    enum: ['equal', 'custom', 'percentage'], 
+    enum: ['equal', 'custom'], 
     default: 'equal' 
   },
   totalParticipants: Number,
