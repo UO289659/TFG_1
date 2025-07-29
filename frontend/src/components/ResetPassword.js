@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import Footer from "./Footer";
 
 
 const ResetPassword = () => {
@@ -29,6 +30,7 @@ const ResetPassword = () => {
   };
 
   return (
+    <>
     <div className="form-container">
       <div className="login-card">
         <h2>Restablecer Contraseña</h2>
@@ -58,6 +60,8 @@ const ResetPassword = () => {
         </form>
       </div>
     </div>
+    <Footer className={"footer-forgot-password"}/>
+    </>
   );
 };
 
