@@ -403,7 +403,7 @@ const Profile = () => {
                   <div className="section-icon">
                     <User size={24} />
                   </div>
-                  <h2 className="h4 mb-0">Información Personal</h2>
+                  <h2 className="h4 mb-0">Información personal</h2>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -456,12 +456,12 @@ const Profile = () => {
                   <div className="section-icon">
                     <Key size={24} />
                   </div>
-                  <h2 className="h4 mb-0">Cambiar Contraseña</h2>
+                  <h2 className="h4 mb-0">Cambiar contraseña</h2>
                 </div>
 
                 <form onSubmit={handlePasswordChange}>
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Contraseña Actual</label>
+                    <label className="form-label fw-semibold">Contraseña actual</label>
                     <input
                       name="actualPassword"
                       type="password"
@@ -473,7 +473,7 @@ const Profile = () => {
                   </div>
                   
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Nueva Contraseña</label>
+                    <label className="form-label fw-semibold">Nueva contraseña</label>
                     <input
                       name="newPassword"
                       type="password"
@@ -485,7 +485,7 @@ const Profile = () => {
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">Confirmar Nueva Contraseña</label>
+                    <label className="form-label fw-semibold">Confirmar nueva contraseña</label>
                     <input
                       name="repeatNewPassword"
                       type="password"
@@ -501,7 +501,7 @@ const Profile = () => {
                     className="btn btn-primary w-100"
                   >
                     <Key size={20} className="me-2" />
-                    Actualizar Contraseña
+                    Actualizar contraseña
                   </button>
                 </form>
               </div>
