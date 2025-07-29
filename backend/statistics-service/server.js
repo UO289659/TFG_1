@@ -217,7 +217,7 @@ async function updateTransaction(transactionId, updateData) {
     }
 
     // Limpiar y preparar datos - solo campos permitidos
-    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'groupName', 'totalParticipants', 'createdBy'];
+    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
     const preparedData = {};
     
     for (const field of allowedFields) {
@@ -267,8 +267,7 @@ async function updateTransaction(transactionId, updateData) {
             clientId: originalTransaction.clientId.toString(),
             sharedWith: friendIds,
             splitType: preparedData.splitType || 'equal',
-            customAmounts: preparedData.customAmounts || {},
-            groupName: preparedData.groupName || "Gasto compartido"
+            customAmounts: preparedData.customAmounts || {}
           });
 
           // Eliminar la transacción original ya que ahora tenemos múltiples transacciones
@@ -463,8 +462,7 @@ async function updateTransaction(transactionId, updateData) {
                 totalParticipants: currentParticipantIds.length,
                 createdBy: originalTransaction.createdBy,
                 isShared: true,
-                customAmounts: preparedData.customAmounts || originalTransaction.customAmounts,
-                groupName: preparedData.groupName || originalTransaction.groupName || "Gasto compartido"
+                customAmounts: preparedData.customAmounts || originalTransaction.customAmounts
               });
 
               const savedTransaction = await newTransaction.save();
@@ -506,10 +504,6 @@ async function updateTransaction(transactionId, updateData) {
           preparedData.totalParticipants = preparedData.sharedWith.length + 1;
         }
         
-        if (!preparedData.groupName && preparedData.sharedWith.length > 0) {
-          preparedData.groupName = "Gasto compartido";
-        }
-        
         // Actualizar y retornar para el caso sin createdBy
         const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
           new: true,
@@ -543,7 +537,6 @@ async function updateTransaction(transactionId, updateData) {
       preparedData.sharedWith = [];
       preparedData.splitType = null;
       preparedData.totalParticipants = 1;
-      preparedData.groupName = null;
       preparedData.isShared = false;
       preparedData.customAmounts = null; // Limpiar customAmounts también
       
@@ -590,8 +583,7 @@ async function createIndividualTransaction({
     sharedWith: [],
     splitType: null,
     totalParticipants: 1,
-    createdBy: new mongoose.Types.ObjectId(clientId),
-    groupName: null
+    createdBy: new mongoose.Types.ObjectId(clientId)
   });
 
   await transaction.save();
@@ -735,7 +727,7 @@ app.delete('/track/:id', async (req, res) => {
   }
 });
 
-// Endpoint para obtener todas las transacciones compartidas relacionadas
+/* // Endpoint para obtener todas las transacciones compartidas relacionadas
 app.get('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
   try {
     const { sharedTransactionId } = req.params;
@@ -813,7 +805,7 @@ app.put('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
     console.error("Error al actualizar transacciones compartidas:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
-});
+}); */
 
 app.get("/categories", authMiddleware, async (req, res) => {   
   try {     
@@ -931,7 +923,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     
     // Obtener todas las transacciones del usuario
     const transactions = await Transaction.find({ clientId })
-      .select('-_id -clientId -icon -__v -createdBy -sharedTransactionId -groupName')
+      .select('-_id -clientId -icon -__v -createdBy -sharedTransactionId')
       .lean();
 
     // Crear un Set con todos los userIds únicos de sharedWith
@@ -998,7 +990,6 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         formattedTx.splitType = formattedTx.splitType || 'N/A';
         formattedTx.totalParticipants = formattedTx.totalParticipants || 'N/A';
         formattedTx.isShared = formattedTx.isShared ? 'Sí' : 'No';
-        formattedTx.groupName = formattedTx.groupName || 'N/A';
         
         // Formatear customAmounts
         if (formattedTx.customAmounts && typeof formattedTx.customAmounts === 'object') {
