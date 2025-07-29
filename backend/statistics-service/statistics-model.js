@@ -23,7 +23,6 @@ const expenseSchema = new mongoose.Schema({
   },
   totalParticipants: Number,
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  groupName: String,
   
   // NUEVO CAMPO: Para agrupar transacciones compartidas
   sharedTransactionId: { 
