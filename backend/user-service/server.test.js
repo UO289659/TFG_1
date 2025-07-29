@@ -314,6 +314,8 @@ describe('Auth Service Tests', () => {
     });
   });
 
+  //?¿pruebas de restablecer contraseña?¿
+
   describe('GET /profile', () => {
     it('should get user profile', async () => {
       const res = await request(app)
@@ -425,7 +427,6 @@ describe('Auth Service Tests', () => {
       expect(res.status).toBe(400);
       expect(res.body.message).toBe('La contraseña actual es incorrecta.');
     });
-
     it('should return 404 when user does not exist', async () => {
         const updateData = {
         actualPassword: 'password123',
@@ -466,6 +467,8 @@ describe('Auth Service Tests', () => {
       expect(res.status).toBe(400);
       expect(res.body.message).toBe('Faltan datos obligatorios.');
     });
+
+    //que la nueva contraseña coincida con la repetición se comprueba en el frontend, no es necesario probarlo aquí
   });
   
 
