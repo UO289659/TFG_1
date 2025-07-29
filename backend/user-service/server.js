@@ -91,13 +91,13 @@ app.post('/register', async (req, res) => {
         // Generate a JWT token
         const token = jwt.sign({ userId: user._id, isPremium: user.isPremium, email: user.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
         // Respond with the token and user information
-        res.json({ token: token, email: email, createdAt: user.createdAt });
+        res.json({ token: token, email: email });
         
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(400).json({ error: error.message }); 
     }
   });
 
@@ -147,7 +147,13 @@ app.put("/password", authMiddleware, async(req, res) => {
   try{
   const clientId = req.user.id; // Se obtiene del middleware de autenticación
   const { actualPassword, newPassword } = req.body;
+  if(!actualPassword || !newPassword){
+    return res.status(400).json({ message: "Faltan datos obligatorios." });
+  }
   const user = await User.findById(clientId);
+  if(!user){
+    return res.status(404).json({ message: "Usuario no encontrado" });
+  }
  if(await bcrypt.compare(actualPassword, user.password)){
   const newHashedPassword= await bcrypt.hash(newPassword, 10);
   user.password=newHashedPassword;
@@ -283,6 +289,10 @@ app.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
+  if(!password){
+    return res.status(400).json({ error: "La nueva contraseña es requerida." });
+  }
+
   try {
     const user = await User.findOne({
       resetToken: token,
@@ -311,6 +321,10 @@ app.get("/friends", authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id)
       .populate('friends.userId', 'name surname email')
       .select('friends');
+
+      if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
     
     // Filtrar solo amigos activos
     const activeFriends = user.friends
@@ -333,7 +347,6 @@ app.get("/friends", authMiddleware, async (req, res) => {
   app.get('/users', async (req, res)=>{
     try{
       const users = await User.find({isPremium:true});
-       console.log(users);
       return res.json(users);
     }catch (error) {
       console.log(error);
@@ -400,7 +413,19 @@ app.patch('/users/:userId', async (req, res, next) => {
   app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=>{
     try{
     const { senderId, receiverId } = req.body;
+    if(!senderId || !receiverId){
+      return res.status(400).json({ message: "Faltan datos obligatorios." });
+    }
+    const sender= await User.findById(senderId);
+    const receiver= await User.findById(receiverId);
 
+    if(!sender || !receiver){
+      return res.status(404).json({ message: "Usuario emisor o receptor no encontrado." });
+    }
+  
+    if(senderId === receiverId){
+      return res.status(400).json({ message: "No puedes enviarte una solicitud de amistad a ti mismo." });
+    }
       const newFriendRequest=new FriendsRequest({
         senderId:senderId,
         receiverId: receiverId,
@@ -415,7 +440,13 @@ app.patch('/users/:userId', async (req, res, next) => {
 
   app.get('/friend-requests/received', authMiddleware, ensurePremium, async (req, res)=>{
     try{
-      const userId = req.user.id;
+     const userId = req.user.id;
+    
+    // Verificar si el usuario existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
       const requests= await FriendsRequest.find({receiverId:userId, status:"pending"})
       .populate('senderId', 'name surname email') // Campos que quieres obtener
       .sort({ createdAt: -1 });
@@ -428,8 +459,14 @@ app.patch('/users/:userId', async (req, res, next) => {
   app.get('/friend-requests/sent', authMiddleware, ensurePremium, async (req, res)=>{
     try{
       const userId = req.user.id;
+      const user = await User.findById(userId);
+
+      if(!user){
+        return res.status(404).json({error: "Usuario no encontrado"});
+      }
+
       const requests= await FriendsRequest.find({senderId:userId, status:"pending"})
-       .populate('receiverId', 'name surname email') // Campos que quieres obtener
+       .populate('receiverId', 'name surname email'); // Campos que quieres obtener
       res.json(requests);
     }catch (error) {
       console.log(error);
@@ -524,6 +561,10 @@ app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, asy
     if (request.receiverId.toString() !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ error: "La solicitud ya ha sido procesada" });
+    }
     
     request.status = 'rejected';
     await request.save();
@@ -542,13 +583,21 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     const friendId = req.params.friendId;
     
     // Remover de ambos usuarios
-    await User.findByIdAndUpdate(userId, {
+    const user=await User.findByIdAndUpdate(userId, {
       $pull: { friends: { userId: friendId } }
     });
+
+    if(!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
     
-    await User.findByIdAndUpdate(friendId, {
+    const friend=await User.findByIdAndUpdate(friendId, {
       $pull: { friends: { userId: userId } }
     });
+
+    if(!friend) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
     
     res.json({ message: "Amigo eliminado correctamente" });
   } catch (error) {
@@ -638,7 +687,7 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
   });
 
 // Agregar INTERNAL_API_KEY a las variables requeridas
-const requiredEnvVars = [
+/* const requiredEnvVars = [
   'MONGO_URI', 'SECRET_KEY', 'INTERNAL_API_KEY'
 ];
 requiredEnvVars.forEach(varName => {
@@ -646,4 +695,6 @@ requiredEnvVars.forEach(varName => {
     console.error(`❌ Variable de entorno requerida no encontrada: ${varName}`);
     process.exit(1);
   }
-});
+}); */
+
+module.exports = app;

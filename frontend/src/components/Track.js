@@ -71,20 +71,20 @@ const [friends, setFriends] = useState([]);
 const [clientId, setClientId] = useState(null);
 
 // Obtener categorías únicas de gastos y de ingresos por separado
-const expenseCategoriesUnique = [...new Set(data.filter(i => i.type === "expense").map(i => i.category))];
-const incomeCategoriesUnique = [...new Set(data.filter(i => i.type === "income").map(i => i.category))];
+const expenseCategoriesUnique = [...new Set(data.filter(i => i.type === "expense").map(i => i.category.name))];
+const incomeCategoriesUnique = [...new Set(data.filter(i => i.type === "income").map(i => i.category.name))];
 
 // Total por categoría gastos
 const expenseData = expenseCategoriesUnique.map(cat =>
   data
-    .filter(i => i.type === "expense" && i.category === cat)
+    .filter(i => i.type === "expense" && i.category.name === cat)
     .reduce((acc, curr) => acc + Number(curr.value), 0)
 );
 
 // Total por categoría ingresos
 const incomeData = incomeCategoriesUnique.map(cat =>
   data
-    .filter(i => i.type === "income" && i.category === cat)
+    .filter(i => i.type === "income" && i.category.name === cat)
     .reduce((acc, curr) => acc + Number(curr.value), 0)
 );
 
@@ -467,10 +467,7 @@ const handleCreateTransaction = async (formData) => {
 
 
 const handleEditTransaction = async (transaction) => {
-  console.log("✏️ Editando transacción:", transaction);
-
- 
-  
+  console.log("✏️ Editando transacción:", transaction);  
   try {
    
     setEditingTransaction(transaction);
@@ -1242,7 +1239,7 @@ const safeTotal = totalAmount > 0 ? totalAmount : 1;
               <div className="transaction-icon">{transaction.icon}</div>
               <div className="transaction-details">
                 <div className="transaction-name">{transaction.name}</div>
-                <div className="transaction-category">{transaction.category}</div>
+                <div className="transaction-category">{transaction.category.name}</div>
               </div>
               <div className={`transaction-amount ${transaction.type}`}>
                 {transaction.type === 'expense' ? '-' : '+'}

@@ -18,11 +18,83 @@ jest.mock('../auth-middleware/index', () => ({
   ensurePremium: (req, res, next) => next()
 }));
 
-jest.mock('./seedCategories', () => jest.fn().mockResolvedValue());
-jest.mock('./seedIcons', () => jest.fn().mockResolvedValue());
-
 let mongoServer;
 let app;
+
+// Variables para almacenar IDs de categorías creadas
+let comidaCategoryId;
+let transporteCategoryId;
+let salarioCategoryId;
+let electronicaCategoryId;
+let metaAhorroCategoryId;
+
+// Función para agregar datos de prueba
+async function addTestData() {
+
+  const comidaCategory = await Categoria.create({ name: 'Comida', type: 'expense' });
+  const transporteCategory = await Categoria.create({ name: 'Transporte', type: 'expense' });
+  const salarioCategory = await Categoria.create({ name: 'Salario', type: 'income' });
+
+  comidaCategoryId = comidaCategory._id;
+  transporteCategoryId = transporteCategory._id;
+  salarioCategoryId = salarioCategory._id;
+
+   // Crear categorías de usuario
+  const electronicaCategory = await UserCategory.create({
+    userId: clientId,
+    name: 'Electronica',
+    type: 'expense'
+  });
+  const metaAhorroCategory = await UserCategory.create({
+    userId: clientId,
+    name: 'Meta ahorro',
+    type: 'income'
+  });
+  
+  electronicaCategoryId = electronicaCategory._id;
+  metaAhorroCategoryId = metaAhorroCategory._id;
+
+  // Crear transacciones de prueba
+  await Transaction.create([
+    {
+      clientId: clientId,
+      name: 'Gasto Test 1',
+      type: 'expense',
+      category: comidaCategoryId,
+      value: 100,
+      icon: '🍕',
+      createdAt: new Date()
+    },
+    {
+      clientId: clientId,
+      name: 'Gasto Test 2',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50,
+      icon: '🚗',
+      createdAt: new Date()
+    },
+    {
+      clientId: clientId,
+      name: 'Ingreso Test',
+      type: 'income',
+      category: salarioCategoryId,
+      value: 2000,
+      icon: '💰',
+      createdAt: new Date('2024-01-15')
+    }
+  ]);
+
+  // Crear iconos de prueba
+  await Icono.create([
+    { emoji: '🍕' },
+    { emoji: '🚗' },
+    { emoji: '💰' },
+    { emoji: '🏠' }
+  ]);
+
+
+}
 
 // Datos de prueba
 const sampleTransaction = {
@@ -38,61 +110,6 @@ const sampleCategory = {
   name: 'Test Category',
   type: 'expense',
 };
-
-// Función para agregar datos de prueba
-async function addTestData() {
-  // Crear transacciones de prueba
-  await Transaction.create([
-    {
-      clientId: clientId,
-      name: 'Gasto Test 1',
-      type: 'expense',
-      category: 'Comida',
-      value: 100,
-      icon: '🍕',
-      createdAt: new Date()
-    },
-    {
-      clientId: clientId,
-      name: 'Gasto Test 2',
-      type: 'expense',
-      category: 'Transporte',
-      value: 50,
-      icon: '🚗',
-      createdAt: new Date()
-    },
-    {
-      clientId: clientId,
-      name: 'Ingreso Test',
-      type: 'income',
-      category: 'Salario',
-      value: 2000,
-      icon: '💰',
-      createdAt: new Date('2024-01-15')
-    }
-  ]);
-
-  // Crear categorías de prueba
-  await Categoria.create([
-    { name: 'Comida', type: 'expense' },
-    { name: 'Transporte', type: 'expense' },
-    { name: 'Salario', type: 'income' },
-  ]);
-
-  // Crear iconos de prueba
-  await Icono.create([
-    { emoji: '🍕' },
-    { emoji: '🚗' },
-    { emoji: '💰' },
-    { emoji: '🏠' }
-  ]);
-
-  // Crear categorías de usuario
-  await UserCategory.create([
-    { userId: clientId, name: 'Electronica', type: 'expense' },
-    { userId: clientId, name: 'Meta ahorro', type: 'income' }
-  ]);
-}
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -348,7 +365,7 @@ describe('Server Tests', () => {
         clientId: clientId,
         name: 'Original Transaction',
         type: 'expense',
-        category: 'Comida',
+        category: comidaCategoryId,
         value: 100,
         icon: '🍕',
         createdBy: new mongoose.Types.ObjectId(),
@@ -379,7 +396,7 @@ describe('Server Tests', () => {
         clientId: clientId,
         name: 'Original Transaction',
         type: 'expense',
-        category: 'Comida',
+        category: comidaCategoryId,
         value: 150,
         icon: '🍕',
         createdBy: new mongoose.Types.ObjectId(),
@@ -420,7 +437,7 @@ describe('Server Tests', () => {
         clientId: clientId,
         name: 'Individual Custom Expense',
         type: 'expense',
-        category: 'Transporte',
+        category: transporteCategoryId,
         value: 120,
         icon: '🚗',
         createdBy: new mongoose.Types.ObjectId(),
@@ -481,7 +498,7 @@ describe('Server Tests', () => {
           clientId: clientId,
           name: 'Update Shared Test',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 30,
           icon: '🍕',
           createdBy: createdBy,
@@ -497,7 +514,7 @@ describe('Server Tests', () => {
           clientId: userId2,
           name: 'Update Shared Test',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 50,
           icon: '🍕',
           createdBy: createdBy,
@@ -513,7 +530,7 @@ describe('Server Tests', () => {
           clientId: userId3,
           name: 'Update Shared Test',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 20,
           icon: '🍕',
           createdBy: createdBy,
@@ -573,7 +590,7 @@ describe('Server Tests', () => {
           clientId: clientId,
           name: 'Shared to Individual',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 50,
           icon: '🍕',
           createdBy: createdBy,
@@ -589,7 +606,7 @@ describe('Server Tests', () => {
           clientId: userId2,
           name: 'Shared to Individual',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 50,
           icon: '🍕',
           createdBy: createdBy,
@@ -605,7 +622,7 @@ describe('Server Tests', () => {
           clientId: userId3,
           name: 'Shared to Individual',
           type: 'expense',
-          category: 'Comida',
+          category: comidaCategoryId,
           value: 50,
           icon: '🍕',
           createdBy: createdBy,
@@ -667,7 +684,7 @@ describe('Server Tests', () => {
         clientId: clientId,
         name: 'Transaction to Delete',
         type: 'expense',
-        category: 'Comida',
+        category: comidaCategoryId,
         value: 100,
         icon: '🍕'
       });

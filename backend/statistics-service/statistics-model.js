@@ -5,7 +5,7 @@ const expenseSchema = new mongoose.Schema({
   clientId: { type: String, required: true },
   name: { type: String, required: true },
   type: { type: String, enum: ["expense", "income"], required: true },
-  category: { type: String, required: true },
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Categoria', required: true },
   value: { type: Number, required: true },
   originalValue: { type: Number, required: false },
   icon: { type: String },
@@ -38,5 +38,8 @@ const expenseSchema = new mongoose.Schema({
   }
 });
 
+expenseSchema.pre(['find', 'findOne', 'findOneAndUpdate'], function() {
+  this.populate('category');
+});
 
 module.exports = mongoose.model("Transaction", expenseSchema);

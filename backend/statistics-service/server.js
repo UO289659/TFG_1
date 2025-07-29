@@ -230,6 +230,15 @@ async function updateTransaction(transactionId, updateData) {
       }
     }
 
+     if (preparedData.category) {
+      const categoryExists = await Categoria.findOne({
+      name: { $regex: new RegExp(`^${preparedData.category}$`, 'i') }
+    });
+    if(categoryExists) {
+      preparedData.category = categoryExists._id;
+    }
+  }
+
     // Transformar createdBy si está presente
     if (preparedData.createdBy && typeof preparedData.createdBy === 'string') {
       preparedData.createdBy = new mongoose.Types.ObjectId(preparedData.createdBy);
@@ -617,13 +626,17 @@ app.post('/track', async (req, res) => {
     return res.status(400).json({ error: "Datos incompletos" });
   }
 
+  const categoryExists = await Categoria.findOne({
+  name: { $regex: new RegExp(`^${category}$`, 'i') }
+});
+
   try {
     // Si no hay usuarios compartidos, crear transacción individual
     if (!sharedWith || sharedWith.length === 0) {
       const transaction = await createIndividualTransaction({
         name,
         type,
-        category,
+        category: categoryExists._id,
         value,
         icon,
         clientId
@@ -639,7 +652,7 @@ app.post('/track', async (req, res) => {
     const transactions = await createSharedTransactions({
       name,
       type,
-      category,
+      category: categoryExists._id,
       value,
       originalValue,
       icon,
@@ -811,42 +824,41 @@ app.put('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
   }
 });
 
-app.get("/categories", authMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
+app.get("/categories", authMiddleware, async (req, res) => {   
+  try {     
+    const userId = req.user.id;      
 
-    // 1. Obtener categorías globales
-    const categoriasGlobales = await Categoria.find();
+    // 1. Obtener SOLO categorías globales (sin categoryType)
+    const categoriasGlobales = await Categoria.find({ 
+      categoryType: { $exists: false } // Solo las que no tienen discriminador
+    });      
 
-    // 2. Obtener categorías personalizadas del usuario
-    const categoriasUsuario = await UserCategory.find({ userId });
+    // 2. Obtener categorías personalizadas del usuario     
+    const categoriasUsuario = await UserCategory.find({ userId });      
 
-    // 3. Combinar ambas listas
-    const todas = [
-      ...categoriasGlobales.map(c => ({
-        name: c.name,
-        type: c.type,
-       
-      })),
-      ...categoriasUsuario.map(c => ({
-        name: c.name,
-        type: c.type,
-      }))
-    ];
+    // 3. Combinar ambas listas     
+    const todas = [       
+      ...categoriasGlobales.map(c => ({         
+        name: c.name,         
+        type: c.type,               
+      })),       
+      ...categoriasUsuario.map(c => ({         
+        name: c.name,         
+        type: c.type,       
+      }))     
+    ];      
 
-    // 4. Agrupar por tipo y extraer iconos únicos
-    const porTipo = {
-      expense: todas.filter(c => c.type === "expense").map(c => c.name),
-      income: todas.filter(c => c.type === "income").map(c => c.name),
-    
-    };
+    // 4. Agrupar por tipo     
+    const porTipo = {       
+      expense: todas.filter(c => c.type === "expense").map(c => c.name),       
+      income: todas.filter(c => c.type === "income").map(c => c.name),          
+    };      
 
-    res.json(porTipo);
-
-  } catch (err) {
-    console.error("❌ Error exacto en /categories:", err);
-    res.status(500).json({ error: err.message || "Fallo interno" });
-  }
+    res.json(porTipo);    
+  } catch (err) {     
+    console.error("❌ Error exacto en /categories:", err);     
+    res.status(500).json({ error: err.message || "Fallo interno" });   
+  } 
 });
 
 

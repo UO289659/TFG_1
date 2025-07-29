@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Categoria = require('./category-model');
 
 const CategoriaUsuarioSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
@@ -6,4 +7,5 @@ const CategoriaUsuarioSchema = new mongoose.Schema({
   type: { type: String, enum: ['income', 'expense'], required: true },
 });
 
-module.exports = mongoose.model('CategoriaUsuario', CategoriaUsuarioSchema);
+const CategoriaUsuario = Categoria.discriminator('CategoriaUsuario', CategoriaUsuarioSchema);
+module.exports = CategoriaUsuario;
