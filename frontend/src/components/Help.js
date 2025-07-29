@@ -42,58 +42,148 @@ import '../styles/variables.css';
 import Footer from "./Footer.js";
 
 const faqData = [
+   {
+    categoria: "Transacciones",
+    preguntas: [
+       {
+        pregunta: "¿Dónde puedo añadir mis gastos o ingresos?",
+        respuesta: "1) Accede a la pestaña 'Track', 2) Haz clic en '+ Nueva transacción' 3) Completa los datos requeridos, 4) Guarda los cambios",
+        tags: ["registrar", "ingreso", "gasto", "transacciones"]
+      },
+      {
+        pregunta: "¿Qué significa el tipo 'Ingreso' o 'Gasto'?",
+        respuesta: "El tipo define la naturaleza de la transacción: 'Ingreso' representa dinero que entra (salario, ventas, etc.) y 'Gasto' representa dinero que sale (compras, pagos, etc.). Esta clasificación es fundamental para generar estadísticas precisas.",
+        tags: ["tipos", "ingreso", "gasto", "transacciones"]
+      },
+      {
+        pregunta: "¿Puedo modificar una transacción después de crearla?",
+        respuesta: "Sí, puedes editar transacciones existentes. Busca la transacción en tu historial, haz clic en el icono de edición y modifica los campos necesarios. Los cambios se reflejarán automáticamente en tus estadísticas.",
+        tags: ["editar", "transacciones", "modificar"]
+      },
+       {
+        pregunta: "¿Puedo eliminar una transacción después de crearla?",
+        respuesta: "Sí, puedes eliminar transacciones existentes. Busca la transacción en tu historial y haz clic en el icono de papelera.",
+        tags: ["eliminar", "transacciones", "gasto", "ingreso"]
+      },
+      {
+        pregunta: "¿Puedo filtrar transacciones por fecha?",
+        respuesta: "Sí, puedes filtrar transacciones a través de los botones proporcionados en la pantall principal: 'día', 'semana', 'mes', 'año' o 'periodo'.",
+        tags: ["filtrar", "transacciones", "gasto", "ingreso"]
+      },
+       {
+        pregunta: "¿Puedo filtrar transacciones en un rango de fechas concreto?",
+        respuesta: "Sí, puedes filtrar transacciones en un rango de fechas haciendo clic en el botón 'periodo' proporcionado en la pantalla principal",
+        tags: ["filtrar", "transacciones", "gasto", "ingreso", "fecha concreta"]
+      }
+    ]
+  },
   {
     categoria: "Categorías",
     preguntas: [
       {
         pregunta: "¿Puedo editar una categoría global?",
-        respuesta: "Las categorías globales no se pueden editar directamente para mantener la consistencia del sistema. Sin embargo, puedes crear una categoría personalizada con características similares. Ve a la sección 'Categorías' y selecciona 'Crear Nueva Categoría' para personalizar completamente tus opciones.",
+        respuesta: "Las categorías globales no se pueden editar directamente para mantener la consistencia del sistema. Sin embargo, puedes crear una categoría personalizada con características similares. Ve a la sección 'Categorías' y selecciona '+ Nueva categoría' para personalizar completamente tus opciones.",
         tags: ["categorías", "editar", "personalizar"]
       },
       {
         pregunta: "¿Cómo creo una categoría personalizada?",
-        respuesta: "Para crear una categoría personalizada: 1) Ve a la sección 'Categorías', 2) Haz clic en 'Nueva Categoría', 3) Completa el nombre, selecciona el tipo (Ingreso/Gasto), 4) Elige un icono y color, 5) Guarda los cambios.",
+        respuesta: "Para crear una categoría personalizada: 1) Ve a la sección 'Categorías', 2) Haz clic en '+ Nueva Categoría', 3) Completa el nombre y selecciona el tipo (Ingreso/Gasto), 4) Guarda los cambios.",
         tags: ["categorías", "crear", "personalizar"]
+      }, {
+        pregunta: "¿Puedo ver las categorías que tengo activas?",
+        respuesta: "Sí, en la pestaña 'Categorías' se mostrará una lista de todas las categorías activas.",
+        tags: ["categorías", "ver", "activas"]
       }
     ]
   },
-  {
-    categoria: "Transacciones",
-    preguntas: [
-      {
-        pregunta: "¿Qué significa el tipo 'Ingreso' o 'Gasto'?",
-        respuesta: "El tipo define la naturaleza de la transacción: 'Ingreso' representa dinero que entra (salario, ventas, etc.) y 'Gasto' representa dinero que sale (compras, pagos, etc.). Esta clasificación es fundamental para generar estadísticas precisas y análisis financieros.",
-        tags: ["tipos", "ingreso", "gasto", "transacciones"]
-      },
-      {
-        pregunta: "¿Puedo modificar una transacción después de crearla?",
-        respuesta: "Sí, puedes editar transacciones existentes. Busca la transacción en tu historial, haz clic en el ícono de edición y modifica los campos necesarios. Los cambios se reflejarán automáticamente en tus estadísticas.",
-        tags: ["editar", "transacciones", "modificar"]
-      }
-    ]
-  },
+ 
   {
     categoria: "Estadísticas",
     preguntas: [
       {
         pregunta: "¿Dónde veo mis estadísticas?",
-        respuesta: "Puedes ver tus estadísticas en la pestaña 'Análisis' del panel principal. Aquí encontrarás gráficos de ingresos vs gastos, distribución por categorías, tendencias temporales y resúmenes mensuales detallados.",
+        respuesta: "Puedes ver tus estadísticas en el panel principal. Aquí encontrarás gráficos de ingresos vs gastos, distribución por categorías y tendencias temporales.",
         tags: ["estadísticas", "análisis", "gráficos"]
       },
       {
         pregunta: "¿Puedo exportar mis datos?",
-        respuesta: "Sí, puedes exportar tus datos en formato CSV o PDF desde la sección de estadísticas. Esta función te permite hacer backup de tu información o analizarla en otras herramientas.",
+        respuesta: "Sí, puedes exportar tus datos en formato CSV si eres usuario Premium. Esta función te permite hacer backup de tu información o analizarla en otras herramientas.",
         tags: ["exportar", "datos", "backup"]
       }
     ]
-  }
+  },
+   {
+    categoria: "Planes de suscripción",
+    preguntas: [
+      {
+        pregunta: "¿Cómo puedo cambiar mi plan de suscripción?",
+        respuesta: "En la pestaña 'Perfil' verás tu plan activo junto con un botón para cambiarlo.",
+        tags: ["premium", "básico", "suscripción"]
+      },
+      {
+        pregunta: "¿Qué funciones tiene el plan premium?",
+        respuesta: "Con el plan premium tendrás soporte prioritario y acceso a funciones avanzadas como añadir amigos, registrar gastos compartidos y exportar transacciones.",
+        tags: ["exportar", "amigos", "gastos compartidos", "premium"]
+      }
+    ]
+  },
+   {
+    categoria: "Amigos",
+    preguntas: [
+      {
+        pregunta: "¿Cómo puedo buscar amigos?",
+        respuesta: "En la pestaña 'Amigos' verás la opción de buscar amigos junto con una barra de navegación donde podrás introducir el nombre, apellido o email de los usuarios premium.",
+        tags: ["premium", "amigo", "buscar"]
+      },
+      {
+        pregunta: "¿Cómo puedo añadir amigos?",
+        respuesta: "Para añadir amigos, basta con buscarlos a través de la barra de navegación. En los resultados de la búsqueda, aparecerán los usuarios junto con un botón para poder agregarlos.",
+        tags: ["premium", "amigos", "añadir"]
+      },
+        {
+        pregunta: "¿Dónde puedo ver mis solicitudes de amistad?",
+        respuesta: "En la pestaña 'Amigos', dentro del apartado 'Solicitudes' verás las solicitudes recibidas y enviadas con su correspondiente estado.",
+        tags: ["premium", "amigos", "añadir"]
+      },
+       {
+        pregunta: "¿Dónde puedo ver mis amigos?",
+        respuesta: "En la pestaña 'Amigos', se mostrará un listado de todos tus amigos.",
+        tags: ["premium", "amigos", "ver"]
+      },
+        {
+        pregunta: "¿Cómo puedo eliminar amigos?",
+        respuesta: "Para eliminar amigos, accede a la pestaña 'Amigos'. Se mostrará una lista de amigos junto con un botón de eliminado.",
+        tags: ["premium", "amigos", "eliminar"]
+      }
+    ]
+  },
+   {
+    categoria: "Contacto",
+    preguntas: [
+      {
+        pregunta: "¿Cómo puedo contactar con la empresa?",
+        respuesta: "En la pestaña 'Contacto' verás un formulario que te permitirá enviar un mensaje a la empresa. No obstante, también puedes enviar un correo electrónico a través de la dirección de correo habilitada en la misma página",
+        tags: ["contacto", "problema", "soporte"]
+      }
+    ]
+  },
+   {
+    categoria: "Editar datos personales",
+    preguntas: [
+      {
+        pregunta: "¿Cómo puedo editar mis datos personales?",
+        respuesta: "En la pestaña 'Perfil' verás dos formularios habilitados para tal fin. El primero de ellos, te permitirá actualizar tu nombre y apellido. El segundo, te permitirá cambia tu contraseña",
+        tags: ["editar", "datos personales", "contraseña"]
+      }
+    ]
+  },
 ];
 
 const guideSteps = [
   {
     icon: <CheckIcon sx={{ color: 'var(--purple)' }} />,
     title: "Registro e Inicio de Sesión",
-    description: "Crea tu cuenta desde la pantalla principal y accede con tus credenciales."
+    description: "Crea tu cuenta desde la pantalla de inicio y accede con tus credenciales."
   },
   {
     icon: <CategoryIcon sx={{ color: 'var(--purple)' }} />,
