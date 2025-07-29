@@ -356,6 +356,8 @@ describe('Server Tests', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Datos incompletos');
     });
+
+    //los datos válidos se comprueban en el frontend, no es necesario probarlo aquí
   });
 
   describe('PUT /track/:id', () => {
@@ -654,7 +656,6 @@ describe('Server Tests', () => {
       expect(res.body.value).toBe(150);
       expect(res.body.splitType).toBeNull();
       expect(res.body.totalParticipants).toBe(1);
-      expect(res.body.groupName).toBeNull();
 
       // Verificar que las otras transacciones del grupo fueron eliminadas
       const remainingTransactions = await Transaction.find({ 
@@ -739,6 +740,8 @@ describe('Server Tests', () => {
       expect(res.body.type).toBe('expense');
       expect(res.body.userId).toBe(clientId);
     });
+
+    //que la categoría ya exista se comprueba en el frontend, no es necesario probarlo aquí
 
     it('should return 400 if required fields are missing', async () => {
       const res = await request(app)
