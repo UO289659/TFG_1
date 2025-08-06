@@ -123,14 +123,16 @@ const ConfigurarCategorias = () => {
           <div className="categories-list">
             {cats.map((cat, index) => (
               <div
-                key={cat}
+                key={cat.name}
                 className="category-item"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="category-info">
                   <div className={`category-dot ${tipo === "expense" ? "expense-dot" : "income-dot"}`}></div>
-                  <span className="category-name">{cat}</span>
+                  <span className="category-name">{cat.name}</span>
                 </div>
+                
+                {cat.categoryType === "CategoriaUsuario" ? (
                 <button
                   onClick={() => handleDeleteCategoria(tipo, cat)}
                   className="delete-button"
@@ -138,13 +140,18 @@ const ConfigurarCategorias = () => {
                 >
                   <Trash2 size={16} />
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ) : (
+                <span className="read-only-indicator" title="Las categorías predeterminadas no se pueden eliminar">
+                  🔒
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 
   // Pantalla de carga inicial
   if (initialLoading) {
