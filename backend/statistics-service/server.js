@@ -690,29 +690,29 @@ app.put('/track/:id', async (req, res) => {
   }
 });
 
-function agruparPorCategoria(transactions) {
-  // Usamos un objeto para acumular por categoría
-  const agrupados = {};
+// function agruparPorCategoria(transactions) {
+//   // Usamos un objeto para acumular por categoría
+//   const agrupados = {};
 
-  transactions.forEach(({ category, type, value, icon, name, createdAt, _id }) => {
-    const key = `${type}-${category}`; // diferenciamos gastos e ingresos por categoría
-    if (!agrupados[key]) {
-      agrupados[key] = {
-        category,
-        type,
-        value: 0,
-        icon,
-        name,
-        createdAt,
-        _id 
-      };
-    }
-    agrupados[key].value += Number(value);
-  });
+//   transactions.forEach(({ category, type, value, icon, name, createdAt, _id }) => {
+//     const key = `${type}-${category}`; // diferenciamos gastos e ingresos por categoría
+//     if (!agrupados[key]) {
+//       agrupados[key] = {
+//         category,
+//         type,
+//         value: 0,
+//         icon,
+//         name,
+//         createdAt,
+//         _id 
+//       };
+//     }
+//     agrupados[key].value += Number(value);
+//   });
 
-  // Convertimos el objeto a array
-  return Object.values(agrupados);
-}
+//   // Convertimos el objeto a array
+//   return Object.values(agrupados);
+// }
 
 app.delete('/track/:id', async (req, res) => {
   try {
@@ -823,19 +823,21 @@ app.get("/categories", authMiddleware, async (req, res) => {
     const todas = [       
       ...categoriasGlobales.map(c => ({         
         name: c.name,         
-        type: c.type,               
+        type: c.type,     
+        categoryType: c.categoryType,          
       })),       
       ...categoriasUsuario.map(c => ({         
         name: c.name,         
         type: c.type,       
+        categoryType: c.categoryType,
       }))     
     ];      
 
     // 4. Agrupar por tipo     
-    const porTipo = {       
-      expense: todas.filter(c => c.type === "expense").map(c => c.name),       
-      income: todas.filter(c => c.type === "income").map(c => c.name),          
-    };      
+    const porTipo = {
+            expense: todas.filter(c => c.type === "expense"),
+            income: todas.filter(c => c.type === "income"),
+        };    
 
     res.json(porTipo);    
   } catch (err) {     
@@ -882,10 +884,14 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
     console.log("name: "+name);
      // Verificamos si la categoría existe en ambas colecciones
      //TODO: AQUI NO SE PUEDEN BORRAR LAS CATEGORIAS POR DEFECTO PORQUE SE BORRAN PARA TODOS LOS USUARIOS
-    const categoryInCategoria = await Categoria.findOne({ userId, name, type });
+    const categoryInCategoria = await Categoria.findOne({  name, type , categoryType: { $exists: false } }); // Solo categorías globales
+
+    if(categoryInCategoria) {
+      return res.status(400).json({ message: "No se puede eliminar una categoría por defecto" });
+    }
     const categoryInUserCategory = await UserCategory.findOne({ userId, name, type });
 
-    if (!categoryInCategoria && !categoryInUserCategory) {
+    if (!categoryInUserCategory) {
       return res.status(404).json({ message: "Categoría no encontrada en ninguna colección" });
     }
 
@@ -894,9 +900,9 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
     let deleted2 = false;
 
     // Si la categoría existe en Categoria, intentamos eliminarla
-    if (categoryInCategoria) {
-      deleted = await Categoria.findOneAndDelete({ userId, name, type });
-    }
+    // if (categoryInCategoria) {
+    //   deleted = await Categoria.findOneAndDelete({ userId, name, type });
+    // }
 
     // Si la categoría existe en UserCategory, intentamos eliminarla
     if (categoryInUserCategory) {

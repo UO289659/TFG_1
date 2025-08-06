@@ -775,6 +775,20 @@ describe('Server Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Categoría eliminada correctamente');
     });
+    
+     it('should throw 400 error: cannot delete default category', async () => {
+      // Crear categoría primero
+     
+
+      const res = await request(app)
+        .delete('/categorie')
+        .send({
+           name: 'Comida', type: 'expense' 
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('No se puede eliminar una categoría por defecto');
+    });
 
     it('should return 404 if category not found', async () => {
       const res = await request(app)
