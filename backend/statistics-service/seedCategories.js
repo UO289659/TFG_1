@@ -5,27 +5,34 @@ const Categoria = require("./category-model")
 
 
 const categoriasIniciales = [
-  { name: "Comida", type: "expense" },
-  { name: "Ropa", type: "expense" },
-  { name: "Hogar", type: "expense" },
-  { name: "Transporte", type: "expense" },
-  { name: "Salud", type: "expense" },
+  { name: "Comida", type: "expense", categoryType:"DefaultCategory" },
+  { name: "Ropa", type: "expense", categoryType:"DefaultCategory" },
+  { name: "Hogar", type: "expense", categoryType:"DefaultCategory" },
+  { name: "Transporte", type: "expense", categoryType:"DefaultCategory" },
+  { name: "Salud", type: "expense" , categoryType:"DefaultCategory"},
   { name: "Regalo", type: "expense" },
-  { name: "Ocio", type: "expense" },
-  { name: "Ahorro", type: "income" },
-  { name: "Salario", type: "income" },
-  { name: "Bonos", type: "income" },
-  { name: "Otros ingresos", type: "income" },
+  { name: "Ocio", type: "expense" , categoryType:"DefaultCategory"},
+  { name: "Ahorro", type: "income" , categoryType:"DefaultCategory"},
+  { name: "Salario", type: "income", categoryType:"DefaultCategory" },
+  { name: "Bonos", type: "income", categoryType:"DefaultCategory" },
+  { name: "Otros ingresos", type: "income", categoryType:"DefaultCategory" },
 ];
+
 
 const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
 
 module.exports = async function seedCategorias() {
   try {
-    const existentes = await Categoria.find();
-    if (existentes.length === 0) {
-      await Categoria.insertMany(categoriasIniciales);
-      console.log("✅ Categorías insertadas correctamente");
+    const existentes = await Categoria.find({categoryType: "DefaultCategory"});
+    if (existentes.length < categoriasIniciales.length) {
+      for (const cat of categoriasIniciales) {
+      await Categoria.updateOne(
+        { name: cat.name },     // criterio de búsqueda
+        { $setOnInsert: cat },      // lo que se insertará si no existe
+        { upsert: true }
+      );
+    }
+    console.log("✅ Categorías insertadas o actualizadas correctamente");
     } else {
       console.log("🔁 Categorías ya existen, no se duplican");
     }
