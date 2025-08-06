@@ -43,7 +43,7 @@ const ConfigurarCategorias = () => {
 
     // Verificar si la categoría ya existe
     const categoriaExiste = categorias[nuevoTipo].some(
-      cat => cat.toLowerCase() === nuevoNombre.trim().toLowerCase()
+      cat => cat.name.toLowerCase() === nuevoNombre.trim().toLowerCase()
     );
     
     if (categoriaExiste) {
@@ -61,10 +61,15 @@ const ConfigurarCategorias = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      setCategorias((prev) => ({
-        ...prev,
-        [nuevoTipo]: [...prev[nuevoTipo], nuevoNombre.trim()]
-      }));
+        const nuevaCategoria = {
+      name: nuevoNombre.trim(),
+      categoryType: "CategoriaUsuario" // Marcar como categoría de usuario
+    };
+    
+    setCategorias((prev) => ({
+      ...prev,
+      [nuevoTipo]: [...prev[nuevoTipo], nuevaCategoria] // ✅ Ahora guardas el objeto completo
+    }));
       
       setNuevoNombre("");
       setShowForm(false);
@@ -87,7 +92,7 @@ const ConfigurarCategorias = () => {
       
       setCategorias((prev) => ({
         ...prev,
-        [type]: prev[type].filter((cat) => cat !== name),
+        [type]: prev[type].filter((cat) => cat.name !== name),
       }));
       
       toast.success(`Categoría "${name}" eliminada correctamente`);
@@ -134,7 +139,7 @@ const ConfigurarCategorias = () => {
                 
                 {cat.categoryType === "CategoriaUsuario" ? (
                 <button
-                  onClick={() => handleDeleteCategoria(tipo, cat)}
+                  onClick={() => handleDeleteCategoria(tipo, cat.name)}
                   className="delete-button"
                   title="Eliminar categoría"
                 >
