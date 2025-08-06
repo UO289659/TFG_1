@@ -52,10 +52,10 @@ const Hero = () => {
 
 
   const stats = [
-    { value: "50K+", label: "Usuarios Activos" },
-    { value: "+100", label: "Transacciones registradas" },
-    { value: "98%", label: "Satisfacción" },
-    { value: "24/7", label: "Soporte" }
+    {value: "∞", label: "Transacciones" },
+    { value: "11", label: "Categorías principales" },
+    { value: "100%", label: "Control total" },
+    { value: "24/7", label: "Disponible" }
   ];
 
   const handleNavigation = (path) => {
