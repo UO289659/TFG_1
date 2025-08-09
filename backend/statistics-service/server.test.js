@@ -370,7 +370,7 @@ describe('Server Tests', () => {
         category: comidaCategoryId,
         value: 100,
         icon: '🍕',
-        createdBy: new mongoose.Types.ObjectId(),
+        createdBy: clientId,
       });
 
        console.log('Transaction created:', transaction._id);
@@ -401,7 +401,7 @@ describe('Server Tests', () => {
         category: comidaCategoryId,
         value: 150,
         icon: '🍕',
-        createdBy: new mongoose.Types.ObjectId(),
+        createdBy: clientId,
       });
 
       const updateData = {
@@ -442,7 +442,7 @@ describe('Server Tests', () => {
         category: transporteCategoryId,
         value: 120,
         icon: '🚗',
-        createdBy: new mongoose.Types.ObjectId(),
+        createdBy: clientId,
         sharedWith: [],
         isShared: false
       });
@@ -584,7 +584,7 @@ describe('Server Tests', () => {
     it('should convert shared transaction to individual', async () => {
       const userId2 = new mongoose.Types.ObjectId();
       const userId3 = new mongoose.Types.ObjectId();
-      const createdBy = new mongoose.Types.ObjectId();
+      const createdBy = new mongoose.Types.ObjectId(clientId);
 
       // Crear transacciones compartidas (simulando el grupo)
       const sharedTransactions = await Transaction.insertMany([
@@ -918,6 +918,92 @@ it('should update shared transaction from equal split to custom split', async ()
   const user3Share = creatorTx.sharedWith.find(share => share.userId.toString() === userId3.toString());
   expect(user2Share.amount).toBe(70);
   expect(user3Share.amount).toBe(50);
+});
+
+it('should return error 500 when not creator user tries to update transaction', async () => {
+  const userId2 = new mongoose.Types.ObjectId();
+  const userId3 = new mongoose.Types.ObjectId();
+  const createdBy = new mongoose.Types.ObjectId(userId2);
+
+  // Crear transacciones compartidas con división equitativa
+  const equalTransactions = await Transaction.insertMany([
+    {
+      clientId: clientId,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50, // 150/3 = 50 cada uno
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: userId2, amount: 50 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    },
+    {
+      clientId: userId2,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50,
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 50 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    },
+    {
+      clientId: userId3,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50,
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 50 },
+        { userId: userId2, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    }
+  ]);
+
+  const transactionToUpdate = equalTransactions[0];
+  
+
+  const updateData = {
+    splitType: 'custom',
+    customAmounts: {
+      [clientId]: 80,
+      [userId2.toString()]: 70,
+      [userId3.toString()]: 50
+    },
+    sharedWith: [
+      { userId: userId2.toString(), amount: 70 },
+      { userId: userId3.toString(), amount: 50 }
+    ]
+  };
+
+  const res = await request(app)
+    .put(`/track/${transactionToUpdate._id}`)
+    .send(updateData);
+
+  expect(res.status).toBe(500);
+  expect(res.body.error).toBe('Acceso denegado: no eres el creador de esta transacción');
+
+
 });
   });
 
