@@ -208,12 +208,16 @@ async function createSharedTransactions({
 
 // Función helper para actualizar transacciones (individuales o compartidas)
 // Función helper mejorada para actualizar transacciones (individuales o compartidas)
-async function updateTransaction(transactionId, updateData) {
+async function updateTransaction(transactionId, updateData, userId) {
   try {
     // Obtener la transacción original
     const originalTransaction = await Transaction.findById(transactionId);
     if (!originalTransaction) {
       throw new Error('Transacción no encontrada');
+    }
+
+    if(originalTransaction.createdBy.toString() !== userId) {
+        throw new Error('Acceso denegado: no eres el creador de esta transacción');
     }
 
     // Limpiar y preparar datos - solo campos permitidos
@@ -657,11 +661,12 @@ app.post('/track', async (req, res) => {
 });
 
 // Endpoint PUT refactorizado
-app.put('/track/:id', async (req, res) => {
+app.put('/track/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
     
-    const result = await updateTransaction(id, req.body);
+    const result = await updateTransaction(id, req.body, req.user.id);
 
     console.log("resultado de update: ", result);
 
@@ -929,7 +934,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     
     // Obtener todas las transacciones del usuario
     const transactions = await Transaction.find({ clientId })
-      .select('-_id -clientId -icon -__v -createdBy -sharedTransactionId')
+      .select('-_id -clientId -icon -__v -createdBy')
       .lean();
 
     // Crear un Set con todos los userIds únicos de sharedWith
