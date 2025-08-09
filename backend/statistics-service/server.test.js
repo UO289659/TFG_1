@@ -676,6 +676,249 @@ describe('Server Tests', () => {
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('Transacción no encontrada');
     });
+
+
+it('should update shared transaction from custom split to equal split', async () => {
+      const userId2 = new mongoose.Types.ObjectId();
+      const userId3 = new mongoose.Types.ObjectId();
+      const createdBy = new mongoose.Types.ObjectId(clientId);
+      const originalValue = 150; // Valor original de la transacción
+
+      // Crear transacciones compartidas (simulando el grupo)
+      const customTransactions = await Transaction.insertMany([
+    {
+      clientId: clientId,
+      name: 'Custom to Equal Test',
+      type: 'expense',
+      category: comidaCategoryId,
+      value: 60, // Monto personalizado del creador
+      originalValue: originalValue,
+      icon: '🍕',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: userId2, amount: 40 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'custom',
+      totalParticipants: 3,
+      
+    },
+    {
+      clientId: userId2,
+      name: 'Custom to Equal Test',
+      type: 'expense',
+      category: comidaCategoryId,
+      value: 40,
+      originalValue: originalValue,
+      icon: '🍕',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 60 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'custom',
+      totalParticipants: 3,
+     
+    },
+    {
+      clientId: userId3,
+      name: 'Custom to Equal Test',
+      type: 'expense',
+      category: comidaCategoryId,
+      value: 50,
+      originalValue: originalValue,
+      icon: '🍕',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 60 },
+        { userId: userId2, amount: 40 }
+      ],
+      isShared: true,
+      splitType: 'custom',
+      totalParticipants: 3,
+     
+    }
+  ]);
+
+  const transactionToUpdate = customTransactions[0];
+  
+
+  const updateData = {
+    splitType: 'equal',
+    sharedWith: [
+      userId2.toString(),
+      userId3.toString()
+    ],
+    originalValue: originalValue, // Mantener el valor original para la división equitativa
+    value: originalValue 
+  };
+
+  const res = await request(app)
+    .put(`/track/${transactionToUpdate._id}`)
+    .send(updateData);
+
+  expect(res.status).toBe(200);
+
+  // Verificar que la transacción se actualizó correctamente
+  expect(res.body.splitType).toBe('equal');
+  expect(res.body.isShared).toBe(true);
+  expect(res.body.totalParticipants).toBe(3);
+
+
+
+  // Verificar que todas las transacciones del grupo se actualizaron
+  const updatedTransactions = await Transaction.find({ 
+    name: 'Custom to Equal Test',
+    createdBy: createdBy
+  });
+  console.log("de custom a equal", updatedTransactions);
+
+  expect(updatedTransactions).toHaveLength(3);
+
+  // Cada participante debe tener el mismo valor (150/3 = 50)
+  const expectedValuePerPerson = originalValue / 3;
+  
+  updatedTransactions.forEach(tx => {
+    expect(tx.value).toBe(expectedValuePerPerson);
+    expect(tx.splitType).toBe('equal');
+    expect(tx.isShared).toBe(true);
+    expect(tx.totalParticipants).toBe(3);
+  
+
+  });
+
+  // Verificar que los sharedWith se actualizaron correctamente
+  const creatorTx = updatedTransactions.find(tx => tx.clientId.toString() === clientId);
+  expect(creatorTx.sharedWith).toHaveLength(2);
+  creatorTx.sharedWith.forEach(share => {
+    expect(share.amount).toBe(0);
+  });
+});
+
+it('should update shared transaction from equal split to custom split', async () => {
+  const userId2 = new mongoose.Types.ObjectId();
+  const userId3 = new mongoose.Types.ObjectId();
+  const createdBy = new mongoose.Types.ObjectId(clientId);
+
+  // Crear transacciones compartidas con división equitativa
+  const equalTransactions = await Transaction.insertMany([
+    {
+      clientId: clientId,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50, // 150/3 = 50 cada uno
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: userId2, amount: 50 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    },
+    {
+      clientId: userId2,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50,
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 50 },
+        { userId: userId3, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    },
+    {
+      clientId: userId3,
+      name: 'Equal to Custom Test',
+      type: 'expense',
+      category: transporteCategoryId,
+      value: 50,
+      originalValue: 150,
+      icon: '🚗',
+      createdBy: createdBy,
+      sharedWith: [
+        { userId: new mongoose.Types.ObjectId(clientId), amount: 50 },
+        { userId: userId2, amount: 50 }
+      ],
+      isShared: true,
+      splitType: 'equal',
+      totalParticipants: 3
+    }
+  ]);
+
+  const transactionToUpdate = equalTransactions[0];
+  const newTotalValue = 200;
+
+  const updateData = {
+    value: newTotalValue,
+    splitType: 'custom',
+    customAmounts: {
+      [clientId]: 80,
+      [userId2.toString()]: 70,
+      [userId3.toString()]: 50
+    },
+    sharedWith: [
+      { userId: userId2.toString(), amount: 70 },
+      { userId: userId3.toString(), amount: 50 }
+    ]
+  };
+
+  const res = await request(app)
+    .put(`/track/${transactionToUpdate._id}`)
+    .send(updateData);
+
+  expect(res.status).toBe(200);
+
+  // Verificar que la transacción se actualizó correctamente
+  expect(res.body.splitType).toBe('custom');
+  expect(res.body.isShared).toBe(true);
+  expect(res.body.totalParticipants).toBe(3);
+  expect(res.body.value).toBe(80); // Valor personalizado del creador
+
+  // Verificar que todas las transacciones del grupo se actualizaron
+  const updatedTransactions = await Transaction.find({ 
+    name: 'Equal to Custom Test',
+    createdBy: createdBy
+  });
+
+  expect(updatedTransactions).toHaveLength(3);
+
+  // Verificar valores personalizados para cada participante
+  const creatorTx = updatedTransactions.find(tx => tx.clientId.toString() === clientId);
+  const user2Tx = updatedTransactions.find(tx => tx.clientId.toString() === userId2.toString());
+  const user3Tx = updatedTransactions.find(tx => tx.clientId.toString() === userId3.toString());
+
+  expect(creatorTx.value).toBe(80);
+  expect(user2Tx.value).toBe(70);
+  expect(user3Tx.value).toBe(50);
+
+  // Verificar que todas tienen splitType custom y customAmounts
+  updatedTransactions.forEach(tx => {
+    expect(tx.splitType).toBe('custom');
+    expect(tx.isShared).toBe(true);
+    expect(tx.totalParticipants).toBe(3);
+    expect(tx.originalValue).toBe(newTotalValue);
+
+  });
+
+  // Verificar sharedWith con montos personalizados
+  expect(creatorTx.sharedWith).toHaveLength(2);
+  const user2Share = creatorTx.sharedWith.find(share => share.userId.toString() === userId2.toString());
+  const user3Share = creatorTx.sharedWith.find(share => share.userId.toString() === userId3.toString());
+  expect(user2Share.amount).toBe(70);
+  expect(user3Share.amount).toBe(50);
+});
   });
 
   describe('DELETE /track/:id', () => {
@@ -721,11 +964,25 @@ describe('Server Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('expense');
       expect(res.body).toHaveProperty('income');
-      expect(res.body.expense).toContain('Comida');
-      expect(res.body.income).toContain('Salario');
+      const expenseNames = res.body.expense.map(cat => cat.name);
+      //categorías por defecto
+      expect(expenseNames).toContain('Comida');
+      expect(expenseNames).toContain('Transporte');
       //categorías de usuario
-      expect(res.body.expense).toContain('Electronica');
-      expect(res.body.income).toContain('Meta ahorro');
+      expect(expenseNames).toContain('Electronica');
+      
+      // Check that income categories contain the expected items  
+      //categoría por defecto
+      const incomeNames = res.body.income.map(cat => cat.name);
+      expect(incomeNames).toContain('Salario');
+      //categoría de usuario
+      expect(incomeNames).toContain('Meta ahorro');
+
+      // Verify the structure of category objects
+      expect(res.body.expense[0]).toHaveProperty('name');
+      expect(res.body.expense[0]).toHaveProperty('type');
+      expect(res.body.income[0]).toHaveProperty('name');
+      expect(res.body.income[0]).toHaveProperty('type');
     });
   });
 
