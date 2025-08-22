@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Microservicio de correo electrónico para la aplicación de finanzas
+ * @description Servidor Express que proporciona endpoints para el envío de correos
+ * electrónicos incluyendo formulario de contacto, restablecimiento de contraseñas
+ * y confirmaciones de registro utilizando Nodemailer y Gmail SMTP
+ * @author Carmen Espinosa Martínez
+ * @version 1.0.0
+ * @requires express
+ * @requires nodemailer
+ * @requires cors
+ * @requires mongoose
+ * @requires dotenv
+ */
+
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
@@ -34,7 +48,30 @@ const transporter = nodemailer.createTransport({
 });
 
 
-// Ruta para enviar correo a través de 'contactar'
+/**
+ * Endpoint para enviar correos desde el formulario de contacto
+ * @function
+ * @name POST /send-email
+ * @description Procesa y envía correos electrónicos del formulario de contacto web
+ * @param {Object} req - Objeto de petición HTTP
+ * @param {Object} req.body - Cuerpo de la petición
+ * @param {string} req.body.name - Nombre del remitente
+ * @param {string} req.body.email - Correo electrónico del remitente
+ * @param {string} req.body.subject - Asunto del mensaje
+ * @param {string} req.body.message - Contenido del mensaje
+ * @param {Object} res - Objeto de respuesta HTTP
+ * @returns {Object} JSON con resultado del envío o error
+ * @throws {Error} Error 400 si faltan campos requeridos
+ * @throws {Error} Error 500 si falla el envío del correo
+ * @example
+ * // POST /send-email
+ * {
+ *   "name": "Juan Pérez",
+ *   "email": "juan@ejemplo.com",
+ *   "subject": "Consulta sobre la aplicación",
+ *   "message": "Tengo una pregunta sobre las funcionalidades..."
+ * }
+ */
 app.post('/send-email', (req, res) => {
      console.log("📨 Microservicio de correo recibió:", req.body); // 👈 agrega esto
   const { name, email, subject, message } = req.body;
@@ -74,7 +111,26 @@ app.post('/send-email', (req, res) => {
   });
 });
 
-// Ruta específica para enviar correos de restablecimiento de contraseña
+/**
+ * Endpoint para enviar correos de restablecimiento de contraseña
+ * @function
+ * @name POST /send-reset-email
+ * @description Envía correos electrónicos con enlaces de restablecimiento de contraseña
+ * @param {Object} req - Objeto de petición HTTP
+ * @param {Object} req.body - Cuerpo de la petición
+ * @param {string} req.body.to - Dirección de correo del destinatario
+ * @param {string} req.body.resetLink - Enlace de restablecimiento de contraseña
+ * @param {Object} res - Objeto de respuesta HTTP
+ * @returns {Object} JSON con resultado del envío o error
+ * @throws {Error} Error 400 si faltan parámetros requeridos
+ * @throws {Error} Error 500 si falla el envío del correo
+ * @example
+ * // POST /send-reset-email
+ * {
+ *   "to": "usuario@ejemplo.com",
+ *   "resetLink": "https://miapp.com/reset-password?token=abc123"
+ * }
+ */
 app.post('/send-reset-email', (req, res) => {
   console.log("📨 Enviando correo de restablecimiento:", req.body);
   
@@ -123,6 +179,28 @@ app.post('/send-reset-email', (req, res) => {
   });
 });
 
+/**
+ * Endpoint para enviar correos de confirmación de registro
+ * @function
+ * @name POST /send-registration-email
+ * @description Envía correos electrónicos de confirmación cuando se registra un nuevo usuario
+ * @param {Object} req - Objeto de petición HTTP
+ * @param {Object} req.body - Cuerpo de la petición
+ * @param {string} req.body.to - Dirección de correo del destinatario
+ * @param {string} req.body.subject - Asunto del correo de confirmación
+ * @param {string} req.body.message - Mensaje de confirmación
+ * @param {Object} res - Objeto de respuesta HTTP
+ * @returns {Object} JSON con resultado del envío o error
+ * @throws {Error} Error 400 si faltan parámetros requeridos
+ * @throws {Error} Error 500 si falla el envío del correo
+ * @example
+ * // POST /send-registration-email
+ * {
+ *   "to": "nuevousuario@ejemplo.com",
+ *   "subject": "Bienvenido a la aplicación",
+ *   "message": "Tu registro se ha completado exitosamente..."
+ * }
+ */
 app.post('/send-registration-email', (req, res) => {
   console.log("📨 Enviando correo de registro:", req.body);
 
