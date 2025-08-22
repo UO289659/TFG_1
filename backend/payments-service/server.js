@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Payment Service - Servicio de pagos con Stripe y Socket.IO
+ * @description Microservicio que maneja las suscripciones premium, webhooks de Stripe
+ * y notificaciones en tiempo real a través de Socket.IO
+ * @author Carmen Espinosa Martínez
+ * @version 1.0.0
+ */
 const express = require("express");
 const cors = require("cors");
 const mongoose = require('mongoose');
@@ -26,7 +33,10 @@ const io = socketIo(server, {
 
 const userConnections = new Map();
 
-// Middleware para autenticar conexiones Socket.IO
+/**
+ * Middleware para autenticar conexiones Socket.IO
+ * Verifica el token JWT en el handshake de la conexión
+ */
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   
@@ -46,7 +56,26 @@ io.use((socket, next) => {
 });
 
 
-// Manejar conexiones Socket.IO
+/**
+ * @typedef {Object} UserData
+ * @property {string} id - ID del usuario
+ * @property {string} email - Email del usuario
+ * @property {string} name - Nombre del usuario
+ * @property {boolean} isPremium - Si el usuario tiene suscripción premium
+ * @property {boolean} subscriptionActive - Si la suscripción está activa
+ * @property {Date} planExpirationDate - Fecha de expiración del plan
+ */
+
+/**
+ * @typedef {Object} TokenUpdateData
+ * @property {string} token - Nuevo token JWT
+ * @property {UserData} user - Datos del usuario actualizados
+ */
+
+/**
+ * Manejo de conexiones Socket.IO
+ * Gestiona la conexión, desconexión y actualización de tokens en tiempo real
+ */
 io.on('connection', (socket) => {
   console.log(`🔌 Usuario conectado: ${socket.userEmail} (${socket.userId})`);
   
@@ -99,7 +128,14 @@ io.on('connection', (socket) => {
   });
 });
 
-// Función para notificar actualización de token a un usuario específico
+/**
+ * Función para notificar actualización de token a un usuario específico
+ * @async
+ * @function notifyTokenUpdate
+ * @param {string} userId - ID del usuario a notificar
+ * @returns {Promise<void>}
+ * @description Envía un token actualizado a un usuario conectado específico
+ */
 const notifyTokenUpdate = async (userId) => {
   const socket = userConnections.get(userId);
   if (socket) {
@@ -142,7 +178,20 @@ const notifyTokenUpdate = async (userId) => {
   }
 };
 
-// Stripe webhook necesita raw body
+/**
+ * @typedef {Object} StripeEvent
+ * @property {string} type - Tipo de evento de Stripe
+ * @property {Object} data - Datos del evento
+ * @property {Object} data.object - Objeto principal del evento
+ */
+
+/**
+ * Webhook de Stripe
+ * @route POST /webhook
+ * @description Maneja los webhooks de Stripe para eventos de pago y suscripción
+ * @param {express.Request} req - Request object (raw body)
+ * @param {express.Response} res - Response object
+ */
 app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -205,7 +254,27 @@ requiredEnvVars.forEach(varName => {
 
 console.log('✅ Variables de entorno verificadas');
 
-// ✅ MEJORAR: Crear sesión de Stripe Checkout con mejor manejo de errores
+/**
+ * @typedef {Object} CheckoutRequest
+ * @property {string} priceId - ID del precio en Stripe
+ * @property {string} billingCycle - Ciclo de facturación ('monthly' | 'yearly')
+ * @property {string} plan - Nombre del plan
+ */
+
+/**
+ * @typedef {Object} CheckoutResponse
+ * @property {string} sessionId - ID de la sesión de checkout
+ */
+
+/**
+ * Crear sesión de Stripe Checkout
+ * @route POST /create-checkout-session
+ * @middleware authMiddleware
+ * @param {express.Request<{}, CheckoutResponse, CheckoutRequest>} req - Request con datos del checkout
+ * @param {express.Response<CheckoutResponse>} res - Response con sessionId
+ * @returns {Promise<void>}
+ * @description Crea una sesión de pago en Stripe para suscripción premium
+ */
 app.post('/create-checkout-session', authMiddleware, async (req, res) => {
   try {
     const { priceId, billingCycle, plan } = req.body;
@@ -299,7 +368,28 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ MEJORAR: Verificar pago con mejor manejo de errores
+/**
+ * @typedef {Object} PaymentVerificationRequest
+ * @property {string} sessionId - ID de la sesión de Stripe
+ */
+
+/**
+ * @typedef {Object} PaymentVerificationResponse
+ * @property {boolean} success - Si la verificación fue exitosa
+ * @property {string} message - Mensaje de confirmación
+ * @property {string} token - Nuevo token JWT
+ * @property {UserData} user - Datos del usuario actualizados
+ */
+
+/**
+ * Verificar pago completado
+ * @route POST /verify-payment
+ * @middleware authMiddleware
+ * @param {express.Request<{}, PaymentVerificationResponse, PaymentVerificationRequest>} req - Request con sessionId
+ * @param {express.Response<PaymentVerificationResponse>} res - Response con confirmación
+ * @returns {Promise<void>}
+ * @description Verifica que el pago se completó y actualiza el usuario a premium
+ */
 app.post('/verify-payment', authMiddleware, async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -400,7 +490,15 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Las funciones auxiliares permanecen igual...
+/**
+ * Maneja el pago exitoso desde webhook de Stripe
+ * @async
+ * @function handleSuccessfulPayment
+ * @param {express.Request} req - Request object
+ * @param {Object} session - Sesión de checkout de Stripe
+ * @returns {Promise<void>}
+ * @description Procesa un pago exitoso y actualiza el usuario a premium
+ */
 async function handleSuccessfulPayment(req, session) {
   try {
     if (session.metadata && session.metadata.userId) {
@@ -433,6 +531,15 @@ async function handleSuccessfulPayment(req, session) {
   }
 }
 
+/**
+ * Maneja la renovación de suscripción desde webhook de Stripe
+ * @async
+ * @function handleSubscriptionRenewal
+ * @param {express.Request} req - Request object
+ * @param {Object} invoice - Factura de Stripe
+ * @returns {Promise<void>}
+ * @description Procesa la renovación de una suscripción y extiende la fecha de expiración
+ */
 async function handleSubscriptionRenewal(req, invoice) {
   try {
     if (invoice.subscription_details && invoice.subscription_details.metadata) {
@@ -466,6 +573,15 @@ async function handleSubscriptionRenewal(req, invoice) {
   }
 }
 
+/**
+ * Maneja la cancelación de suscripción desde webhook de Stripe
+ * @async
+ * @function handleSubscriptionCancellation
+ * @param {express.Request} req - Request object
+ * @param {Object} subscription - Suscripción de Stripe
+ * @returns {Promise<string|void>} - ID del usuario cancelado o void
+ * @description Procesa la cancelación de una suscripción y revierte el usuario a free
+ */
 async function handleSubscriptionCancellation(req, subscription) {
   try {
     if (subscription.metadata && subscription.metadata.userId) {
@@ -495,7 +611,21 @@ async function handleSubscriptionCancellation(req, subscription) {
   }
 }
 
-// Ruta para cancelar suscripción
+/**
+ * @typedef {Object} CancellationResponse
+ * @property {boolean} success - Si la cancelación fue exitosa
+ * @property {string} message - Mensaje de confirmación
+ */
+
+/**
+ * Cancelar suscripción
+ * @route POST /cancel-subscription
+ * @middleware authMiddleware
+ * @param {express.Request<{}, CancellationResponse, {}>} req - Request object
+ * @param {express.Response<CancellationResponse>} res - Response con confirmación
+ * @returns {Promise<void>}
+ * @description Cancela la suscripción del usuario al final del período actual
+ */
 app.post('/cancel-subscription', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -530,7 +660,23 @@ app.post('/cancel-subscription', authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ AGREGAR: Ruta de health check
+/**
+ * @typedef {Object} HealthCheckResponse
+ * @property {string} status - Estado del servicio
+ * @property {string} service - Nombre del servicio
+ * @property {string} mongodb - Estado de conexión a MongoDB
+ * @property {string} stripe - Estado de configuración de Stripe
+ */
+
+/**
+ * Health check del servicio
+ * @route GET /health
+ * @param {express.Request} req - Request object
+ * @param {express.Response<HealthCheckResponse>} res - Response con estado del servicio
+ * @returns {void}
+ * @description Verifica el estado del servicio y sus dependencias
+ */
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
