@@ -1,3 +1,11 @@
+/**
+ * @fileoverview Statistics Service - Servicio de estadísticas y transacciones
+ * @description Microservicio que maneja transacciones financieras, categorías, 
+ * gastos compartidos y exportación de datos
+ * @author Carmen Espinosa Martínez
+ * @version 1.0.0
+ */
+
 const express = require("express");
 const cors = require("cors");
 const mongoose = require('mongoose');
@@ -52,7 +60,21 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   });
 
   
+/**
+ * @typedef {Object} DateRangeQuery
+ * @property {string} start - Fecha de inicio (ISO string)
+ * @property {string} end - Fecha de fin (ISO string)
+ */
 
+/**
+ * Obtener gastos por rango de fechas
+ * @route GET /gastos/rango
+ * @middleware authMiddleware
+ * @param {express.Request<{}, TransactionData[], {}, DateRangeQuery>} req - Request con parámetros de fecha
+ * @param {express.Response<TransactionData[]>} res - Response con transacciones
+ * @returns {Promise<void>}
+ * @description Obtiene todas las transacciones del usuario en un rango de fechas específico
+ */
   app.get('/gastos/rango', authMiddleware, async (req, res) => {
   const { start, end } = req.query;
   const clientId = req.user.id;
@@ -83,7 +105,20 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   }
 });
 
-// Endpoint para obtener los gastos
+/**
+ * @typedef {Object} PeriodParams
+ * @property {string} period - Período de tiempo (day/week/month/year)
+ */
+
+/**
+ * Obtener gastos por período
+ * @route GET /gastos/:period
+ * @middleware authMiddleware
+ * @param {express.Request<PeriodParams, TransactionData[], {}>} req - Request con período
+ * @param {express.Response<TransactionData[]>} res - Response con transacciones
+ * @returns {Promise<void>}
+ * @description Obtiene transacciones del usuario para un período específico
+ */
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
   try {
     const { period } = req.params;
@@ -107,7 +142,13 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
   }
 });
 
-// Función helper para transformar datos de sharedWith
+/**
+ * Función helper para transformar datos de sharedWith
+ * @function transformSharedWithData
+ * @param {Array<string|Object>} sharedWith - Array de usuarios compartidos
+ * @returns {SharedParticipant[]} Array transformado con estructura consistente
+ * @description Normaliza los datos de usuarios compartidos a una estructura consistente
+ */
 function transformSharedWithData(sharedWith) {
   if (!sharedWith || !Array.isArray(sharedWith)) return [];
   
@@ -140,7 +181,27 @@ function transformSharedWithData(sharedWith) {
   });
 }
 
-// Función helper para crear transacciones compartidas
+/**
+ * @typedef {Object} SharedTransactionOptions
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor total
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente creador
+ * @property {string[]} sharedWith - IDs de usuarios compartidos
+ * @property {string} splitType - Tipo de división (equal/custom)
+ * @property {Object} customAmounts - Montos personalizados
+ */
+
+/**
+ * Función helper para crear transacciones compartidas
+ * @async
+ * @function createSharedTransactions
+ * @param {SharedTransactionOptions} options - Opciones para crear transacciones compartidas
+ * @returns {Promise<TransactionData[]>} Array de transacciones creadas
+ * @description Crea múltiples transacciones para gastos compartidos entre usuarios
+ */
 async function createSharedTransactions({
   name,
   type,
@@ -206,8 +267,27 @@ async function createSharedTransactions({
   return transactions;
 }
 
-// Función helper para actualizar transacciones (individuales o compartidas)
-// Función helper mejorada para actualizar transacciones (individuales o compartidas)
+/**
+ * @typedef {Object} UpdateResult
+ * @property {TransactionData} [transaction] - Transacción actualizada
+ * @property {boolean} [isConverted] - Si se convirtió a compartida
+ * @property {string} [message] - Mensaje de resultado
+ * @property {TransactionData[]} [transactions] - Múltiples transacciones (si se convirtió)
+ * @property {string} [originalClientId] - ID del cliente original
+ * @property {string} [deletedTransactionId] - ID de transacción eliminada
+ */
+
+/**
+ * Función helper para actualizar transacciones (individuales o compartidas)
+ * @async
+ * @function updateTransaction
+ * @param {string} transactionId - ID de la transacción a actualizar
+ * @param {Partial<TransactionData>} updateData - Datos a actualizar
+ * @param {string} userId - ID del usuario que realiza la actualización
+ * @returns {Promise<UpdateResult>} Resultado de la actualización
+ * @description Actualiza una transacción existente, manejando conversiones entre individual y compartida
+ * @throws {Error} Si la transacción no se encuentra o el usuario no tiene permisos
+ */
 async function updateTransaction(transactionId, updateData, userId) {
   try {
     // Obtener la transacción original
@@ -567,7 +647,24 @@ async function updateTransaction(transactionId, updateData, userId) {
   }
 }
 
-// Función helper para crear transacción individual
+/**
+ * @typedef {Object} IndividualTransactionOptions
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente
+ */
+
+/**
+ * Función helper para crear transacción individual
+ * @async
+ * @function createIndividualTransaction
+ * @param {IndividualTransactionOptions} options - Opciones para crear transacción individual
+ * @returns {Promise<TransactionData>} Transacción creada
+ * @description Crea una transacción individual (no compartida)
+ */
 async function createIndividualTransaction({
   name,
   type,
@@ -594,7 +691,34 @@ async function createIndividualTransaction({
   return transaction;
 }
 
-// Endpoint POST refactorizado
+/**
+ * @typedef {Object} TrackRequest
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor
+ * @property {number} [originalValue] - Valor original
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente
+ * @property {string[]} [sharedWith] - IDs de usuarios compartidos
+ * @property {string} [splitType] - Tipo de división
+ * @property {Object} [customAmounts] - Montos personalizados
+ */
+
+/**
+ * @typedef {Object} TrackResponse
+ * @property {string} message - Mensaje de confirmación
+ * @property {TransactionData[]} transactions - Transacciones creadas
+ */
+
+/**
+ * Crear nueva transacción
+ * @route POST /track
+ * @param {express.Request<{}, TrackResponse, TrackRequest>} req - Request con datos de transacción
+ * @param {express.Response<TrackResponse>} res - Response con transacciones creadas
+ * @returns {Promise<void>}
+ * @description Crea una nueva transacción individual o compartida según los parámetros
+ */
 app.post('/track', async (req, res) => {
   const {
     name,
@@ -660,7 +784,20 @@ app.post('/track', async (req, res) => {
   }
 });
 
-// Endpoint PUT refactorizado
+/**
+ * @typedef {Object} UpdateTransactionParams
+ * @property {string} id - ID de la transacción a actualizar
+ */
+
+/**
+ * Actualizar transacción existente
+ * @route PUT /track/:id
+ * @middleware authMiddleware
+ * @param {express.Request<UpdateTransactionParams, UpdateResult, Partial<TrackRequest>>} req - Request con datos a actualizar
+ * @param {express.Response<UpdateResult>} res - Response con resultado de actualización
+ * @returns {Promise<void>}
+ * @description Actualiza una transacción existente, manejando conversiones entre individual y compartida
+ */
 app.put('/track/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -719,6 +856,37 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
 //   return Object.values(agrupados);
 // }
 
+/**
+ * Elimina una transacción por su ID
+ * @route DELETE /track/:id
+ * @description Elimina una transacción específica de la base de datos utilizando su ID único
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.params - Parámetros de la ruta
+ * @param {string} req.params.id - ID único de la transacción a eliminar
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Respuesta JSON con el resultado de la operación
+ * 
+ * @example
+ * // Solicitud exitosa
+ * DELETE /track/60d21b4667d0d8992e610c85
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Transacción eliminada"
+ * }
+ * 
+ * @example
+ * // Transacción no encontrada
+ * DELETE /track/60d21b4667d0d8992e610c99
+ * 
+ * // Respuesta (404)
+ * {
+ *   "message": "Transacción no encontrada"
+ * }
+ * 
+ * @throws {404} Cuando la transacción con el ID especificado no existe
+ * @throws {500} Error interno del servidor al procesar la eliminación
+ */
 app.delete('/track/:id', async (req, res) => {
   try {
     const deleted = await Transaction.findByIdAndDelete(req.params.id);
@@ -812,6 +980,51 @@ app.put('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
   }
 }); */
 
+/**
+ * Obtiene todas las categorías disponibles para el usuario autenticado
+ * @route GET /categories
+ * @description Obtiene categorías globales (por defecto del sistema) y categorías personalizadas del usuario,
+ *              agrupándolas por tipo (expense/income)
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.user - Información del usuario autenticado (proporcionada por authMiddleware)
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Objeto JSON con categorías agrupadas por tipo
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /categories
+ * Authorization: Bearer <token>
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "expense": [
+ *     {
+ *       "name": "Comida",
+ *       "type": "expense",
+ *       "categoryType": undefined
+ *     },
+ *     {
+ *       "name": "Mi categoría personalizada",
+ *       "type": "expense",
+ *       "categoryType": "user"
+ *     }
+ *   ],
+ *   "income": [
+ *     {
+ *       "name": "Salario",
+ *       "type": "income",
+ *       "categoryType": undefined
+ *     }
+ *   ]
+ * }
+ * 
+ * @throws {401} Usuario no autenticado
+ * @throws {500} Error interno del servidor al procesar categorías
+ * 
+ * @since 1.0.0
+ */
 app.get("/categories", authMiddleware, async (req, res) => {   
   try {     
     const userId = req.user.id;      
@@ -851,7 +1064,28 @@ app.get("/categories", authMiddleware, async (req, res) => {
   } 
 });
 
-
+/**
+ * Obtiene todos los iconos disponibles en el sistema
+ * @route GET /icons
+ * @description Recupera una lista de emojis/iconos disponibles para usar en categorías o transacciones
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Array de strings con los emojis disponibles
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /icons
+ * Authorization: Bearer <token>
+ * 
+ * // Respuesta exitosa (200)
+ * ["🍔", "🏠", "🚗", "💰", "📱", "🎬"]
+ * 
+ * @throws {401} Usuario no autenticado
+ * @throws {500} Error interno del servidor al obtener iconos
+ * 
+ * @since 1.0.0
+ */
 app.get("/icons", authMiddleware, async (req, res) => {
   try {
     const iconos = await Icono.find();
@@ -861,6 +1095,46 @@ app.get("/icons", authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * Crea una nueva categoría personalizada para el usuario
+ * @route POST /categories
+ * @description Permite al usuario autenticado crear una categoría personalizada
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Datos de la nueva categoría
+ * @param {string} req.body.name - Nombre de la categoría
+ * @param {string} req.body.type - Tipo de categoría ("expense" o "income")
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Objeto JSON con la nueva categoría creada
+ * 
+ * @example
+ * // Solicitud exitosa
+ * POST /categories
+ * Authorization: Bearer <token>
+ * Content-Type: application/json
+ * 
+ * {
+ *   "name": "Gastos médicos",
+ *   "type": "expense"
+ * }
+ * 
+ * // Respuesta exitosa (201)
+ * {
+ *   "_id": "60d21b4667d0d8992e610c85",
+ *   "userId": "60d21b4667d0d8992e610c80",
+ *   "name": "Gastos médicos",
+ *   "type": "expense",
+ *   "createdAt": "2021-06-22T10:30:00.000Z"
+ * }
+ * 
+ * @throws {400} Datos incompletos (falta name o type)
+ * @throws {401} Usuario no autenticado
+ * @throws {500} Error interno del servidor al crear la categoría
+ * 
+ * @since 1.0.0
+ */
 app.post('/categories',authMiddleware, async (req, res) => {
   const { name, type } = req.body;
   const userId= req.user.id;
@@ -880,6 +1154,52 @@ app.post('/categories',authMiddleware, async (req, res) => {
     return res.status(201).json(newCategory);
 });
 
+/**
+ * Elimina una categoría personalizada del usuario
+ * @route DELETE /categorie
+ * @description Elimina una categoría personalizada del usuario. No permite eliminar categorías globales/por defecto
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Datos de la categoría a eliminar
+ * @param {string} req.body.name - Nombre de la categoría a eliminar
+ * @param {string} req.body.type - Tipo de categoría ("expense" o "income")
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Mensaje de confirmación de eliminación
+ * 
+ * @example
+ * // Solicitud exitosa
+ * DELETE /categorie
+ * Authorization: Bearer <token>
+ * Content-Type: application/json
+ * 
+ * {
+ *   "name": "Gastos médicos",
+ *   "type": "expense"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Categoría eliminada correctamente"
+ * }
+ * 
+ * @example
+ * // Intento de eliminar categoría por defecto
+ * DELETE /categorie
+ * 
+ * // Respuesta de error (400)
+ * {
+ *   "message": "No se puede eliminar una categoría por defecto"
+ * }
+ * 
+ * @throws {400} No se puede eliminar una categoría por defecto
+ * @throws {401} Usuario no autenticado
+ * @throws {404} Categoría no encontrada o no se pudo eliminar
+ * @throws {500} Error interno del servidor al eliminar la categoría
+ * 
+ * @since 1.0.0
+ */
 app.delete('/categorie', authMiddleware, async (req, res) => {
   try {
     const { type, name } = req.body;
@@ -927,6 +1247,58 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * Exporta todas las transacciones del usuario en formato JSON
+ * @route GET /export
+ * @description Exporta todas las transacciones del usuario autenticado con formato optimizado para análisis.
+ *              Incluye información de gastos compartidos y datos de usuarios participantes.
+ *              Requiere suscripción Premium.
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @middleware ensurePremium - Requiere suscripción Premium activa
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Array de transacciones formateadas con información completa
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /export
+ * Authorization: Bearer <token>
+ * 
+ * // Respuesta exitosa (200)
+ * [
+ *   {
+ *     "amount": 150.50,
+ *     "category": "Restaurantes",
+ *     "description": "Cena con amigos",
+ *     "type": "expense",
+ *     "createdAt": "22 de junio de 2024",
+ *     "sharedWith": "Juan Pérez, María García",
+ *     "splitType": "equal",
+ *     "totalParticipants": 3,
+ *     "isShared": "Sí",
+ *     "customAmounts": "N/A"
+ *   },
+ *   {
+ *     "amount": 2500.00,
+ *     "category": "Salario",
+ *     "description": "Sueldo mensual",
+ *     "type": "income",
+ *     "createdAt": "1 de junio de 2024",
+ *     "sharedWith": "N/A",
+ *     "splitType": "N/A",
+ *     "totalParticipants": "N/A",
+ *     "customAmounts": "N/A"
+ *   }
+ * ]
+ * 
+ * @throws {401} Usuario no autenticado
+ * @throws {403} Usuario sin suscripción Premium
+ * @throws {500} Error interno del servidor al exportar transacciones
+ * 
+ * @since 1.0.0
+ */
 app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
   console.log("entra por export de stats");
   try {
