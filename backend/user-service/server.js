@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de autenticación y gestión de usuarios
+ * @description API REST para manejo de autenticación, perfiles de usuario, amistades y funcionalidades premium
+ * @version 1.0.0
+ * @author Carmen Espinosa Martínez
+ */
 require("dotenv").config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -17,8 +23,15 @@ mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Auth Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Auth Service] Error al conectar:", err));
-
-  // Function to validate required fields in the request body
+/**
+ * Valida que los campos requeridos estén presentes en el cuerpo de la solicitud
+ * @function validateRequiredFields
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {string[]} requiredFields - Array de nombres de campos requeridos
+ * @throws {Error} Si falta algún campo requerido
+ * @example
+ * validateRequiredFields(req, ['email', 'password']);
+ */
 function validateRequiredFields(req, requiredFields) {
   for (const field of requiredFields) {
     if (!(field in req.body)) {
@@ -28,8 +41,43 @@ function validateRequiredFields(req, requiredFields) {
   console.log("cumple required fields");
 }
 
+/**
+ * Registra un nuevo usuario en el sistema
+ * @route POST /register
+ * @description Crea una nueva cuenta de usuario con validación de email único y envío de correo de confirmación
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Datos del nuevo usuario
+ * @param {string} req.body.nombre - Nombre del usuario
+ * @param {string} req.body.apellido - Apellido del usuario
+ * @param {string} req.body.email - Correo electrónico único del usuario
+ * @param {string} req.body.password - Contraseña del usuario (será encriptada)
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Token JWT y mensaje de confirmación
+ * 
+ * @example
+ * // Solicitud exitosa
+ * POST /register
+ * Content-Type: application/json
+ * 
+ * {
+ *   "nombre": "Juan",
+ *   "apellido": "Pérez", 
+ *   "email": "juan@ejemplo.com",
+ *   "password": "mipassword123"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Usuario registrado con éxito. Se ha enviado un correo de confirmación.",
+ *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ * }
+ * 
+ * @throws {400} Email ya registrado o campos faltantes
+ * @throws {500} Error interno del servidor o servicio de correo
+ * 
+ * @since 1.0.0
+ */
 app.post('/register', async (req, res) => {
-  
   try {
       // Check if required fields are present in the request body
       validateRequiredFields(req, ['nombre', 'apellido', 'email', 'password']);
@@ -73,6 +121,38 @@ app.post('/register', async (req, res) => {
       res.status(400).json({ error: error.message }); 
   }});
 
+  /**
+ * Autentica un usuario existente
+ * @route POST /login
+ * @description Verifica credenciales y genera token JWT para acceso a la aplicación
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Credenciales de acceso
+ * @param {string} req.body.email - Correo electrónico del usuario
+ * @param {string} req.body.password - Contraseña del usuario
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Token JWT y email del usuario
+ * 
+ * @example
+ * // Solicitud exitosa
+ * POST /login
+ * Content-Type: application/json
+ * 
+ * {
+ *   "email": "juan@ejemplo.com",
+ *   "password": "mipassword123"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+ *   "email": "juan@ejemplo.com"
+ * }
+ * 
+ * @throws {400} Campos faltantes
+ * @throws {401} Credenciales inválidas o usuario no encontrado
+ * 
+ * @since 1.0.0
+ */
   app.post('/login', async (req, res) => {
     try {
       // Check if required fields are present in the request body
@@ -101,6 +181,38 @@ app.post('/register', async (req, res) => {
     }
   });
 
+  /**
+ * Obtiene el perfil del usuario autenticado
+ * @route GET /profile
+ * @description Recupera toda la información del perfil del usuario autenticado
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.user - Información del usuario autenticado (proporcionada por authMiddleware)
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Objeto completo del usuario
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /profile
+ * Authorization: Bearer <token>
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "_id": "60d21b4667d0d8992e610c85",
+ *   "name": "Juan",
+ *   "surname": "Pérez",
+ *   "email": "juan@ejemplo.com",
+ *   "isPremium": false,
+ *   "friends": [],
+ *   "createdAt": "2021-06-22T10:30:00.000Z"
+ * }
+ * 
+ * @throws {401} Usuario no autenticado o no encontrado
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
   app.get('/profile', authMiddleware, async (req, res)=>{
     try{
       const userId = req.user.id;
@@ -116,6 +228,49 @@ app.post('/register', async (req, res) => {
   }
   });
 
+  /**
+ * Actualiza el perfil del usuario autenticado
+ * @route PUT /profile
+ * @description Permite al usuario actualizar su nombre y apellido
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Nuevos datos del perfil
+ * @param {string} req.body.name - Nuevo nombre del usuario
+ * @param {string} req.body.surname - Nuevo apellido del usuario
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Mensaje de confirmación y datos actualizados del usuario
+ * 
+ * @example
+ * // Solicitud exitosa
+ * PUT /profile
+ * Authorization: Bearer <token>
+ * Content-Type: application/json
+ * 
+ * {
+ *   "name": "Juan Carlos",
+ *   "surname": "Pérez García"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Perfil actualizado correctamente",
+ *   "user": {
+ *     "_id": "60d21b4667d0d8992e610c85",
+ *     "name": "Juan Carlos",
+ *     "surname": "Pérez García",
+ *     "email": "juan@ejemplo.com"
+ *   }
+ * }
+ * 
+ * @throws {400} Datos obligatorios faltantes
+ * @throws {401} Usuario no autenticado
+ * @throws {404} Usuario no encontrado
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
   app.put('/profile', authMiddleware, async (req, res) => {
   try {
     const clientId = req.user.id; // Se obtiene del middleware de autenticación
@@ -143,6 +298,43 @@ app.post('/register', async (req, res) => {
   }
 });
 
+/**
+ * Cambia la contraseña del usuario autenticado
+ * @route PUT /password
+ * @description Permite al usuario cambiar su contraseña actual por una nueva
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Datos para cambio de contraseña
+ * @param {string} req.body.actualPassword - Contraseña actual del usuario
+ * @param {string} req.body.newPassword - Nueva contraseña deseada
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Mensaje de confirmación del cambio
+ * 
+ * @example
+ * // Solicitud exitosa
+ * PUT /password
+ * Authorization: Bearer <token>
+ * Content-Type: application/json
+ * 
+ * {
+ *   "actualPassword": "passwordViejo123",
+ *   "newPassword": "passwordNuevo456"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Contraseña actualizada correctamente"
+ * }
+ * 
+ * @throws {400} Datos faltantes o contraseña actual incorrecta
+ * @throws {401} Usuario no autenticado
+ * @throws {404} Usuario no encontrado
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
 app.put("/password", authMiddleware, async(req, res) => {
   try{
   const clientId = req.user.id; // Se obtiene del middleware de autenticación
@@ -170,74 +362,102 @@ app.put("/password", authMiddleware, async(req, res) => {
  
 });
 
-app.post("/subscribe", authMiddleware, async (req, res) => {
-  try {
-    const clientId = req.user.id;
-    const { plan } = req.body;
+// app.post("/subscribe", authMiddleware, async (req, res) => {
+//   try {
+//     const clientId = req.user.id;
+//     const { plan } = req.body;
     
-    // Validar el plan
-    if (!plan || !['basic', 'premium'].includes(plan)) {
-      return res.status(400).json({ 
-        message: "Plan inválido. Debe ser 'basic' o 'premium'" 
-      });
-    }  
-    const user = await User.findById(clientId);
+//     // Validar el plan
+//     if (!plan || !['basic', 'premium'].includes(plan)) {
+//       return res.status(400).json({ 
+//         message: "Plan inválido. Debe ser 'basic' o 'premium'" 
+//       });
+//     }  
+//     const user = await User.findById(clientId);
   
-    if (!user) {    
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
+//     if (!user) {    
+//       return res.status(404).json({ message: "Usuario no encontrado" });
+//     }
 
-    // Actualizar el plan del usuario
-    user.isPremium = plan === 'premium';
-    user.billingCycle = null;
-    user.planExpirationDate = null;
-    user.stripeSubscriptionId=null;
+//     // Actualizar el plan del usuario
+//     user.isPremium = plan === 'premium';
+//     user.billingCycle = null;
+//     user.planExpirationDate = null;
+//     user.stripeSubscriptionId=null;
    
-    await user.save();  
+//     await user.save();  
     
-    // Generar un NUEVO token con la información actualizada
-    const tokenPayload = { 
-      userId: user._id,
-      email: user.email,
-      isPremium: user.isPremium 
-    };
+//     // Generar un NUEVO token con la información actualizada
+//     const tokenPayload = { 
+//       userId: user._id,
+//       email: user.email,
+//       isPremium: user.isPremium 
+//     };
     
-    const newToken = jwt.sign(
-      tokenPayload,
-     process.env.SECRET_KEY,
-      { expiresIn: '7d' }
-    );
+//     const newToken = jwt.sign(
+//       tokenPayload,
+//      process.env.SECRET_KEY,
+//       { expiresIn: '7d' }
+//     );
     
-    // Preparar respuesta
-    const responseData = { 
-      message: "Plan actualizado correctamente",
-      token: newToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        surname: user.surname,
-        isPremium: user.isPremium
-      }
-    };
+//     // Preparar respuesta
+//     const responseData = { 
+//       message: "Plan actualizado correctamente",
+//       token: newToken,
+//       user: {
+//         id: user._id,
+//         email: user.email,
+//         name: user.name,
+//         surname: user.surname,
+//         isPremium: user.isPremium
+//       }
+//     };
     
-    // UNA SOLA RESPUESTA
-    res.json(responseData);
-  } catch (error) {
-    // Verificar si ya se envió una respuesta
-    if (res.headersSent) {
-      console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
-      return;
-    }
+//     // UNA SOLA RESPUESTA
+//     res.json(responseData);
+//   } catch (error) {
+//     // Verificar si ya se envió una respuesta
+//     if (res.headersSent) {
+//       console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
+//       return;
+//     }
     
-    res.status(500).json({ 
-      message: "Error al actualizar plan",
-      error: error.message 
-    });
-  }
-});
+//     res.status(500).json({ 
+//       message: "Error al actualizar plan",
+//       error: error.message 
+//     });
+//   }
+// });
 
-// Ruta para solicitar el restablecimiento de la contraseña
+/**
+ * Solicita restablecimiento de contraseña
+ * @route POST /forgot-password
+ * @description Genera token de restablecimiento y envía correo con enlace de recuperación
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.body - Datos para solicitud de restablecimiento
+ * @param {string} req.body.email - Correo electrónico del usuario
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Mensaje de confirmación del envío del correo
+ * 
+ * @example
+ * // Solicitud exitosa
+ * POST /forgot-password
+ * Content-Type: application/json
+ * 
+ * {
+ *   "email": "juan@ejemplo.com"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Correo de restablecimiento enviado correctamente. Revisa tu bandeja de entrada."
+ * }
+ * 
+ * @throws {400} Email requerido o usuario no encontrado
+ * @throws {500} Error al procesar solicitud o enviar correo
+ * 
+ * @since 1.0.0
+ */
 app.post("/forgot-password", async (req, res) => {
   
   const { email } = req.body;
@@ -285,6 +505,37 @@ app.post("/forgot-password", async (req, res) => {
 });
 
 
+/**
+ * Restablece contraseña usando token de recuperación
+ * @route POST /reset-password/:token
+ * @description Permite establecer nueva contraseña usando token válido de restablecimiento
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.params - Parámetros de la ruta
+ * @param {string} req.params.token - Token de restablecimiento generado anteriormente
+ * @param {Object} req.body - Nueva contraseña
+ * @param {string} req.body.password - Nueva contraseña del usuario
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Mensaje de confirmación del restablecimiento
+ * 
+ * @example
+ * // Solicitud exitosa
+ * POST /reset-password/abc123def456...
+ * Content-Type: application/json
+ * 
+ * {
+ *   "password": "nuevaPassword123"
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Contraseña restablecida con éxito. Puede cerrar esta ventana."
+ * }
+ * 
+ * @throws {400} Token inválido, expirado o contraseña faltante
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
 app.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -316,6 +567,40 @@ app.post("/reset-password/:token", async (req, res) => {
   }
 });
 
+/**
+ * Obtiene la lista de amigos del usuario autenticado
+ * @route GET /friends
+ * @description Recupera todos los amigos activos del usuario autenticado con su información básica
+ * @middleware authMiddleware - Requiere autenticación de usuario
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.user - Información del usuario autenticado
+ * @param {string} req.user.id - ID único del usuario autenticado
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Array de amigos con información básica
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /friends
+ * Authorization: Bearer <token>
+ * 
+ * // Respuesta exitosa (200)
+ * [
+ *   {
+ *     "_id": "60d21b4667d0d8992e610c86",
+ *     "name": "María",
+ *     "surname": "García",
+ *     "email": "maria@ejemplo.com",
+ *     "avatar": "avatar_url",
+ *     "friendSince": "2021-06-22T10:30:00.000Z"
+ *   }
+ * ]
+ * 
+ * @throws {401} Usuario no autenticado
+ * @throws {404} Usuario no encontrado
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
 app.get("/friends", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
@@ -344,6 +629,34 @@ app.get("/friends", authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Obtiene lista de usuarios premium (funcionalidad administrativa)
+ * @route GET /users
+ * @description Recupera todos los usuarios con suscripción premium activa
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Array de usuarios premium
+ * 
+ * @example
+ * // Solicitud exitosa
+ * GET /users
+ * 
+ * // Respuesta exitosa (200)
+ * [
+ *   {
+ *     "_id": "60d21b4667d0d8992e610c85",
+ *     "name": "Juan",
+ *     "surname": "Pérez",
+ *     "email": "juan@ejemplo.com",
+ *     "isPremium": true
+ *   }
+ * ]
+ * 
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
   app.get('/users', async (req, res)=>{
     try{
       const users = await User.find({isPremium:true});
@@ -355,7 +668,56 @@ app.get("/friends", authMiddleware, async (req, res) => {
   });
 
 
-// Endpoint para actualizar datos de usuario (usado por payments-service)
+/**
+ * Actualiza datos de usuario (endpoint interno y autenticado)
+ * @route PATCH /users/:userId
+ * @description Permite actualizar datos de usuario desde payments-service o usuario autenticado
+ * @middleware Dual authentication - API key interna o authMiddleware
+ * @param {Object} req - Objeto de solicitud de Express
+ * @param {Object} req.params - Parámetros de la ruta
+ * @param {string} req.params.userId - ID único del usuario a actualizar
+ * @param {Object} req.body - Campos a actualizar
+ * @param {boolean} [req.body.isPremium] - Estado de suscripción premium
+ * @param {Date} [req.body.planExpirationDate] - Fecha de expiración del plan
+ * @param {boolean} [req.body.subscriptionActive] - Estado activo de suscripción
+ * @param {string} [req.body.stripeCustomerId] - ID del cliente en Stripe
+ * @param {string} [req.body.stripeSubscriptionId] - ID de suscripción en Stripe
+ * @param {string} [req.body.billingCycle] - Ciclo de facturación
+ * @param {Object} res - Objeto de respuesta de Express
+ * @returns {Promise<void>} Usuario actualizado con información básica
+ * 
+ * @example
+ * // Solicitud desde payments-service
+ * PATCH /users/60d21b4667d0d8992e610c85
+ * X-Internal-Api-Key: internal_key_123
+ * Content-Type: application/json
+ * 
+ * {
+ *   "isPremium": true,
+ *   "planExpirationDate": "2024-12-31T23:59:59.000Z",
+ *   "subscriptionActive": true
+ * }
+ * 
+ * // Respuesta exitosa (200)
+ * {
+ *   "message": "Usuario actualizado correctamente",
+ *   "user": {
+ *     "id": "60d21b4667d0d8992e610c85",
+ *     "email": "juan@ejemplo.com",
+ *     "name": "Juan",
+ *     "surname": "Pérez",
+ *     "isPremium": true,
+ *     "planExpirationDate": "2024-12-31T23:59:59.000Z"
+ *   }
+ * }
+ * 
+ * @throws {400} ID de usuario inválido
+ * @throws {401} No autorizado (sin API key ni token válido)
+ * @throws {404} Usuario no encontrado
+ * @throws {500} Error interno del servidor
+ * 
+ * @since 1.0.0
+ */
 app.patch('/users/:userId', async (req, res, next) => {
   // Permitir acceso si la clave interna es válida
   if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
@@ -410,6 +772,24 @@ app.patch('/users/:userId', async (req, res, next) => {
   }
 });
 
+/**
+ * Envía una solicitud de amistad a otro usuario
+ * @route POST /send-friend-request
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.body - Cuerpo de la petición
+ * @param {string} req.body.senderId - ID del usuario que envía la solicitud
+ * @param {string} req.body.receiverId - ID del usuario que recibe la solicitud
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {400} - Faltan datos obligatorios o usuario intenta enviarse solicitud a sí mismo
+ * @throws {404} - Usuario emisor o receptor no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // POST /send-friend-request
+ * // Body: { "senderId": "60f7b1b3b3b3b3b3b3b3b3b3", "receiverId": "60f7b1b3b3b3b3b3b3b3b3b4" }
+ */
   app.post("/send-friend-request", authMiddleware, ensurePremium,async (req, res)=>{
     try{
     const { senderId, receiverId } = req.body;
@@ -438,6 +818,22 @@ app.patch('/users/:userId', async (req, res, next) => {
     }
   });
 
+  /**
+ * Obtiene las solicitudes de amistad recibidas por el usuario autenticado
+ * @route GET /friend-requests/received
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.user - Usuario autenticado
+ * @param {string} req.user.id - ID del usuario autenticado
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {404} - Usuario no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // GET /friend-requests/received
+ * // Response: [{ "_id": "...", "senderId": { "name": "Juan", "surname": "Pérez", "email": "juan@email.com" }, ... }]
+ */
   app.get('/friend-requests/received', authMiddleware, ensurePremium, async (req, res)=>{
     try{
      const userId = req.user.id;
@@ -456,6 +852,23 @@ app.patch('/users/:userId', async (req, res, next) => {
     res.status(500).json({ error: "Error del servidor" });
   }
   });
+
+  /**
+ * Obtiene las solicitudes de amistad enviadas por el usuario autenticado
+ * @route GET /friend-requests/sent
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.user - Usuario autenticado
+ * @param {string} req.user.id - ID del usuario autenticado
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {404} - Usuario no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // GET /friend-requests/sent
+ * // Response: [{ "_id": "...", "receiverId": { "name": "Ana", "surname": "García", "email": "ana@email.com" }, ... }]
+ */
   app.get('/friend-requests/sent', authMiddleware, ensurePremium, async (req, res)=>{
     try{
       const userId = req.user.id;
@@ -474,7 +887,26 @@ app.patch('/users/:userId', async (req, res, next) => {
   }
   });
 
-  // Aceptar solicitud
+/**
+ * Acepta una solicitud de amistad y crea la relación de amistad entre los usuarios
+ * @route PUT /friend-requests/:requestId/accept
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.params - Parámetros de la URL
+ * @param {string} req.params.requestId - ID de la solicitud de amistad
+ * @param {Object} req.user - Usuario autenticado
+ * @param {string} req.user.id - ID del usuario autenticado
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {400} - La solicitud ya ha sido procesada
+ * @throws {403} - No autorizado (no es el receptor de la solicitud)
+ * @throws {404} - Solicitud no encontrada
+ * @throws {500} - Error del servidor
+ * @example
+ * // PUT /friend-requests/60f7b1b3b3b3b3b3b3b3b3b3/accept
+ * // Response: { "message": "Solicitud aceptada y amistad creada", "request": {...}, "friendship": {...} }
+ */
 app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, async (req, res) => {
   try {
     const request = await FriendsRequest.findById(req.params.requestId)
@@ -549,7 +981,26 @@ app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, asy
   }
 });
 
-// Rechazar solicitud
+/**
+ * Rechaza una solicitud de amistad
+ * @route PUT /friend-requests/:requestId/reject
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.params - Parámetros de la URL
+ * @param {string} req.params.requestId - ID de la solicitud de amistad
+ * @param {Object} req.user - Usuario autenticado
+ * @param {string} req.user.id - ID del usuario autenticado
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {400} - La solicitud ya ha sido procesada
+ * @throws {403} - No autorizado (no es el receptor de la solicitud)
+ * @throws {404} - Solicitud no encontrada
+ * @throws {500} - Error del servidor
+ * @example
+ * // PUT /friend-requests/60f7b1b3b3b3b3b3b3b3b3b3/reject
+ * // Response: { "message": "Solicitud rechazada" }
+ */
 app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, async (req, res) => {
   try {
     const request = await FriendsRequest.findById(req.params.requestId);
@@ -577,6 +1028,24 @@ app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, asy
   }
 });
 
+/**
+ * Elimina una amistad entre dos usuarios
+ * @route DELETE /friends/:friendId
+ * @middleware authMiddleware - Verificación de autenticación
+ * @middleware ensurePremium - Verificación de suscripción premium
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.params - Parámetros de la URL
+ * @param {string} req.params.friendId - ID del amigo a eliminar
+ * @param {Object} req.user - Usuario autenticado
+ * @param {string} req.user.id - ID del usuario autenticado
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {404} - Usuario no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // DELETE /friends/60f7b1b3b3b3b3b3b3b3b3b4
+ * // Response: { "message": "Amigo eliminado correctamente" }
+ */
 app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -606,6 +1075,24 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
   }
 });
 
+/**
+ * Obtiene la información de un usuario por su ID
+ * @route GET /users/:userId
+ * @middleware authMiddleware - Verificación de autenticación (opcional con clave interna)
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.params - Parámetros de la URL
+ * @param {string} req.params.userId - ID del usuario a buscar
+ * @param {Object} req.headers - Headers de la petición
+ * @param {string} [req.headers.x-internal-api-key] - Clave interna para bypass de auth
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {400} - ID de usuario inválido
+ * @throws {404} - Usuario no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // GET /users/60f7b1b3b3b3b3b3b3b3b3b3
+ * // Response: { "_id": "...", "name": "Juan", "surname": "Pérez", "email": "juan@email.com", ... }
+ */
   app.get('/users/:userId', async (req, res, next) => {
      // Permitir acceso si la clave interna es válida
   if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
@@ -636,6 +1123,24 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
   }
 });
 
+/**
+ * Elimina todos los amigos de un usuario específico
+ * @route PATCH /delete-all-friends/:userId
+ * @middleware authMiddleware - Verificación de autenticación (opcional con clave interna)
+ * @param {Object} req - Objeto de petición Express
+ * @param {Object} req.params - Parámetros de la URL
+ * @param {string} req.params.userId - ID del usuario al que se le eliminarán todos los amigos
+ * @param {Object} req.headers - Headers de la petición
+ * @param {string} [req.headers.x-internal-api-key] - Clave interna para bypass de auth
+ * @param {Object} res - Objeto de respuesta Express
+ * @returns {Promise<void>}
+ * @throws {404} - Usuario no encontrado
+ * @throws {500} - Error del servidor
+ * @example
+ * // PATCH /delete-all-friends/60f7b1b3b3b3b3b3b3b3b3b3
+ * // Headers: { "x-internal-api-key": "your-internal-key" }
+ * // Response: { "success": true, "message": "Todos los amigos han sido eliminados correctamente" }
+ */
 app.patch("/delete-all-friends/:userId", async (req, res, next) => {
   // Verificar si es una llamada interna
   if (req.headers['x-internal-api-key'] === process.env.INTERNAL_API_KEY) {
