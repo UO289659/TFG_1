@@ -231,32 +231,52 @@ const validateAndPrepareTransaction = (formData, clientId, friends = []) => {
       
       // Validar la suma
    
+         // CAMBIO CLAVE: Para edición, permitir cambio del valor total
+      // solo validar si hay importes personalizados definidos
       if (formData._id) {
-        // Al editar: suma debe ser exactamente igual
-        if (Math.abs(sumCustomAmounts - totalValue) > 0) {
-          toast.error(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) debe ser exactamente igual al valor total del gasto (${totalValue.toFixed(2)}€).`);
-          return null;
+        // Si hay importes personalizados definidos, deben sumar exactamente al NUEVO valor
+        const hasDefinedAmounts = allParticipants.some(participantId => 
+          customAmounts[participantId] && customAmounts[participantId] > 0
+        );
+        
+        if (hasDefinedAmounts) {
+          // Solo validar si todos los participantes tienen importes asignados
+          const allHaveAmounts = allParticipants.every(participantId => 
+            customAmounts[participantId] && customAmounts[participantId] > 0
+          );
+          
+          if (allHaveAmounts && Math.abs(sumCustomAmounts - newValue) > 0.01) {
+            toast.error(
+              `La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) debe ser exactamente igual al nuevo valor del gasto (${newValue.toFixed(2)}€). ` +
+              `Ajusta los importes personalizados o deja algunos en 0 para que se calculen automáticamente.`
+            );
+            return null;
+          }
         }
+        
+        // Si no todos tienen importes definidos, está bien - el backend los calculará
+        
       } else {
         // Al crear: suma no debe exceder el total
-        if (sumCustomAmounts >= totalValue) {
-          toast.error(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) no puede ser mayor o igual al valor total del gasto (${totalValue.toFixed(2)}€).`);
+        if (sumCustomAmounts >= newValue) {
+          toast.error(`La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) no puede ser mayor o igual al valor total del gasto (${newValue.toFixed(2)}€).`);
           return null;
         }
       }
 
-      // Validar que todos tengan importe asignado
-      const missingAmounts = allParticipants.filter(participantId => 
-        !customAmounts[participantId] || customAmounts[participantId] <= 0
-      );
+      // Validar que los importes definidos sean positivos
+      const negativeAmounts = allParticipants.filter(participantId => {
+        const amount = customAmounts[participantId];
+        return amount && amount <= 0;
+      });
       
-      if (missingAmounts.length > 0) {
-        const missingNames = missingAmounts.map(id => {
+      if (negativeAmounts.length > 0) {
+        const negativeNames = negativeAmounts.map(id => {
           if (id === clientId) return "Tú";
           const friend = friends?.find(f => f._id === id);
           return friend?.name || `Usuario ${id}`;
         });
-        toast.error(`Los siguientes participantes deben tener un importe asignado mayor a 0: ${missingNames.join(', ')}`);
+        toast.error(`Los importes asignados deben ser mayores a 0: ${negativeNames.join(', ')}`);
         return null;
       }
     }
