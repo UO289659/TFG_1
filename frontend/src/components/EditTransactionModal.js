@@ -19,6 +19,7 @@ const EditTransactionModal = ({
     console.log("🔍 [EditModal] 1. Transacción original de BD:", {
       _id: transaction._id,
       name: transaction.name,
+      category: transaction.category,
       value: transaction.value,
       originalValue: transaction.originalValue,
       splitType: transaction.splitType,
@@ -74,7 +75,7 @@ const EditTransactionModal = ({
     const finalData = {
       name: transaction.name,
       type: transaction.type,
-      category: transaction.category,
+      category: transaction.category.name,
       value: transaction.originalValue || transaction.value,
       originalValue: transaction.originalValue || transaction.value,
       icon: transaction.icon,
