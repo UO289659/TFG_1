@@ -9,36 +9,122 @@ class SocketService {
     this.maxReconnectAttempts = 5;
     this.reconnectDelay = 1000;
     this.listeners = new Map();
+    this.isDestroyed = false;
+    this.connectionTimeout = null;
+  }
+
+  // Verificar si el servicio está disponible
+  isServiceAvailable() {
+    return !this.isDestroyed;
   }
 
   // Conectar al servidor Socket.IO
   connect(token) {
+    // Verificar si el servicio está disponible
+    if (!this.isServiceAvailable()) {
+      console.warn('SocketService ha sido destruido, no se puede conectar');
+      return;
+    }
+
     if (this.socket && this.isConnected) {
       console.log('Socket ya está conectado');
       return;
     }
 
-    const serverURL = process.env.REACT_APP_PAYMENT_SERVICE_URL || 'https://0e42060e4d39.ngrok-free.app';
-    
-    this.socket = io(serverURL, {
-      auth: {
-        token: token
-      },
-      transports: ['websocket', 'polling'],
-      timeout: 10000,
-      forceNew: true
-    });
+    // Validar token
+    if (!token) {
+      console.error('Token es requerido para conectar');
+      return;
+    }
 
-    this.setupEventListeners();
-    this.reconnectAttempts = 0;
+    try {
+      const serverURL = process.env.REACT_APP_PAYMENT_SERVICE_URL || 'https://0e42060e4d39.ngrok-free.app';
+      
+      // Limpiar socket anterior si existe
+      if (this.socket) {
+        this.cleanupSocket();
+      }
+
+      this.socket = io(serverURL, {
+        auth: {
+          token: token
+        },
+        transports: ['websocket', 'polling'],
+        timeout: 10000,
+        forceNew: true
+      });
+
+      this.setupEventListeners();
+      this.reconnectAttempts = 0;
+
+      // Timeout de conexión
+      this.connectionTimeout = setTimeout(() => {
+        if (!this.isConnected && this.socket) {
+          console.warn('Timeout de conexión alcanzado');
+          this.handleConnectionTimeout();
+        }
+      }, 15000);
+
+    } catch (error) {
+      console.error('Error al crear socket:', error);
+      this.emit('connection-error', error);
+    }
+  }
+
+  // Manejar timeout de conexión
+  handleConnectionTimeout() {
+    if (!this.isServiceAvailable()) {
+      console.log('🚫 Servicio no disponible durante timeout de conexión');
+      return;
+    }
+
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.activeTimeouts.delete(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    
+    if (this.socket && !this.isConnected) {
+      console.warn('Conexión timeout, intentando reconectar...');
+      this.cleanupSocket();
+      this.handleReconnect();
+    }
+  }
+
+  // Limpiar socket
+  cleanupSocket() {
+    if (this.socket) {
+      try {
+        this.socket.removeAllListeners();
+        this.socket.disconnect();
+      } catch (error) {
+        console.warn('Error limpiando socket:', error);
+      }
+      this.socket = null;
+    }
+    
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    
+    this.isConnected = false;
   }
 
   // Configurar event listeners
   setupEventListeners() {
+    if (!this.socket || !this.isServiceAvailable()) return;
+
     this.socket.on('connect', () => {
       console.log('🔌 Conectado al servidor Socket.IO');
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      
+      // Limpiar timeout si existe
+      if (this.connectionTimeout) {
+        clearTimeout(this.connectionTimeout);
+        this.connectionTimeout = null;
+      }
       
       // Notificar a todos los listeners sobre la conexión
       this.emit('connected');
@@ -53,7 +139,11 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       console.error('❌ Error de conexión Socket.IO:', error);
       this.isConnected = false;
-      this.handleReconnect();
+      
+      // Solo intentar reconectar si el servicio sigue disponible
+      if (this.isServiceAvailable()) {
+        this.handleReconnect();
+      }
     });
 
     // Escuchar eventos de actualización de token
@@ -76,22 +166,32 @@ class SocketService {
 
   // Manejar actualización de token
   handleTokenUpdate(data) {
-    // Actualizar token en localStorage
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-    }
+    if (!this.isServiceAvailable()) return;
 
-    // Emitir evento para que los componentes puedan reaccionar
-    this.emit('token-updated', data);
-    
-    // También puedes disparar un evento personalizado en window
-    window.dispatchEvent(new CustomEvent('tokenUpdated', { 
-      detail: data 
-    }));
+    try {
+      // Actualizar token en localStorage solo si está disponible
+      if (data.token && typeof(Storage) !== "undefined") {
+        localStorage.setItem('token', data.token);
+      }
+
+      // Emitir evento para que los componentes puedan reaccionar
+      this.emit('token-updated', data);
+      
+      // También puedes disparar un evento personalizado en window
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tokenUpdated', { 
+          detail: data 
+        }));
+      }
+    } catch (error) {
+      console.error('Error manejando actualización de token:', error);
+    }
   }
 
   // Manejar reconexión
   handleReconnect() {
+    if (!this.isServiceAvailable()) return;
+
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
@@ -99,8 +199,12 @@ class SocketService {
       console.log(`🔄 Intentando reconectar en ${delay}ms (intento ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
       setTimeout(() => {
-        if (!this.isConnected) {
-          this.socket.connect();
+        if (!this.isConnected && this.socket && this.isServiceAvailable()) {
+          try {
+            this.socket.connect();
+          } catch (error) {
+            console.error('Error en reconexión:', error);
+          }
         }
       }, delay);
     } else {
@@ -111,8 +215,17 @@ class SocketService {
 
   // Solicitar actualización de token
   requestTokenUpdate() {
+    if (!this.isServiceAvailable()) {
+      console.warn('SocketService no está disponible');
+      return;
+    }
+
     if (this.socket && this.isConnected) {
-      this.socket.emit('request-token-update');
+      try {
+        this.socket.emit('request-token-update');
+      } catch (error) {
+        console.error('Error solicitando actualización de token:', error);
+      }
     } else {
       console.error('Socket no está conectado');
     }
@@ -120,16 +233,44 @@ class SocketService {
 
   // Desconectar
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-      this.isConnected = false;
-      this.listeners.clear();
+    console.log('Desconectando socket...');
+    
+    // Limpiar timeout
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
     }
+
+    // Limpiar socket
+    this.cleanupSocket();
+    
+    // Limpiar listeners internos
+    this.listeners.clear();
+  }
+
+  // Destruir completamente el servicio (para logout)
+  destroy() {
+    console.log('Destruyendo SocketService...');
+    this.isDestroyed = true;
+    this.disconnect();
+  }
+
+  // Reinicializar el servicio (después de logout)
+  reinitialize() {
+    console.log('Reinicializando SocketService...');
+    this.isDestroyed = false;
+    this.isConnected = false;
+    this.reconnectAttempts = 0;
+    this.listeners.clear();
+    this.socket = null;
+    this.connectionTimeout = null;
+    this.reconnectTimeout = null;
   }
 
   // Sistema de eventos interno
   on(event, callback) {
+    if (!this.isServiceAvailable()) return;
+
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
     }
@@ -137,16 +278,18 @@ class SocketService {
   }
 
   off(event, callback) {
-    if (this.listeners.has(event)) {
-      const callbacks = this.listeners.get(event);
-      const index = callbacks.indexOf(callback);
-      if (index > -1) {
-        callbacks.splice(index, 1);
-      }
+    if (!this.listeners.has(event)) return;
+
+    const callbacks = this.listeners.get(event);
+    const index = callbacks.indexOf(callback);
+    if (index > -1) {
+      callbacks.splice(index, 1);
     }
   }
 
   emit(event, data) {
+    if (!this.isServiceAvailable()) return;
+
     if (this.listeners.has(event)) {
       this.listeners.get(event).forEach(callback => {
         try {
@@ -160,7 +303,7 @@ class SocketService {
 
   // Verificar estado de conexión
   isSocketConnected() {
-    return this.socket && this.isConnected;
+    return this.socket && this.isConnected && this.isServiceAvailable();
   }
 
   // Obtener información de conexión
@@ -168,7 +311,9 @@ class SocketService {
     return {
       isConnected: this.isConnected,
       reconnectAttempts: this.reconnectAttempts,
-      hasSocket: !!this.socket
+      hasSocket: !!this.socket,
+      isDestroyed: this.isDestroyed,
+      isServiceAvailable: this.isServiceAvailable()
     };
   }
 }
