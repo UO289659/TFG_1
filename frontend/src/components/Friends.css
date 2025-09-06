@@ -293,14 +293,32 @@
 }
 
 .search-container {
-  display: flex;
+ display: flex;
+  align-items: flex-end;
   gap: 1rem;
   max-width: 600px;
 }
 
 .search-input-wrapper {
-  flex: 1;
+   flex: 1;
   position: relative;
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.search-label {
+ font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
 }
 
 .search-icon {
@@ -341,7 +359,7 @@
 }
 
 .search-button {
-  padding: 0.75rem 1.5rem;
+padding: 0.75rem 1.5rem;
   background: #4f46e5;
   color: white;
   border: none;
@@ -350,6 +368,7 @@
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  height: fit-content; /* Mantiene la altura natural del botón */
 }
 
 .search-button:hover:not(:disabled) {
@@ -405,9 +424,16 @@
   }
   
   .search-container {
-    flex-direction: column;
+   flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+
   }
   
+   .search-input-group {
+    width: 100%;
+  }
+
   .card-content {
     flex-direction: column;
     align-items: flex-start;
@@ -422,4 +448,5 @@
   .card-actions {
     align-self: flex-end;
   }
+  
 }

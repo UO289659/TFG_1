@@ -452,17 +452,24 @@ const FriendsSystem = () => {
               
               <div className="search-section">
                 <div className="search-container">
-                  <div className="search-input-wrapper">
+                  <div className="search-input-group">
+                    <label htmlFor="search-friends-input" className="search-label">
+                      Buscar usuarios:
+                    </label>
+                    <div className="search-input-wrapper">
                     <Search className="search-icon" />
                     <input
+                      id="search-friends-input"
                       type="text"
                       placeholder="Buscar por nombre, apellido o email..."
                       value={searchTerm}
                       onChange={handleSearchChange}
                       className="search-input"
                     />
+                 
                     {loading && <div className="search-loading">🔍</div>}
                   </div>
+                   </div>
                   <button
                     onClick={handleSearch}
                     disabled={loading || !searchTerm.trim()}
