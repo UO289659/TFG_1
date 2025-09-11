@@ -32,7 +32,7 @@ import '../styles/variables.css';
 import Footer from "./Footer.js";
 
 const ExportTransactions = () => {
-  const GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');

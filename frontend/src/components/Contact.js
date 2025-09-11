@@ -26,7 +26,7 @@ import toast from 'react-hot-toast';
 import Footer from "./Footer.js";
 
 const Contact = () => {
-  const apiEndpoint = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+  const apiEndpoint = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
   const [formData, setFormData] = useState({
     name: '',
     email: '',

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./Footer.js";
 
 const ForgotPassword = () => {
-  const GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");

@@ -22,7 +22,7 @@ import { useUserContext } from "../context/UserContext";
 
 // Inicializar Stripe con validación más robusta
 let stripePromise = null;
-const GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
 
 const initializeStripe = () => {
   try {

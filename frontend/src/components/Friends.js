@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import Footer from "./Footer.js";
 
 const FriendsSystem = () => {
-  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
   const [activeTab, setActiveTab] = useState('friends');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);

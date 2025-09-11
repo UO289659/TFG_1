@@ -6,7 +6,7 @@ import { useUserContext } from '../context/UserContext';
 import Footer from "./Footer";
 
 const Login = () => {
-  const GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
   const { login } = useUserContext();
   const navigate = useNavigate(); // Hook para redirigir al usuario
   const [formData, setFormData] = useState({
