@@ -2,13 +2,24 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
-const {authMiddleware, ensurePremium} = require("../backend/auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 console.log("Middleware cargado:", authMiddleware);
 const app = express();
-app.use(cors());
+
+// CORS para Vercel
+const corsOptions = {
+  origin: [
+    'https://saldosmart.vercel.app/',
+    'https://saldosmart-q08ujhaa2-uo289659s-projects.vercel.app/',
+    process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null
+  ].filter(Boolean),
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000';
+const userServiceUrl = process.env.REACT_APP_USER_SERVICE_URL || 'http://localhost:5000';
 const statsServiceUrl = process.env.STATS_SERVICE_URL || 'http://localhost:5001';
 const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
 const paymentsServiceUrl = process.env.PAYMENTS_SERVICE_URL || 'http://localhost:5003';
@@ -637,4 +648,8 @@ app.get('track/:id/details', authMiddleware, async(req, res) => {
       details: error.response?.data
     });
   }
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
