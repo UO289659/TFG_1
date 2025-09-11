@@ -10,9 +10,9 @@ const Register = () => {
   // 🔍 DEBUG - Agregar logs para ver qué está pasando
   console.log('🔍 Environment DEBUG:');
   console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('NEXT_PUBLIC_API_GATEWAY_URL:', process.env.NEXT_PUBLIC_API_GATEWAY_URL);
+  console.log('NEXT_PUBLIC_API_GATEWAY_URL:', process.env.REACT_APP_API_GATEWAY_URL);
   console.log('GATEWAY_URL final:', GATEWAY_URL);
-  console.log('All NEXT_PUBLIC vars:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC')));
+  console.log('All NEXT_PUBLIC vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP')));
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
