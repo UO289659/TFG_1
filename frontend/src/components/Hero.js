@@ -85,6 +85,7 @@ const Hero = () => {
           {/* Botón móvil */}
           <button 
             className="mobile-menu-btn"
+            aria-label="Abrir menú de navegación"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="menu-icon" /> : <Menu className="menu-icon" />}

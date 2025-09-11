@@ -345,7 +345,10 @@ const Contact = () => {
                 <TextField
                   fullWidth
                   label="Mensaje"
+                  id="contact-message"
                   name="message"
+                  aria-label="Mensaje de contacto"
+                  aria-describedby={errors.message ? "message-error" : undefined}
                   multiline
                   rows={5}
                   value={formData.message}
@@ -369,9 +372,11 @@ const Contact = () => {
               <Grid item xs={12}>
                 <Button
                   type="submit"
+                  label="Enviar mensaje"
                   variant="contained"
                   fullWidth
                   disabled={isLoading}
+                  aria-label={isLoading ? 'Enviando mensaje...' : 'Enviar mensaje'}
                   startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
                   sx={{
                     background: 'var(--primary-gradient)',

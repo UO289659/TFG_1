@@ -30,7 +30,7 @@ const TransactionForm = ({
     
     if (name === "type") {
       const firstCategory = value === "income" 
-        ? incomeCategories[0] || "" 
+        ? incomeCategories[0].name|| "" 
         : expenseCategories[0] || "";
 
       setFormData(prev => ({
@@ -167,8 +167,8 @@ const TransactionForm = ({
           >
             {(formData.type === "expense" ? expenseCategories : incomeCategories).map(
               (cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
                 </option>
               )
             )}
@@ -193,7 +193,7 @@ const TransactionForm = ({
       {/* Funcionalidad Premium - Compartir gastos */}
       {isPremium && formData.type === "expense" && (
         <>
-          <label className="my-form-label">Compartir gasto con:</label>
+          <label className="my-form-label">Compartir gasto con:
           <Select
             isMulti
             value={friendsOptions.filter(option => formData.sharedWith.includes(option.value))}
@@ -210,6 +210,7 @@ const TransactionForm = ({
             placeholder="Selecciona amigos..."
             closeMenuOnSelect={false}
           />
+          </label>
 
           {formData.sharedWith.length > 0 && (
             <>

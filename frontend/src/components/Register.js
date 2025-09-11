@@ -5,6 +5,7 @@ import "./Login.css";
 import Footer from "./Footer";
 
 const Register = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: "",
@@ -30,7 +31,7 @@ const Register = () => {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:4000/register", formData);
+      const res = await axios.post(GATEWAY_URL+"/register", formData);
        localStorage.setItem("token", res.data.token);
       navigate("/select-plan"); 
     } catch (error) {

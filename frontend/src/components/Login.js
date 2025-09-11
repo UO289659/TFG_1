@@ -6,6 +6,7 @@ import { useUserContext } from '../context/UserContext';
 import Footer from "./Footer";
 
 const Login = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const { login } = useUserContext();
   const navigate = useNavigate(); // Hook para redirigir al usuario
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const Login = () => {
 
     try {
       localStorage.removeItem("token");
-      const res = await axios.post("http://localhost:4000/login", formData);
+      const res = await axios.post(GATEWAY_URL+"/login", formData);
 
       // Guardar el token en localStorage o sessionStorage
       login(res.data.token); 

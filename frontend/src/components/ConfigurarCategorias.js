@@ -7,6 +7,8 @@ import Footer from "./Footer.js";
 import toast, { Toaster } from 'react-hot-toast';
 
 const ConfigurarCategorias = () => {
+  //const GATEWAY_URL = "http://localhost:4000"; 
+  const GATEWAY_URL = process.env.API_GATEWAY; 
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState("expense");
@@ -21,7 +23,7 @@ const ConfigurarCategorias = () => {
       try {
         setInitialLoading(true);
         
-        const res = await axios.get("http://localhost:4000/categories", {
+        const res = await axios.get(`${GATEWAY_URL}/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCategorias(res.data);
@@ -54,7 +56,7 @@ const ConfigurarCategorias = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:4000/categories", {
+      const res = await axios.post(`${GATEWAY_URL}/categories`, {
         name: nuevoNombre.trim(),
         type: nuevoTipo,
       }, {
@@ -85,7 +87,7 @@ const ConfigurarCategorias = () => {
 
   const handleDeleteCategoria = async (type, name) => {
     try {
-      const res = await axios.delete("http://localhost:4000/categorie", {
+      const res = await axios.delete(`${GATEWAY_URL}/categorie`, {
         headers: { Authorization: `Bearer ${token}` },
         data: { type, name },
       });
@@ -213,6 +215,7 @@ const ConfigurarCategorias = () => {
                     setNuevoNombre("");
                   }}
                   className="close-button"
+                  aria-label="Cerrar formulario"
                 >
                   <X size={20} />
                 </button>
@@ -222,7 +225,6 @@ const ConfigurarCategorias = () => {
                 <div className="form-group">
                   <label className="my-form-label">
                     Nombre de la categoría
-                  </label>
                   <input
                     type="text"
                     placeholder="Ej: Alimentación, Salario..."
@@ -234,15 +236,16 @@ const ConfigurarCategorias = () => {
                     autoFocus
                     maxLength={50} // Límite de caracteres
                   />
+                   </label>
                   <small className="form-text text-muted">
                     {nuevoNombre.length}/50 caracteres
                   </small>
                 </div>
+                 
                 
                 <div className="form-group">
                   <label className="my-form-label">
                     Tipo de categoría
-                  </label>
                   <select
                     value={nuevoTipo}
                     onChange={(e) => setNuevoTipo(e.target.value)}
@@ -251,6 +254,7 @@ const ConfigurarCategorias = () => {
                     <option value="expense">💸 Gasto</option>
                     <option value="income">💰 Ingreso</option>
                   </select>
+                   </label>
                 </div>
                 
                 <div className="modal-actions">

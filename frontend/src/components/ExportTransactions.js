@@ -32,6 +32,7 @@ import '../styles/variables.css';
 import Footer from "./Footer.js";
 
 const ExportTransactions = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');
@@ -48,7 +49,7 @@ const ExportTransactions = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:4000/export', {
+      const response = await axios.get(`${GATEWAY_URL}/export`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

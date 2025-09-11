@@ -22,6 +22,7 @@ import { useUserContext } from "../context/UserContext";
 
 // Inicializar Stripe con validación más robusta
 let stripePromise = null;
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
 
 const initializeStripe = () => {
   try {
@@ -123,7 +124,7 @@ const Subscribe = () => {
           return;
         }
 
-        const response = await axios.get("http://localhost:4000/profile", {
+        const response = await axios.get(GATEWAY_URL+"/profile", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -151,8 +152,7 @@ const Subscribe = () => {
       const token = localStorage.getItem("token");
       
       // Verificar el pago con el backend
-      const response = await axios.post(
-        "http://localhost:4000/verify-payment",
+      const response = await axios.post(GATEWAY_URL+"/verify-payment",
         { sessionId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -204,8 +204,7 @@ const Subscribe = () => {
       }
 
       // Crear sesión de checkout en el backend
-      const response = await axios.post(
-        "http://localhost:4000/create-checkout-session",
+      const response = await axios.post(GATEWAY_URL+"/create-checkout-session",
         {
           priceId: billingCycle === "monthly" ? monthlyPriceId : yearlyPriceId,
           billingCycle,

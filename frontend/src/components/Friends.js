@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import Footer from "./Footer.js";
 
 const FriendsSystem = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const [activeTab, setActiveTab] = useState('friends');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -28,7 +29,7 @@ const FriendsSystem = () => {
 
     const fetchFriends = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/friends", {
+        const res = await axios.get(GATEWAY_URL+"/friends", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFriends(res.data);
@@ -39,7 +40,7 @@ const FriendsSystem = () => {
 
     const fetchFriendRequests = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/friend-requests/received", {
+        const res = await axios.get(GATEWAY_URL+"/friend-requests/received", {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -52,7 +53,7 @@ const FriendsSystem = () => {
 
   const fetchSentRequests = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/friend-requests/sent", {
+      const res = await axios.get(GATEWAY_URL+"/friend-requests/sent", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSentRequests(res.data);
@@ -81,7 +82,7 @@ const FriendsSystem = () => {
     }
 
     try {
-      const res = await axios.get(`http://localhost:4000/users/${userId}`, {
+      const res = await axios.get(GATEWAY_URL+`/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -130,7 +131,7 @@ const FriendsSystem = () => {
     
     setLoading(true);
     try {
-      const result = await axios.get("http://localhost:4000/users");
+      const result = await axios.get(GATEWAY_URL+"/users");
       const users = result.data
         .filter(user => user._id !== currentUserId) // Excluir usuario actual
         .filter(user => 
@@ -175,7 +176,7 @@ const FriendsSystem = () => {
   const sendFriendRequest = async (userId) => {
     try {
       console.log('Enviando solicitud a usuario:', userId);
-      await axios.post("http://localhost:4000/send-friend-request",
+      await axios.post(GATEWAY_URL+"/send-friend-request",
         { senderId: currentUserId, receiverId: userId },
         { headers: { Authorization: `Bearer ${token}` }}
       );
@@ -200,7 +201,7 @@ const FriendsSystem = () => {
     try {
       const request = friendRequests.find(r => r._id === requestId);
       
-      await axios.put(`http://localhost:4000/friend-requests/${requestId}/accept`, {}, {
+      await axios.put(GATEWAY_URL+`/friend-requests/${requestId}/accept`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -218,7 +219,7 @@ const FriendsSystem = () => {
   // Rechazar solicitud
   const rejectRequest = async (requestId) => {
     try {
-      await axios.put(`http://localhost:4000/friend-requests/${requestId}/reject`, {}, {
+      await axios.put(GATEWAY_URL+`/friend-requests/${requestId}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -248,7 +249,7 @@ const FriendsSystem = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:4000/friends/${friendId}`, {
+        await axios.delete(GATEWAY_URL+`/friends/${friendId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setFriends(prev => prev.filter(f => f._id !== friendId));

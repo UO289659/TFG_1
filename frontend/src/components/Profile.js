@@ -11,6 +11,7 @@ import { useUserContext} from "../context/UserContext";
 
 
 const Profile = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const navigate = useNavigate();
   
   // Usar el contexto de usuario con manejo de errores
@@ -54,7 +55,7 @@ const Profile = () => {
         setError(""); // Limpiar errores previos
         const token = localStorage.getItem("token");
 
-        const response = await axios.get("http://localhost:4000/profile", {
+        const response = await axios.get(GATEWAY_URL+"/profile", {
            headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -91,7 +92,7 @@ const Profile = () => {
       const token = localStorage.getItem("token");
       console.log("token en profile.js: "+token);
       
-      await axios.put("http://localhost:4000/profile", formData, {
+      await axios.put(GATEWAY_URL+"/profile", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -162,7 +163,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.put("http://localhost:4000/password", {
+      await axios.put(GATEWAY_URL+"/password", {
         actualPassword: passwordData.actualPassword,
         newPassword: passwordData.newPassword,
       }, {
@@ -266,7 +267,7 @@ const Profile = () => {
 
       const token = localStorage.getItem("token");
       
-      const response= await axios.post("http://localhost:4000/cancel-subscription",
+      const response= await axios.post(GATEWAY_URL+"/cancel-subscription",
         {}, // cuerpo vacío (o null)
         {
           headers: {
@@ -408,7 +409,7 @@ const Profile = () => {
 
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Nombre</label>
+                    <label className="form-label fw-semibold">Nombre
                     <input
                       name="name"
                       type="text"
@@ -417,10 +418,11 @@ const Profile = () => {
                       onChange={handleChange}
                       required
                     />
+                    </label>
                   </div>
                   
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Apellido</label>
+                    <label className="form-label fw-semibold">Apellido
                     <input
                       name="surname"
                       type="text"
@@ -429,10 +431,11 @@ const Profile = () => {
                       onChange={handleChange}
                       required
                     />
+                    </label>
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">Email</label>
+                    <label className="form-label fw-semibold">Email
                     <input
                       name="email"
                       type="email"
@@ -440,6 +443,7 @@ const Profile = () => {
                       value={formData.email}
                       disabled={true}
                     />
+                    </label>
                   </div>
                   
                   <button type="submit" className="btn btn-primary w-100">
@@ -461,7 +465,7 @@ const Profile = () => {
 
                 <form onSubmit={handlePasswordChange}>
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Contraseña actual</label>
+                    <label className="form-label fw-semibold">Contraseña actual
                     <input
                       name="actualPassword"
                       type="password"
@@ -470,10 +474,11 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
+                    </label>
                   </div>
                   
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Nueva contraseña</label>
+                    <label className="form-label fw-semibold">Nueva contraseña
                     <input
                       name="newPassword"
                       type="password"
@@ -482,10 +487,11 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
+                    </label>
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">Confirmar nueva contraseña</label>
+                    <label className="form-label fw-semibold">Confirmar nueva contraseña
                     <input
                       name="repeatNewPassword"
                       type="password"
@@ -494,6 +500,7 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
+                    </label>
                   </div>
                   
                   <button

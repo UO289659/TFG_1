@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./Footer.js";
 
 const ForgotPassword = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -19,7 +20,7 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:4000/forgot-password", { email });
+      const res = await axios.post(`${GATEWAY_URL}/forgot-password`, { email });
       setMessage(res.data.message); // Mensaje de éxito (ej. "Revisa tu correo para restablecer la contraseña.")
       setTimeout(() => navigate("/login"), 5000); // Redirigir al login después de 5 segundos
     } catch (err) {

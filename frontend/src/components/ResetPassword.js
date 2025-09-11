@@ -5,6 +5,7 @@ import Footer from "./Footer";
 
 
 const ResetPassword = () => {
+  const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
   const { token } = useParams(); // Obtener el token de la URL
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,7 +20,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const res = await axios.post(`http://localhost:4000/reset-password/${token}`, {
+      const res = await axios.post(GATEWAY_URL+`/reset-password/${token}`, {
         password,
       });
 

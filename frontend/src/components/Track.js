@@ -38,6 +38,7 @@ const categories = [
 
 ];
 
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:4000';
 
 const Track = () => {
   const [data, setData] = useState([]);
@@ -355,7 +356,7 @@ const handleRemoveUserFromSharedTransaction = async (transactionId, userIdToRemo
   const token = localStorage.getItem("token");
   
   try {
-    const response = await axios.patch(`http://localhost:4000/track/${transactionId}/remove-user`, {
+    const response = await axios.patch(GATEWAY_URL+`/track/${transactionId}/remove-user`, {
       userIdToRemove: userIdToRemove
     }, {
       headers: { Authorization: `Bearer ${token}` },
@@ -400,9 +401,9 @@ const refreshTransactionsData = async () => {
         const end = new Date(customEndDate);
         end.setHours(23, 59, 59, 999);
         
-        endpoint = `http://localhost:4000/gastos/rango?start=${start.toISOString()}&end=${end.toISOString()}`;
+        endpoint = GATEWAY_URL+`/gastos/rango?start=${start.toISOString()}&end=${end.toISOString()}`;
       } else {
-        endpoint = `http://localhost:4000/gastos/${selectedCategory}`;
+        endpoint = GATEWAY_URL+`/gastos/${selectedCategory}`;
       }
       
       const response = await axios.get(endpoint, {
@@ -448,6 +449,12 @@ const refreshTransactionsData = async () => {
 
 
 const handleCreateTransaction = async (formData) => {
+
+   console.log("Category being sent:", formData.category);
+  console.log("Category type:", typeof formData.category);
+  console.log("Category has _id:", formData.category?._id ? "Yes" : "No");
+
+  console.log("transaccion en create: ", formData);
     const token = localStorage.getItem("token");
     const decoded = jwtDecode(token);
     const currentClientId = decoded.userId; 
@@ -460,7 +467,7 @@ const handleCreateTransaction = async (formData) => {
 
       console.log("📤 Enviando datos:", newItem);
 
-      const response = await axios.post("http://localhost:4000/track", newItem, {
+      const response = await axios.post(GATEWAY_URL+"/track", newItem, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -527,7 +534,7 @@ const handleUpdateTransaction = async (formData) => {
       return;
     }
 
-    const response = await axios.put(`http://localhost:4000/track/${formData._id}`, updateData, {
+    const response = await axios.put(GATEWAY_URL+`/track/${formData._id}`, updateData, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -624,7 +631,7 @@ useEffect(() => {
   const fetchCategorias = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.get("http://localhost:4000/categories", {
+      const res = await axios.get(GATEWAY_URL+"/categories", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenseCategories(res.data.expense || []);
@@ -641,7 +648,7 @@ useEffect(() => {
   const fetchIcons = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.get("http://localhost:4000/icons", {
+      const res = await axios.get(GATEWAY_URL+"/icons", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIconOptions(res.data|| []);
@@ -671,7 +678,7 @@ useEffect(() => {
       setLoading(true);
       setError(""); // Limpia errores previos
       // Llamada a la API con filtro según selectedCategory
-      const response = await axios.get("http://localhost:4000/gastos/"+selectedCategory, {
+      const response = await axios.get(GATEWAY_URL+"/gastos/"+selectedCategory, {
         headers: {
           Authorization: "Bearer "+token,
         },
@@ -703,7 +710,7 @@ useEffect(() => {
   const fetchFriends = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await axios.get("http://localhost:4000/friends", {
+      const res = await axios.get(GATEWAY_URL+"/friends", {
         headers: { Authorization: `Bearer ${token}` },
       });
      setFriends(res.data);
@@ -839,7 +846,7 @@ const handleSubmit = async (e) => {
     };
 
     try {
-      const response = await axios.put(`http://localhost:4000/track/${newEntry._id}`, updateData, {
+      const response = await axios.put(GATEWAY_URL+`/track/${newEntry._id}`, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -955,14 +962,14 @@ const handleDeleteTransaction = async (id) => {
     });
 
     const token = localStorage.getItem("token");
-    await axios.delete(`http://localhost:4000/track/${id}`, {
+    await axios.delete(GATEWAY_URL+`/track/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
     // Recargar lista después de borrar
-    const response = await axios.get(`http://localhost:4000/gastos/${selectedCategory}`, {
+    const response = await axios.get(GATEWAY_URL+`/gastos/${selectedCategory}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     setData(response.data);
@@ -1025,7 +1032,7 @@ const fetchCustomRangeData = async () => {
 
   try {
     setLoading(true);
-    const res = await axios.get("http://localhost:4000/gastos/rango", {
+    const res = await axios.get(GATEWAY_URL+"/gastos/rango", {
       headers: { Authorization: `Bearer ${token}` },
       params: { start, end },
     });
