@@ -8,7 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const ConfigurarCategorias = () => {
   //const GATEWAY_URL = "http://localhost:4000"; 
-  const GATEWAY_URL = process.env.API_GATEWAY; 
+  constGATEWAY_URL = process.env.API_GATEWAY_URL || 'http://localhost:4000'; 
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState("expense");
