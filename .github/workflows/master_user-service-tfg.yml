@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: backend/user-service
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,7 +62,9 @@ jobs:
         with:
           app-name: 'user-service-tfg'
           slot-name: 'Production'
-          package: backend/user-service
+          package: .
 
           
+
+
 
