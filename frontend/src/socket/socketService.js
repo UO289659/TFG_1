@@ -38,7 +38,8 @@ class SocketService {
     }
 
     try {
-      const serverURL = process.env.REACT_APP_PAYMENT_SERVICE_URL || 'https://0e42060e4d39.ngrok-free.app';
+      //const serverURL = process.env.REACT_APP_PAYMENT_SERVICE_URL || 'https://0e42060e4d39.ngrok-free.app';
+      const serverURL = 'https://payments-service-tfg-asdub5hwduawbzc8.germanywestcentral-01.azurewebsites.net/';
       
       // Limpiar socket anterior si existe
       if (this.socket) {
