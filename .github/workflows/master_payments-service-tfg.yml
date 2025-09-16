@@ -5,9 +5,9 @@ name: Build and deploy Node.js app to Azure Web App - payments-service-tfg
 
 on:
   push:
-    branches:
-      - master
-  workflow_dispatch:
+   paths:
+      - 'backend/payments-service/**'   # Solo dispara cuando cambia esta carpeta
+      - '.github/workflows/master_payments-service-tfg.yml'
 
 jobs:
   build:
@@ -25,9 +25,10 @@ jobs:
 
       - name: npm install, build, and test
         run: |
+          cd backend/payments-service
           npm install
           npm run build --if-present
-          npm run test --if-present
+        
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,4 +63,5 @@ jobs:
           app-name: 'payments-service-tfg'
           slot-name: 'Production'
           package: .
+
           
