@@ -64,9 +64,10 @@ jobs:
         with:
           app-name: 'statistics-service-tfg'
           slot-name: 'Production'
-          package: backend/statistics-service
+          package: .
 
           
+
 
 
 
