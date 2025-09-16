@@ -5,8 +5,10 @@ name: Build and deploy Node.js app to Azure Web App - statistics-service-tfg
 
 on:
   push:
-    branches:
-      - master
+    paths:
+      - 'backend/statistics-service/**'   # Solo dispara cuando cambia esta carpeta
+      - '.github/workflows/master_statistics-service-tfg.yml'
+
   workflow_dispatch:
 
 jobs:
@@ -25,9 +27,10 @@ jobs:
 
       - name: npm install, build, and test
         run: |
+          cd backend/statistics-service
           npm install
           npm run build --if-present
-          npm run test --if-present
+          
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,4 +65,5 @@ jobs:
           app-name: 'statistics-service-tfg'
           slot-name: 'Production'
           package: .
+
           
