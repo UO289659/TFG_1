@@ -1,13 +1,13 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - statistics-service-tfg
+name: Build and deploy Node.js app to Azure Web App - mail-service-tfg
 
 on:
   push:
    paths:
-      - 'backend/statistics-service/**'   # Solo dispara cuando cambia esta carpeta
-      - '.github/workflows/deploy-statistics.yml'
+      - 'backend/mail-service/**'   # Solo dispara cuando cambia esta carpeta
+      - '.github/workflows/deploy-mails.yml'
 
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'statistics-service-tfg'
+          app-name: 'mail-service-tfg'
           slot-name: 'Production'
           package: .
           
