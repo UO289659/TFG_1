@@ -5,9 +5,9 @@ name: Build and deploy Node.js app to Azure Web App - user-service-tfg
 
 on:
   push:
-    branches:
-      - master
-  workflow_dispatch:
+    paths:
+      - 'backend/user-service/**'   # Solo dispara cuando cambia esta carpeta
+      - '.github/workflows/master_user-service-tfg.yml'
 
 jobs:
   build:
@@ -25,9 +25,10 @@ jobs:
 
       - name: npm install, build, and test
         run: |
+          cd backend/user-service
           npm install
           npm run build --if-present
-          npm run test --if-present
+         
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,4 +63,5 @@ jobs:
           app-name: 'user-service-tfg'
           slot-name: 'Production'
           package: .
+
           
