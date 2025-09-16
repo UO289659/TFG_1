@@ -1,15 +1,13 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - statistics-service-tfg
+name: Build and deploy Node.js app to Azure Web App - user-service-tfg
 
 on:
   push:
     paths:
-      - 'backend/statistics-service/**'   # Solo dispara cuando cambia esta carpeta
-      - '.github/workflows/master_statistics-service-tfg.yml'
-
-  
+      - 'backend/user-service/**'   # Solo dispara cuando cambia esta carpeta
+      - '.github/workflows/master_user-service-tfg.yml'
 
 jobs:
   build:
@@ -27,10 +25,10 @@ jobs:
 
       - name: npm install, build, and test
         run: |
-          cd backend/statistics-service
+          cd backend/user-service
           npm install
           npm run build --if-present
-          
+         
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -54,17 +52,16 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0B66FE17C7F44CF9BBCC7907CF1C9DA0 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_06B8A880986A4A71A78C574A2815C696 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_64DB8527A58E4D1EBA9CCC322F86696B }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_CBC5F0703BFF4F5FA7E277EA9252C1CD }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E9C44C82AF9F4E0DBB29EA266A4FB687 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C83622B138B64AC6929E2D73A7750B74 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'statistics-service-tfg'
+          app-name: 'user-service-tfg'
           slot-name: 'Production'
           package: .
 
           
-
