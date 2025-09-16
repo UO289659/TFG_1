@@ -101,7 +101,8 @@ app.post('/register', async (req, res) => {
     
       const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
        // Crear el mensaje de correo informativo
-    const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
+    //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
+    const mailServiceUrl = 'mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net/mail'
 
     // Enviar un correo informativo al usuario
     await axios.post(`${mailServiceUrl}/send-registration-email`, {
