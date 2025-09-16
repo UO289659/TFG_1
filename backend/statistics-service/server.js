@@ -6,7 +6,7 @@
  * @version 1.0.0
  */
 
-const express = require("express");
+const express = require("express"); 
 const cors = require("cors");
 const mongoose = require('mongoose');
 require('dotenv').config();
