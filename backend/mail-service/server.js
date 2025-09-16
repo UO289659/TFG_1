@@ -17,7 +17,7 @@ const nodemailer = require('nodemailer');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-require('dotenv').config();  // Cargar las variables del archivo .env
+require('dotenv').config();  // Cargar las variables del archivo .env 
 
 // Inicializamos el servidor Express
 const app = express();
