@@ -62,9 +62,10 @@ jobs:
         with:
           app-name: 'mail-service-tfg'
           slot-name: 'Production'
-          package: .
+          package: backend/mail-service/.
 
           
+
 
 
 
