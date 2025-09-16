@@ -154,6 +154,7 @@ app.post('/register', async (req, res) => {
  * @since 1.0.0
  */
   app.post('/login', async (req, res) => {
+    console.log('Petición recibida en /login:', req.body);
     try {
       // Check if required fields are present in the request body
       validateRequiredFields(req, ['email', 'password']);
