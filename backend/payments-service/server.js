@@ -3,7 +3,7 @@
  * @description Microservicio que maneja las suscripciones premium, webhooks de Stripe
  * y notificaciones en tiempo real a través de Socket.IO
  * @author Carmen Espinosa Martínez
- * @version 1.0.0
+ * @version 1.0.0 
  */
 const express = require("express"); 
 const cors = require("cors");
