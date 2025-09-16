@@ -62,6 +62,7 @@ jobs:
         with:
           app-name: 'user-service-tfg'
           slot-name: 'Production'
-          package: .
+          package: backend/user-service
 
           
+
