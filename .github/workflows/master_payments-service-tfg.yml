@@ -62,8 +62,9 @@ jobs:
         with:
           app-name: 'payments-service-tfg'
           slot-name: 'Production'
-          package: backend/payments-service
+          package: .
 
           
+
 
 
