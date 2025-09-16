@@ -616,7 +616,7 @@ useEffect(() => {
         const decoded = jwtDecode(token);
         // Asumiendo que el token contiene información sobre el estado premium
         setIsPremium(decoded.isPremium || decoded.premium || false);
-        setClientId()
+        setClientId(decoded.userId);
       } catch (error) {
         console.error("Error al decodificar token:", error);
         setIsPremium( decoded.userId);
