@@ -151,7 +151,7 @@ app.post('/register', async (req, res) => {
  * @throws {400} Campos faltantes
  * @throws {401} Credenciales inválidas o usuario no encontrado
  * 
- * @since 1.0.0
+ * @since 1.0.0 
  */
   app.post('/login', async (req, res) => {
     console.log('Petición recibida en /login:', req.body);
