@@ -3,7 +3,7 @@
  * @description Microservicio que maneja transacciones financieras, categorías, 
  * gastos compartidos y exportación de datos
  * @author Carmen Espinosa Martínez
- * @version 1.0.0 
+ * @version 1.0.0
  */
 
 const express = require("express");
