@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken');
 const User = require('./user-model');
 const FriendsRequest = require('./friends-request-model');
 const cors = require("cors");
-const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 const crypto = require("crypto");
 const axios = require("axios");
 const app = express();
@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Auth Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Auth Service] Error al conectar:", err));
 /**
@@ -80,7 +80,7 @@ function validateRequiredFields(req, requiredFields) {
 app.post('/register', async (req, res) => {
   try {
       // Check if required fields are present in the request body
-      validateRequiredFields(req, ['nombre', 'apellido', 'email', 'password']);
+      validateRequiredFields(req, ['nombre', 'apellido', 'email', 'password']); 
 
       const existingUser = await User.findOne({ email: req.body.email });
       if (existingUser) {

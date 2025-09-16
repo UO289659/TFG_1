@@ -3,23 +3,23 @@
  * @description Microservicio que maneja transacciones financieras, categorías, 
  * gastos compartidos y exportación de datos
  * @author Carmen Espinosa Martínez
- * @version 1.0.0
+ * @version 1.0.0 
  */
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require('mongoose');
 require('dotenv').config();
-const {authMiddleware, ensurePremium} = require("../auth-middleware/index");
+const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 const dayjs = require('dayjs');
 const seedCategorias = require("./seedCategories");
 const seedIconos= require("./seedIcons");
 const app = express();
-const Transaction = require("../statistics-service/statistics-model")
+const Transaction = require("./statistics-model")
 const Categoria = require("./category-model")
 const UserCategory=require("./user-category");
 const Icono = require("./icon-model")
-const User = require("../user-service/user-model");
+//const User = require("../user-service/user-model");
 app.use(cors());
 app.use(express.json());
 
@@ -43,7 +43,7 @@ const userSchemaLocal = new mongoose.Schema({
 const UserLocal = mongoose.model("UserLocal", userSchemaLocal);
 
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(async () => {
     console.log("✅ [Stats Service] Conectado a MongoDB");
     await seedCategorias();
@@ -737,9 +737,14 @@ app.post('/track', async (req, res) => {
     return res.status(400).json({ error: "Datos incompletos" });
   }
 
+  console.log("categoria recibida", category);
+
   const categoryExists = await Categoria.findOne({
   name: { $regex: new RegExp(`^${category}$`, 'i') }
 });
+
+
+      console.log("category exists: ", categoryExists);
 
   try {
     // Si no hay usuarios compartidos, crear transacción individual
@@ -752,6 +757,7 @@ app.post('/track', async (req, res) => {
         icon,
         clientId
       });
+
 
       return res.status(201).json({ 
         message: "Transacción registrada", 
