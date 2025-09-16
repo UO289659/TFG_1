@@ -9,7 +9,7 @@ on:
       - 'backend/statistics-service/**'   # Solo dispara cuando cambia esta carpeta
       - '.github/workflows/master_statistics-service-tfg.yml'
 
-  workflow_dispatch:
+  
 
 jobs:
   build:
@@ -67,3 +67,4 @@ jobs:
           package: .
 
           
+
