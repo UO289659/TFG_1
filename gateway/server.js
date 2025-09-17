@@ -9,17 +9,19 @@ const app = express();
 // CORS para Vercel
 const corsOptions = {
   origin: [
-    'https://saldosmart.vercel.app/',
-    'https://saldosmart-q08ujhaa2-uo289659s-projects.vercel.app/',
+    'https://saldosmart.vercel.app',
+    'https://saldosmart-99v2thp58-uo289659s-projects.vercel.app',
     process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null
   ].filter(Boolean),
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const userServiceUrl = process.env.REACT_APP_USER_SERVICE_URL || 'http://localhost:5000';
+const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000';
 const statsServiceUrl = process.env.STATS_SERVICE_URL || 'http://localhost:5001';
 const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
 const paymentsServiceUrl = process.env.PAYMENTS_SERVICE_URL || 'http://localhost:5003';
