@@ -6,19 +6,7 @@ const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 console.log("Middleware cargado:", authMiddleware);
 const app = express();
 
-// CORS para Vercel
-const corsOptions = {
-  origin: [
-    'https://saldosmart.vercel.app',
-    'https://saldosmart-99v2thp58-uo289659s-projects.vercel.app',
-    process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000';
