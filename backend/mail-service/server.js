@@ -28,17 +28,22 @@ app.use(express.json());
 app.use(cors());
 
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Mail Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Mail Service] Error al conectar:", err));
 
 // Configura tu transporte de correo con Nodemailer
 const transporter = nodemailer.createTransport({
-  host: "smtp.sendgrid.net",
-  port: 2525,
+  host: 'smtp.gmail.com',        
+  port: 587,                     
+  secure: false,                 
   auth: {
-    user: "apikey",
-    pass: process.env.SENDGRID_API_KEY
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,   
+    ciphers: 'SSLv3'            
   }
 });
 
