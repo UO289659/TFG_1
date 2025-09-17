@@ -113,7 +113,7 @@ app.post('/register', async (req, res) => {
       console.log("pasa generacion de token");
        // Crear el mensaje de correo informativo
     //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
-    const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net/mail'
+    const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net'
 
     // Enviar un correo informativo al usuario
     await axios.post(`${mailServiceUrl}/send-registration-email`, {
@@ -1214,5 +1214,8 @@ requiredEnvVars.forEach(varName => {
     process.exit(1);
   }
 }); */
+
+app.get('/health', (req, res) => res.send('OK'));
+
 
 module.exports = app;
