@@ -27,7 +27,8 @@ module.exports = async function seedCategorias() {
     if (existentes.length < categoriasIniciales.length) {
       for (const cat of categoriasIniciales) {
       await Categoria.updateOne(
-        { name: cat.name },     // criterio de búsqueda
+        { name: cat.name },  
+        { categoryType: cat.categoryType },      // criterio de búsqueda
         { $setOnInsert: cat },      // lo que se insertará si no existe
         { upsert: true }
       );
