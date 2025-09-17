@@ -87,8 +87,12 @@ app.post('/register', async (req, res) => {
       if (existingUser) {
         throw new Error("El correo ya está registrado");
       }
+
+      console.log("pasa comprobacion del existing user");
       // Encrypt the password before saving it
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+      console.log("pasa encriptacion de contraseña");
 
       const newUser = new User({
           name:req.body.nombre,
@@ -98,9 +102,15 @@ app.post('/register', async (req, res) => {
           isPremium: false,
       });
 
+      console.log("pasa creacion del nuevo usuario");
+
       await newUser.save();
+
+      console.log("pasa almacenamiento en base de datos de usuario");
     
       const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
+
+      console.log("pasa generacion de token");
        // Crear el mensaje de correo informativo
     //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
     const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net/mail'
