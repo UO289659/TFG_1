@@ -496,7 +496,7 @@ app.post("/forgot-password", async (req, res) => {
 
   // Enviar el correo a través del mail-service
     const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
-    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetLink = `frontend-tfg-c6fuffcge4ceg0cv.germanywestcentral-01.azurewebsites.net/reset-password/${resetToken}`;
     
     const mailResponse =await axios.post(`${mailServiceUrl}/send-reset-email`, {
       to: email,
