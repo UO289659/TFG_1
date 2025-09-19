@@ -19,7 +19,7 @@ const categoriasIniciales = [
 ];
 
 
-const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
+//const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
 
 module.exports = async function seedCategorias() {
   try {
