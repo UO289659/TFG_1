@@ -239,7 +239,7 @@ app.use(express.json());
 
 // ✅ MEJORAR: Conexión a MongoDB con mejor manejo de errores
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Payments Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Payments Service] Error al conectar:", err));
 
