@@ -1303,7 +1303,6 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
  * @since 1.0.0
  */
 app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
-  console.log("entra por export de stats");
   try {
     const clientId = req.user.id;
     
@@ -1346,6 +1345,8 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
       if (formattedTx.createdAt) {
         formattedTx.createdAt = dayjs(formattedTx.createdAt).format('D [de] MMMM [de] YYYY');
       }
+      //formatear categoría a nombre
+      formattedTx.category= formattedTx.category.name || 'N/A';
       
       // Verificar si el gasto es compartido
       const isSharedExpense = formattedTx.sharedWith && Array.isArray(formattedTx.sharedWith) && formattedTx.sharedWith.length > 0;
