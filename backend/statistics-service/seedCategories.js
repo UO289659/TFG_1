@@ -26,20 +26,29 @@ module.exports = async function seedCategorias() {
     const existentes = await Categoria.find({categoryType: "DefaultCategory"});
     if (existentes.length < categoriasIniciales.length) {
       for (const cat of categoriasIniciales) {
-      await Categoria.updateOne(
-        { name: cat.name, categoryType:"DefaultCategory" }, // criterio de búsqueda
-        { 
-          $setOnInsert: cat,  // solo si se inserta nuevo documento
-          $set: { categoryType: cat.categoryType } // siempre actualiza categoryType
-        },
-        { upsert: true }
-      );
-    }
-    console.log("✅ Categorías insertadas o actualizadas correctamente");
+       // Verificar si YA EXISTE esta DefaultCategory específica
+        const defaultExiste = await Categoria.findOne({ 
+          name: cat.name, 
+          categoryType: "DefaultCategory" 
+        });
+        
+        if (!defaultExiste) {
+          // Crear directamente la categoría DefaultCategory
+          try {
+            const nuevaDefault = await Categoria.create(cat);
+            console.log(`✅ DefaultCategory '${cat.name}' creada con ID: ${nuevaDefault._id}`);
+          } catch (createError) {
+            console.error(`❌ Error creando DefaultCategory '${cat.name}':`, createError.message);
+          }
+        } else {
+          console.log(`🔁 DefaultCategory '${cat.name}' ya existe`);
+        }
+      }
+      console.log("✅ Proceso de seed DefaultCategories completado");
     } else {
-      console.log("🔁 Categorías ya existen, no se duplican");
+      console.log("🔁 Todas las DefaultCategories ya existen, no se necesita seed");
     }
   } catch (err) {
-    console.error("❌ Error al insertar categorías:", err);
+    console.error("❌ Error general al insertar categorías:", err);
   }
 };
