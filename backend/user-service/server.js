@@ -128,6 +128,7 @@ app.post('/register', async (req, res) => {
       ¡Gracias por unirte a nosotros!
       `,
     });
+    console.log("pasa envio de correo");
       res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación.", token });
   } catch (error) {
     console.error("Error en /register:", error);
