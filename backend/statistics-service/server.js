@@ -250,7 +250,6 @@ async function createSharedTransactions({
       name,
       type,
       category,
-      categoryName: category.name,
       value: amounts[participantId] || 0, // Su parte individual
       originalValue: value,
       icon,
@@ -302,7 +301,7 @@ async function updateTransaction(transactionId, updateData, userId) {
     }
 
     // Limpiar y preparar datos - solo campos permitidos
-    const allowedFields = ['name', 'type', 'category','categoryName', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
+    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
     const preparedData = {};
     
     for (const field of allowedFields) {
@@ -317,7 +316,6 @@ async function updateTransaction(transactionId, updateData, userId) {
     });
     if(categoryExists) {
       preparedData.category = categoryExists._id;
-      preparedData.categoryName = categoryExists.name;
     }
   }
 
@@ -680,7 +678,6 @@ async function createIndividualTransaction({
     name,
     type,
     category,
-    categoryName: category.name,
     value,
     originalValue: value, 
     icon,
