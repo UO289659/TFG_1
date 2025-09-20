@@ -222,7 +222,7 @@ async function createSharedTransactions({
   let amounts = {};
   
   if (splitType === 'equal') {
-    const amountPerPerson = value / allParticipants.length;
+   const amountPerPerson = parseFloat((value / allParticipants.length).toFixed(2));
     allParticipants.forEach(userId => {
       amounts[userId] = amountPerPerson;
     });
