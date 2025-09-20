@@ -26,29 +26,18 @@ module.exports = async function seedCategorias() {
     const existentes = await Categoria.find({categoryType: "DefaultCategory"});
     if (existentes.length < categoriasIniciales.length) {
       for (const cat of categoriasIniciales) {
-       // Verificar si YA EXISTE esta DefaultCategory específica
-        const defaultExiste = await Categoria.findOne({ 
-          name: cat.name, 
-          categoryType: "DefaultCategory" 
-        });
-        
-        if (!defaultExiste) {
-          // Crear directamente la categoría DefaultCategory
-          try {
-            const nuevaDefault = await Categoria.create(cat);
-            console.log(`✅ DefaultCategory '${cat.name}' creada con ID: ${nuevaDefault._id}`);
-          } catch (createError) {
-            console.error(`❌ Error creando DefaultCategory '${cat.name}':`, createError.message);
-          }
-        } else {
-          console.log(`🔁 DefaultCategory '${cat.name}' ya existe`);
-        }
-      }
-      console.log("✅ Proceso de seed DefaultCategories completado");
+      await Categoria.updateOne(
+        { name: cat.name },  
+        { categoryType: cat.categoryType },      // criterio de búsqueda
+        { $setOnInsert: cat },      // lo que se insertará si no existe
+        { upsert: true }
+      );
+    }
+    console.log("✅ Categorías insertadas o actualizadas correctamente");
     } else {
-      console.log("🔁 Todas las DefaultCategories ya existen, no se necesita seed");
+      console.log("🔁 Categorías ya existen, no se duplican");
     }
   } catch (err) {
-    console.error("❌ Error general al insertar categorías:", err);
+    console.error("❌ Error al insertar categorías:", err);
   }
 };
