@@ -1037,11 +1037,11 @@ app.get("/categories", authMiddleware, async (req, res) => {
 
     // 1. Obtener SOLO categorías globales (sin categoryType)
     const categoriasGlobales = await Categoria.find({ 
-      categoryType: { $exists: false } // Solo las que no tienen discriminador
+      categoryType: { $exists: false },// Solo las que no tienen discriminador
     });      
 
     // 2. Obtener categorías personalizadas del usuario     
-    const categoriasUsuario = await UserCategory.find({ userId });      
+    const categoriasUsuario = await UserCategory.find({ userId, deleted:false });      
 
     // 3. Combinar ambas listas     
     const todas = [       
@@ -1210,11 +1210,8 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
   try {
     const { type, name } = req.body;
     const userId= req.user.id;
-    console.log("userid: "+userId);
-    console.log("type: "+type);
-    console.log("name: "+name);
+    
      // Verificamos si la categoría existe en ambas colecciones
-     //TODO: AQUI NO SE PUEDEN BORRAR LAS CATEGORIAS POR DEFECTO PORQUE SE BORRAN PARA TODOS LOS USUARIOS
     const categoryInCategoria = await Categoria.findOne({  name, type , categoryType: { $exists: false } }); // Solo categorías globales
 
     if(categoryInCategoria) {
@@ -1227,21 +1224,21 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
     }
 
     // Intentamos eliminar en ambas colecciones
-    let deleted = false;
+    let deleted1 = false;
     let deleted2 = false;
-
-    // Si la categoría existe en Categoria, intentamos eliminarla
-    // if (categoryInCategoria) {
-    //   deleted = await Categoria.findOneAndDelete({ userId, name, type });
-    // }
 
     // Si la categoría existe en UserCategory, intentamos eliminarla
     if (categoryInUserCategory) {
-      deleted2 = await UserCategory.findOneAndDelete({ userId, name, type });
+      deleted2 = await UserCategory.findByIdAndUpdate(categoryInUserCategory,
+        {deleted: true ,
+          deletedAt: new Date()
+        },
+      { new: true }
+      );
     }
 
     // Si no se pudo eliminar en ninguna colección, devolvemos error
-    if (!deleted && !deleted2) {
+    if (!deleted1 && !deleted2) {
       return res.status(404).json({ message: "No se pudo eliminar la categoría" });
     }
 
