@@ -27,7 +27,7 @@ module.exports = async function seedCategorias() {
     if (existentes.length < categoriasIniciales.length) {
       for (const cat of categoriasIniciales) {
       await Categoria.updateOne(
-        { name: cat.name }, // criterio de búsqueda
+        { name: cat.name, categoryType:"DefaultCategory" }, // criterio de búsqueda
         { 
           $setOnInsert: cat,  // solo si se inserta nuevo documento
           $set: { categoryType: cat.categoryType } // siempre actualiza categoryType
