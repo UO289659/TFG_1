@@ -6,6 +6,7 @@ const expenseSchema = new mongoose.Schema({
   name: { type: String, required: true },
   type: { type: String, enum: ["expense", "income"], required: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Categoria', required: true },
+  categoryName: { type: String, required: true },
   value: { type: Number, required: true },
   originalValue: { type: Number, required: false },
   icon: { type: String },
