@@ -634,6 +634,9 @@ async function updateTransaction(transactionId, updateData, userId) {
     }
 
     // Si no hay cambios en sharedWith, actualización normal
+    if (preparedData.value !== undefined) {
+      preparedData.originalValue = preparedData.value;
+    }
     const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
       new: true,
       runValidators: true
