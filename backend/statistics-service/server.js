@@ -632,10 +632,11 @@ async function updateTransaction(transactionId, updateData, userId) {
       
       return updated;
     }
-
-    // Si no hay cambios en sharedWith, actualización normal
-    if (preparedData.value !== undefined) {
-      preparedData.originalValue = preparedData.value;
+    const isIndividualTransaction = !originalTransaction.sharedWith || originalTransaction.sharedWith.length === 0;
+    if (isIndividualTransaction) {
+      if (preparedData.value !== undefined) {
+        preparedData.originalValue = preparedData.value;
+      }
     }
     const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
       new: true,
