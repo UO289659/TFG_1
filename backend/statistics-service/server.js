@@ -301,7 +301,7 @@ async function updateTransaction(transactionId, updateData, userId) {
     }
 
     // Limpiar y preparar datos - solo campos permitidos
-    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
+    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy', 'originalValue'];
     const preparedData = {};
     
     for (const field of allowedFields) {
@@ -633,6 +633,8 @@ async function updateTransaction(transactionId, updateData, userId) {
       return updated;
     }
 
+    console.log("updateData.value:", updateData.value);
+    console.log("preparedData.value:", preparedData.value);
     if (updateData.value !== undefined) {
         preparedData.originalValue = updateData.value;
     }
