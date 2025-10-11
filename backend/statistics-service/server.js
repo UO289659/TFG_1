@@ -301,7 +301,7 @@ async function updateTransaction(transactionId, updateData, userId) {
     }
 
     // Limpiar y preparar datos - solo campos permitidos
-    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy', 'originalValue'];
+    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
     const preparedData = {};
     
     for (const field of allowedFields) {
@@ -632,12 +632,11 @@ async function updateTransaction(transactionId, updateData, userId) {
       
       return updated;
     }
-    const isIndividualTransaction = !originalTransaction.sharedWith || originalTransaction.sharedWith.length === 0;
-    if (isIndividualTransaction) {
-      if (preparedData.value !== undefined) {
+
+    if (preparedData.value !== undefined) {
         preparedData.originalValue = preparedData.value;
-      }
     }
+    // Si no hay cambios en sharedWith, actualización normal
     const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
       new: true,
       runValidators: true
