@@ -623,6 +623,7 @@ async function updateTransaction(transactionId, updateData, userId) {
       preparedData.totalParticipants = 1;
       preparedData.isShared = false;
       preparedData.customAmounts = null; // Limpiar customAmounts también
+      preparedData.originalValue= preparedData.value !== undefined ? preparedData.value : originalTransaction.value;
       
       // Actualizar la transacción actual y retornar
       const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
