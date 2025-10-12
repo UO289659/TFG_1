@@ -524,7 +524,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                   }));
               } else {
                 // División equitativa
-                newValue = (preparedData.value || originalTransaction.value) / currentParticipantIds.length;
+                newValue = parseFloat(((preparedData.value || originalTransaction.value) / currentParticipantIds.length).toFixed(2));
                 newSharedWith = currentParticipantIds
                   .filter(id => id !== newUserId)
                   .map(id => ({
