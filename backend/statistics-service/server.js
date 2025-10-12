@@ -482,7 +482,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                   updateFields.originalValue = preparedData.value; // Mantener el valor total original
                 } else {
                   // Para división equitativa: dividir por igual
-                  updateFields.value = preparedData.value / currentParticipantIds.length;
+                  updateFields.value = parseFloat((preparedData.value / currentParticipantIds.length).toFixed(2));
                   updateFields.originalValue = preparedData.value;
                 }
               }
