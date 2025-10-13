@@ -646,6 +646,8 @@ app.post('/cancel-subscription', authMiddleware, async (req, res) => {
       cancel_at_period_end: true
     });
 
+    await notifyTokenUpdate(userId);
+
     res.json({ 
       success: true, 
       message: 'Suscripción cancelada. Se mantendrá activa hasta el final del período actual.' 
