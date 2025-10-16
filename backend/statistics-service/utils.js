@@ -90,7 +90,18 @@ async function createSharedTransactions({
 }
 
 async function createIndividualTransaction({ name, type, category, value, icon, clientId }) {
-  const transaction = new Transaction({ clientId, name, type, category, value, icon, isShared: false });
+  const transaction = new Transaction({ clientId,
+    name,
+    type,
+    category,
+    value,
+    originalValue: value, 
+    icon,
+    sharedWith: [],
+    splitType: null,
+    totalParticipants: 1,
+    createdBy: new mongoose.Types.ObjectId(clientId)
+   });
   const saved = await transaction.save();
   return saved;
 }
