@@ -31,7 +31,7 @@ jest.mock('stripe', () => {
 // Mocks
 jest.mock('axios');
 
-jest.mock('../auth-middleware/index', () => ({
+jest.mock('./auth-middleware/index', () => ({
   authMiddleware: (req, res, next) => {
     req.user = { id: '507f1f77bcf86cd799439011' };
     next();

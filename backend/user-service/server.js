@@ -15,6 +15,10 @@ const cors = require("cors");
 const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 const crypto = require("crypto");
 const axios = require("axios");
+const { 
+  validateRequiredFields, 
+  generateResetToken,
+} = require('./utils');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -24,23 +28,7 @@ mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Auth Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Auth Service] Error al conectar:", err));
-/**
- * Valida que los campos requeridos estén presentes en el cuerpo de la solicitud
- * @function validateRequiredFields
- * @param {Object} req - Objeto de solicitud de Express
- * @param {string[]} requiredFields - Array de nombres de campos requeridos
- * @throws {Error} Si falta algún campo requerido
- * @example
- * validateRequiredFields(req, ['email', 'password']);
- */
-function validateRequiredFields(req, requiredFields) {
-  for (const field of requiredFields) {
-    if (!(field in req.body)) {
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
-  console.log("cumple required fields");
-}
+// validateRequiredFields ahora se importa desde utils.js
 
 /**
  * Registra un nuevo usuario en el sistema
@@ -489,7 +477,7 @@ app.post("/forgot-password", async (req, res) => {
     }
 
     // Generar un token de restablecimiento
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = generateResetToken();
 
     // Aquí puedes guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
     user.resetToken = resetToken;
@@ -582,6 +570,7 @@ app.post("/reset-password/:token", async (req, res) => {
     res.status(500).json({ error: "Error al restablecer la contraseña." });
   }
 });
+
 
 /**
  * Obtiene la lista de amigos del usuario autenticado

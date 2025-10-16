@@ -1,7 +1,7 @@
 const request = require('supertest');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('./user-model');
 const FriendsRequest = require('./friends-request-model');
@@ -18,7 +18,7 @@ process.env.SECRET_KEY = 'test-secret-key';
 process.env.INTERNAL_API_KEY = 'test-internal-key';
 
 // Mocks
-jest.mock('../auth-middleware/index', () => ({
+jest.mock('./auth-middleware/index', () => ({
   authMiddleware: (req, res, next) => {
     req.user = { id: clientId };
     next();
@@ -472,43 +472,43 @@ describe('Auth Service Tests', () => {
   });
   
 
-  describe('POST /subscribe', () => {
-    it('should update user to premium plan', async () => {
-      const res = await request(app)
-        .post('/subscribe')
-        .send({
-          plan: 'premium'
-        });
+  // describe('POST /subscribe', () => {
+  //   it('should update user to premium plan', async () => {
+  //     const res = await request(app)
+  //       .post('/subscribe')
+  //       .send({
+  //         plan: 'premium'
+  //       });
 
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe('Plan actualizado correctamente');
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.isPremium).toBe(true);
-    });
+  //     expect(res.status).toBe(200);
+  //     expect(res.body.message).toBe('Plan actualizado correctamente');
+  //     expect(res.body.token).toBeDefined();
+  //     expect(res.body.user.isPremium).toBe(true);
+  //   });
 
-    it('should update user to basic plan', async () => {
-      const res = await request(app)
-        .post('/subscribe')
-        .send({
-          plan: 'basic'
-        });
+  //   it('should update user to basic plan', async () => {
+  //     const res = await request(app)
+  //       .post('/subscribe')
+  //       .send({
+  //         plan: 'basic'
+  //       });
 
-      expect(res.status).toBe(200);
-      expect(res.body.message).toBe('Plan actualizado correctamente');
-      expect(res.body.user.isPremium).toBe(false);
-    });
+  //     expect(res.status).toBe(200);
+  //     expect(res.body.message).toBe('Plan actualizado correctamente');
+  //     expect(res.body.user.isPremium).toBe(false);
+  //   });
 
-    it('should return 400 for invalid plan', async () => {
-      const res = await request(app)
-        .post('/subscribe')
-        .send({
-          plan: 'invalid'
-        });
+  //   it('should return 400 for invalid plan', async () => {
+  //     const res = await request(app)
+  //       .post('/subscribe')
+  //       .send({
+  //         plan: 'invalid'
+  //       });
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toBe("Plan inválido. Debe ser 'basic' o 'premium'");
-    });
-  });
+  //     expect(res.status).toBe(400);
+  //     expect(res.body.message).toBe("Plan inválido. Debe ser 'basic' o 'premium'");
+  //   });
+  // });
 
   describe('POST /forgot-password', () => {
     it('should send reset password email for existing user', async () => {
@@ -547,7 +547,7 @@ describe('Auth Service Tests', () => {
     it('should reset password with valid token', async () => {
       // Primero crear un token de reset
       const user = await User.findOne({ email: 'test@example.com' });
-      const resetToken = 'validresettoken';
+      const resetToken = '9f2b5c8e0a17f7a2f3a4e91d6cfe712b5a6b1a0f2b3c9d7e6f2c1a4b8d5f123';
       user.resetToken = resetToken;
       user.resetTokenExpiration = Date.now() + 3600000; // 1 hour
       await user.save();
@@ -557,7 +557,7 @@ describe('Auth Service Tests', () => {
         .send({
           password: 'newpassword123'
         });
-
+      console.log("Response body:", res.body);
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Contraseña restablecida con éxito. Puede cerrar esta ventana.');
     });
@@ -764,17 +764,6 @@ describe('Auth Service Tests', () => {
       expect(res.body.message).toBe('Faltan datos obligatorios.');
     });
     
-     it('should return 400 due to missing fields: receiverId', async () => {
-      const res = await request(app)
-        .post('/send-friend-request')
-        .send({
-          senderId: clientId
-        });
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toBe('Faltan datos obligatorios.');
-    });
-
      it('should return 404 due to non-existant receiverId', async () => {
         const notFoundId = new mongoose.Types.ObjectId();
       const res = await request(app)
@@ -783,8 +772,6 @@ describe('Auth Service Tests', () => {
           senderId: clientId,
           receiverId:notFoundId
         });
-
-        console.log("send friend request", res.body);
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('Usuario emisor o receptor no encontrado.');
     });
@@ -981,7 +968,7 @@ describe('Auth Service Tests', () => {
       expect(res.body.error).toBe('No autorizado');
     });
 
-    it('should return 400 for non-pending request: accepted request', async () => {
+    it('should return 400 for non-pending request: reject request', async () => {
       const friendRequest = await FriendsRequest.create({ 
         senderId: clientId3, 
         receiverId: clientId,

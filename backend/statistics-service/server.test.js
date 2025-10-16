@@ -10,7 +10,7 @@ const Icono = require('./icon-model');
 const clientId = '507f1f77bcf86cd799439011'; // ObjectId fijo para tests
 
 // Mocks corregidos
-jest.mock('../auth-middleware/index', () => ({
+jest.mock('./auth-middleware/index', () => ({
   authMiddleware: (req, res, next) => {
     req.user = { id: '507f1f77bcf86cd799439011' }; // Mismo ID fijo
     next();
@@ -272,7 +272,7 @@ describe('Server Tests', () => {
       // Verificar transacción del creador (userId1)
       const creatorTransaction = transactions.find(t => t.clientId === clientId.toString());
       expect(creatorTransaction).toBeDefined();
-      expect(creatorTransaction.value).toBe(33.333333333333336);
+      expect(creatorTransaction.value).toBe(33.33);
       expect(creatorTransaction.splitType).toBe('equal');
       expect(creatorTransaction.isShared).toBe(true);
       expect(creatorTransaction.totalParticipants).toBe(3);
@@ -280,14 +280,14 @@ describe('Server Tests', () => {
       // Verificar transacción del usuario 2
       const user2Transaction = transactions.find(t => t.clientId === validUserId1.toString());
       expect(user2Transaction).toBeDefined();
-      expect(user2Transaction.value).toBe(33.333333333333336);
+      expect(user2Transaction.value).toBe(33.33);
       expect(user2Transaction.splitType).toBe('equal');
       expect(user2Transaction.isShared).toBe(true);
       
       // Verificar transacción del usuario 3
       const user3Transaction = transactions.find(t => t.clientId === validUserId2.toString());
       expect(user3Transaction).toBeDefined();
-      expect(user3Transaction.value).toBe(33.333333333333336);
+      expect(user3Transaction.value).toBe(33.33);
       expect(user3Transaction.splitType).toBe('equal');
       expect(user3Transaction.isShared).toBe(true);
     });
