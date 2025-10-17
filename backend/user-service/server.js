@@ -1197,6 +1197,7 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
   });
 
 app.post('/users/batch', async (req, res) => {
+  console.log("entra en batch users");
   try {
     // Recibir los IDs como query param separados por comas
     const userIdsString = req.query.userIds;
