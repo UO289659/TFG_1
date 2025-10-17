@@ -1157,7 +1157,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     if (userIds.size > 0) {
       try {
         // Llamar al microservicio de usuarios
-        const response = await axios.get(`${process.env.USER_SERVICE_URL}/users/batch`, {
+        const response = await axios.post(`${process.env.USER_SERVICE_URL}/users/batch`, {
           userIds: Array.from(userIds)
         });
 
