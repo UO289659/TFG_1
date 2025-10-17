@@ -1156,7 +1156,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     let userMap = {};
     if (userIds.size > 0) {
       try {
-        // Llamar al microservicio de usuarios
+        // Llamar al microservicio de usuarios y devuelve un array de objetos 
         const response = await axios.post(`${process.env.USER_SERVICE_URL}/users/batch`, {
           userIds: Array.from(userIds)
         });
@@ -1166,6 +1166,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
             console.log("Usuario obtenido del microservicio:", user);
             userMap[user._id || user.id] = `${user.name} ${user.surname}`;
           });
+          console.log("Mapa de usuarios construido:", userMap);
         }
       } catch (error) {
         console.error('Error al obtener usuarios del microservicio:', error.message);
