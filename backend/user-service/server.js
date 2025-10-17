@@ -1204,6 +1204,7 @@ app.post('/users/batch', async (req, res) => {
       _id: { $in: userIds }
     }).select('_id name surname').lean();
     
+    console.log('Usuarios encontrados en batch:', users);
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener usuarios' });
