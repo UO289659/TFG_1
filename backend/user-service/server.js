@@ -1196,7 +1196,7 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
   });
 
-app.post('/users/batch', async (req, res) => {
+app.get('/users/batch', async (req, res) => {
   try {
     const { userIds } = req.body;
     
