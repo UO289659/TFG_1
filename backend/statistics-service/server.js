@@ -1160,6 +1160,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
 
      if (response.data && Array.isArray(response.data)) {
           response.data.forEach(user => {
+            console.log("Usuario obtenido del microservicio:", user);
             userMap[user._id || user.id] = `${user.name} ${user.surname}`;
           });
         }
