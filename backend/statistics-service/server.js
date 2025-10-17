@@ -1146,7 +1146,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     transactions.forEach(tx => {
       if (tx.sharedWith && Array.isArray(tx.sharedWith)) {
         tx.sharedWith.forEach(share => {
-          if (share.userId && share.userId.toString() !== clientId.toString()) {
+          if (share.userId && share.userId.toString() !== clientId) {
             userIds.add(share.userId.toString());
           }
         });
