@@ -1163,10 +1163,8 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
 
      if (response.data && Array.isArray(response.data)) {
           response.data.forEach(user => {
-            console.log("Usuario obtenido del microservicio:", user);
             userMap[user._id || user.id] = `${user.name} ${user.surname}`;
           });
-          console.log("Mapa de usuarios construido:", userMap);
         }
       } catch (error) {
         console.error('Error al obtener usuarios del microservicio:', error.message);
@@ -1213,7 +1211,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         // Si es compartido, formatear campos apropiadamente
         formattedTx.splitType = formattedTx.splitType || 'N/A';
         formattedTx.totalParticipants = formattedTx.totalParticipants || 'N/A';
-        formattedTx.isShared = formattedTx.isShared ? 'Sí' : 'No';
+        formattedTx.isShared = formattedTx.isShared ? 'Si' : 'No';
         
         // Formatear customAmounts
         if (formattedTx.customAmounts && typeof formattedTx.customAmounts === 'object') {
