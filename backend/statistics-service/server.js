@@ -1134,6 +1134,7 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
 app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
   try {
     const clientId = req.user.id;
+    console.log("clienteid",clientId);
     
     // Obtener todas las transacciones del usuario
     const transactions = await Transaction.find({ clientId })
