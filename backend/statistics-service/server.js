@@ -18,7 +18,10 @@ const app = express();
 const Transaction = require("./statistics-model")
 const Categoria = require("./category-model")
 const UserCategory=require("./user-category");
-const Icono = require("./icon-model")
+const Icono = require("./icon-model");
+const axios = require('axios');
+
+
 //const User = require("../user-service/user-model");
 app.use(cors());
 app.use(express.json());
