@@ -1140,12 +1140,12 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
       .select('-_id -clientId -icon -__v -createdBy')
       .lean();
 
-    // Crear un Set con todos los userIds únicos de sharedWith
+    // Crear un Set con todos los userIds únicos de sharedWith (excluyendo el clientId)
     const userIds = new Set();
     transactions.forEach(tx => {
       if (tx.sharedWith && Array.isArray(tx.sharedWith)) {
         tx.sharedWith.forEach(share => {
-          if (share.userId) {
+          if (share.userId && share.userId.toString() !== clientId.toString()) {
             userIds.add(share.userId.toString());
           }
         });
@@ -1161,7 +1161,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
           userIds: Array.from(userIds)
         });
 
-     if (response.data && Array.isArray(response.data)) {
+        if (response.data && Array.isArray(response.data)) {
           response.data.forEach(user => {
             userMap[user._id || user.id] = `${user.name} ${user.surname}`;
           });
@@ -1171,6 +1171,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         // Continuar con userMap vacío en caso de error
       }
     }
+    
     // Formatear las transacciones
     const formattedResponse = transactions.map(tx => {
       // Crear una copia del objeto para evitar mutaciones
@@ -1181,23 +1182,26 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         formattedTx.createdAt = dayjs(formattedTx.createdAt).format('D [de] MMMM [de] YYYY');
       }
       //formatear categoría a nombre
-      formattedTx.category= formattedTx.category.name || 'N/A';
+      formattedTx.category = formattedTx.category.name || 'N/A';
       
       // Verificar si el gasto es compartido
       const isSharedExpense = formattedTx.sharedWith && Array.isArray(formattedTx.sharedWith) && formattedTx.sharedWith.length > 0;
       
-      // Formatear sharedWith
+      // Formatear sharedWith (filtrando el clientId)
       if (isSharedExpense) {
         formattedTx.sharedWith = formattedTx.sharedWith
+          .filter(share => share.userId && share.userId.toString() !== clientId.toString()) // Filtrar el propio usuario
           .map(share => {
-            if (share.userId) {
-              const userId = share.userId.toString();
-              return userMap[userId] || `Usuario ${userId}`;
-            }
-            return '';
+            const userId = share.userId.toString();
+            return userMap[userId] || `Usuario ${userId}`;
           })
           .filter(name => name !== '') // Filtrar nombres vacíos
           .join(', ');
+        
+        // Si después de filtrar no quedan usuarios, poner N/A
+        if (!formattedTx.sharedWith) {
+          formattedTx.sharedWith = 'N/A';
+        }
       } else {
         formattedTx.sharedWith = 'N/A'; // N/A si no hay usuarios compartidos
       }
