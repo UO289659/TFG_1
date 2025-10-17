@@ -171,7 +171,6 @@ async function createIndividualTransaction({name, type, category, value, icon, c
 }
 
 module.exports = {
-  validateRequiredFields,
   transformSharedWithData,
   createSharedTransactions,
   createIndividualTransaction,
