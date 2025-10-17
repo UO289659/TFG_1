@@ -1196,16 +1196,19 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
   });
 
-// Agregar INTERNAL_API_KEY a las variables requeridas
-/* const requiredEnvVars = [
-  'MONGO_URI', 'SECRET_KEY', 'INTERNAL_API_KEY'
-];
-requiredEnvVars.forEach(varName => {
-  if (!process.env[varName]) {
-    console.error(`❌ Variable de entorno requerida no encontrada: ${varName}`);
-    process.exit(1);
+app.post('/users/batch', async (req, res) => {
+  try {
+    const { userIds } = req.body;
+    
+    const users = await User.find({
+      _id: { $in: userIds }
+    }).select('_id name surname').lean();
+    
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener usuarios' });
   }
-}); */
+});
 
 app.get('/health', (req, res) => res.send('OK'));
 

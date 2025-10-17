@@ -30,19 +30,6 @@ const es = require('dayjs/locale/es'); // Importa el idioma español
 dayjs.extend(localizedFormat);
 dayjs.locale('es');
 
-const userSchemaLocal = new mongoose.Schema({
-  name: { type: String, required: true },
-  surname: { type: String, required: true },
-  email: { type: String, required: true }
-}, {
-  collection: 'users', // Asegúrate de que apunte a la misma colección que tu microservicio de usuarios
-  _id: true, // Asegurar que se reconozca el _id
-  versionKey: false // Opcional: remover __v
-});
-
-// Crear el modelo User local
-const UserLocal = mongoose.model("UserLocal", userSchemaLocal);
-
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(async () => {
@@ -1162,19 +1149,25 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
       }
     });
 
-    // Obtener información de usuarios en lote
+    // Obtener información de usuarios en lote desde el microservicio
     let userMap = {};
     if (userIds.size > 0) {
-      const users = await UserLocal.find({
-        _id: { $in: Array.from(userIds) }
-      }).select('name surname').lean();
+      try {
+        // Llamar al microservicio de usuarios
+        const response = await axios.post(`${process.env.USER_SERVICE_URL}/users/batch`, {
+          userIds: Array.from(userIds)
+        });
 
-      // Crear un mapa de userId -> userData para acceso rápido
-      users.forEach(user => {
-        userMap[user._id.toString()] = `${user.name} ${user.surname}`;
-      });
+     if (response.data && Array.isArray(response.data)) {
+          response.data.forEach(user => {
+            userMap[user._id || user.id] = `${user.name} ${user.surname}`;
+          });
+        }
+      } catch (error) {
+        console.error('Error al obtener usuarios del microservicio:', error.message);
+        // Continuar con userMap vacío en caso de error
+      }
     }
-
     // Formatear las transacciones
     const formattedResponse = transactions.map(tx => {
       // Crear una copia del objeto para evitar mutaciones
