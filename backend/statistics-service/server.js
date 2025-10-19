@@ -220,6 +220,10 @@ async function updateTransaction(transactionId, updateData, userId) {
             customAmounts: preparedData.customAmounts || {}
           });
 
+           const populatedTransactions = await Transaction.find({
+          _id: { $in: transactions.map(t => t._id) }
+         }).populate('category');
+
           // Eliminar la transacción original ya que ahora tenemos múltiples transacciones
           await Transaction.findByIdAndDelete(transactionId);
 
