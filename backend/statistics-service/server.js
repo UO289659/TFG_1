@@ -229,7 +229,7 @@ async function updateTransaction(transactionId, updateData, userId) {
 
           return { 
             message: "Transacción convertida a compartida",
-            transactions,
+            transactions: populatedTransactions,
             isConverted: true,
             originalClientId: originalTransaction.clientId.toString(),
             deletedTransactionId: transactionId
