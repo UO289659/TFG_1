@@ -5,19 +5,6 @@
  * @author Carmen Espinosa Martínez
  */
 
-/**
- * ⚠️ IMPORTANTE: Este archivo contiene PRUEBAS UNITARIAS PURAS
- * 
- * Características de las pruebas unitarias:
- * ✅ Prueban funciones individuales aisladamente
- * ✅ No usan base de datos real
- * ✅ No hacen requests HTTP
- * ✅ Mockean todas las dependencias externas
- * ✅ Son rápidas de ejecutar
- * ✅ No tienen efectos secundarios
- * ✅ Son determinísticas
- */
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -31,12 +18,6 @@ const {
 // Configurar entorno de prueba
 process.env.NODE_ENV = 'test';
 process.env.SECRET_KEY = 'test-secret-key-for-unit-tests';
-
-// Todas las funciones auxiliares ahora se importan desde utils.js
-
-// ===============================
-// 🧪 PRUEBAS UNITARIAS PURAS
-// ===============================
 
 describe('🔍 Unit Tests - User Service Functions', () => {
   

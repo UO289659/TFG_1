@@ -19,8 +19,6 @@ const categoriasIniciales = [
 ];
 
 
-//const iconOptions = ["💸", "🍔", "🚗", "🏠", "💼", "🎁", "🎉", "📦",  "👚", "🏥", "💰", "🎓"];
-
 module.exports = async function seedCategorias() {
   try {
     const existentes = await Categoria.find({categoryType: "DefaultCategory"});

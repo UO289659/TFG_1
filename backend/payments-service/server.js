@@ -233,17 +233,17 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   res.json({received: true});
 });
 
-// ✅ AHORA sí aplicar middlewares
+
 app.use(cors());
 app.use(express.json());
 
-// ✅ MEJORAR: Conexión a MongoDB con mejor manejo de errores
+
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Payments Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Payments Service] Error al conectar:", err));
 
-// ✅ VERIFICAR: Variables de entorno al iniciar
+//VERIFICAR: Variables de entorno al iniciar
 const requiredEnvVars = ['MONGO_URI', 'STRIPE_SECRET_KEY', 'SECRET_KEY', 'USER_SERVICE_URL'];
 requiredEnvVars.forEach(varName => {
   if (!process.env[varName]) {
@@ -309,7 +309,7 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
     // URLs de redirección
     const YOUR_DOMAIN = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    // ✅ VERIFICAR: Que Stripe esté inicializado
+    // VERIFICAR: Que Stripe esté inicializado
     if (!stripe) {
       console.error('❌ Stripe no está inicializado');
       return res.status(500).json({ error: 'Stripe no configurado' });
@@ -329,13 +329,13 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       cancel_url: `${YOUR_DOMAIN}/subscribe?cancelled=true`,
       customer_email: user.email,
       metadata: {
-        userId: userId.toString(), // ✅ IMPORTANTE: Convertir a string
+        userId: userId.toString(), // Convertir a string
         plan: plan,
         billingCycle: billingCycle
       },
       subscription_data: {
         metadata: {
-          userId: userId.toString(), // ✅ IMPORTANTE: Convertir a string
+          userId: userId.toString(), // Convertir a string
           plan: plan,
           billingCycle: billingCycle
         }
@@ -348,7 +348,7 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('❌ Error creando sesión de checkout:', error);
     
-    // ✅ MEJORAR: Manejo específico de errores
+    // Manejo específico de errores
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       return res.status(503).json({ 
         error: 'Error de conexión a base de datos. Intenta de nuevo.' 
@@ -694,7 +694,7 @@ server.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });
 
-// ✅ AGREGAR: Manejo de errores no capturados
+// Manejo de errores no capturados
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
   process.exit(1);

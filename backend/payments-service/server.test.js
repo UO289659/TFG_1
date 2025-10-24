@@ -7,7 +7,7 @@ const axios = require('axios');
 // Define clientId ANTES del mock
 const clientId = '507f1f77bcf86cd799439011';
 
-// Mock de Stripe - FIXED: Should be a function that returns the stripe instance
+// Mock de Stripe -  Should be a function that returns the stripe instance
 jest.mock('stripe', () => {
   const mockStripe = {
     checkout: {
@@ -109,7 +109,7 @@ beforeAll(async () => {
   
   // Obtener la instancia de Stripe del mock
   const stripeModule = require('stripe');
-  stripe = stripeModule(); // This should now work with the fixed mock
+  stripe = stripeModule(); 
 });
 
 afterAll(async () => {
@@ -334,8 +334,6 @@ describe('Payment Server Tests', () => {
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('Sesión no válida para este usuario');
     });
-    // Añadir este test case dentro del describe('POST /verify-payment', () => {})
-// después del test "should return 403 if session does not belong to user"
 
 it('should return 404 if user not found', async () => {
   // Mock successful session retrieval

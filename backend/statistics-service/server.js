@@ -69,8 +69,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   app.get('/gastos/rango', authMiddleware, async (req, res) => {
   const { start, end } = req.query;
   const clientId = req.user.id;
-  //console.log("startDate:", start);
-  //console.log("endDate:", end);
 
   if (!start || !end) {
     return res.status(400).json({ error: "Se requieren fechas de inicio y fin" });
@@ -113,7 +111,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
   try {
     const { period } = req.params;
-   // console.log("Periodo escogido:"+period);
     const gastos = await Transaction.find({ 
       clientId: req.user.id,   
       $expr: {
@@ -126,7 +123,6 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
  if(gastos==null){
   res.status(404).json({ error: "Todavía no hay datos" });
  }
- //const resultadoAgrupado = agruparPorCategoria(gastos);
  res.json(gastos);
   } catch (error) {
     res.status(500).json({ error: "Error del servidor" });
@@ -246,7 +242,7 @@ async function updateTransaction(transactionId, updateData, userId) {
           
           console.log("Sincronizando grupo con createdBy:", createdBy);
           
-          // 1️⃣ Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
+          // Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
           const groupTransactions = await Transaction.find({ 
             createdBy,
             name: originalTransaction.name
@@ -254,7 +250,7 @@ async function updateTransaction(transactionId, updateData, userId) {
 
           console.log("Transacciones del grupo encontradas:", groupTransactions.length);
 
-          // 2️⃣ Obtener IDs de los participantes actuales (incluyendo al creador)
+          // Obtener IDs de los participantes actuales (incluyendo al creador)
           const currentParticipantIds = [];
           
           // Agregar IDs de sharedWith
@@ -276,7 +272,7 @@ async function updateTransaction(transactionId, updateData, userId) {
 
           console.log("Participantes actuales:", currentParticipantIds);
 
-          // 3️⃣ Procesar cada transacción del grupo
+          // Procesar cada transacción del grupo
           const updatedTransactions = [];
           let transactionToReturn = null;
 
@@ -292,7 +288,7 @@ async function updateTransaction(transactionId, updateData, userId) {
               // El usuario sigue participando => actualizar su transacción
               console.log("Actualizando transacción de usuario:", txUserId);
               
-              // 🔧 SOLUCIÓN: Preservar correctamente sharedWith según el tipo de división
+              // Preservar correctamente sharedWith según el tipo de división
               let updatedSharedWith;
               
               if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
@@ -344,7 +340,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                 isShared: true
               };
 
-              // 🔧 SOLUCIÓN: Calcular correctamente el valor según el tipo de división
+              // Calcular correctamente el valor según el tipo de división
               if (preparedData.value !== undefined) {
                 if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
                   // Para división personalizada: usar el monto específico del usuario
@@ -357,7 +353,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                 }
               }
 
-              // 🔧 SOLUCIÓN: Preservar customAmounts si es división personalizada
+              // Preservar customAmounts si es división personalizada
               if (preparedData.splitType === 'custom' && preparedData.customAmounts) {
                 updateFields.customAmounts = preparedData.customAmounts;
               }
@@ -372,7 +368,7 @@ async function updateTransaction(transactionId, updateData, userId) {
             }
           }
 
-          // 4️⃣ Si se agregaron nuevos participantes, crear sus transacciones
+          // Si se agregaron nuevos participantes, crear sus transacciones
           const existingUserIds = groupTransactions.map(tx => tx.clientId.toString());
           const newParticipants = currentParticipantIds.filter(id => !existingUserIds.includes(id));
 
@@ -424,7 +420,7 @@ async function updateTransaction(transactionId, updateData, userId) {
             }
           }
 
-          // 🔧 SOLUCIÓN: Retornar la transacción correcta
+          // Retornar la transacción correcta
           if (transactionToReturn) {
             return transactionToReturn;
           } else {
@@ -671,29 +667,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// function agruparPorCategoria(transactions) {
-//   // Usamos un objeto para acumular por categoría
-//   const agrupados = {};
-
-//   transactions.forEach(({ category, type, value, icon, name, createdAt, _id }) => {
-//     const key = `${type}-${category}`; // diferenciamos gastos e ingresos por categoría
-//     if (!agrupados[key]) {
-//       agrupados[key] = {
-//         category,
-//         type,
-//         value: 0,
-//         icon,
-//         name,
-//         createdAt,
-//         _id 
-//       };
-//     }
-//     agrupados[key].value += Number(value);
-//   });
-
-//   // Convertimos el objeto a array
-//   return Object.values(agrupados);
-// }
 
 /**
  * Elimina una transacción por su ID
@@ -738,86 +711,6 @@ app.delete('/track/:id', async (req, res) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
-
-/* // Endpoint para obtener todas las transacciones compartidas relacionadas
-app.get('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
-  try {
-    const { sharedTransactionId } = req.params;
-    
-    if (!sharedTransactionId) {
-      return res.status(400).json({ error: "ID de transacción compartida requerido" });
-    }
-    
-    // Buscar todas las transacciones con el mismo sharedTransactionId
-    const sharedTransactions = await Transaction.find({
-      sharedTransactionId: sharedTransactionId
-    }).populate('sharedWith.userId', 'name email'); // Si tienes modelo de usuarios
-    
-    if (!sharedTransactions || sharedTransactions.length === 0) {
-      return res.status(404).json({ error: "No se encontraron transacciones compartidas" });
-    }
-    
-    res.json(sharedTransactions);
-    
-  } catch (error) {
-    console.error("Error al obtener transacciones compartidas:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
-// Endpoint para actualizar una transacción compartida
-app.put('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
-  try {
-    const { sharedTransactionId } = req.params;
-    const {
-      name,
-      type,
-      category,
-      value,
-      icon,
-      sharedWith,
-      splitType,
-      customAmounts,
-      clientId
-    } = req.body;
-    
-    // Obtener todas las transacciones relacionadas
-    const existingTransactions = await Transaction.find({
-      sharedTransactionId: sharedTransactionId
-    });
-    
-    if (!existingTransactions || existingTransactions.length === 0) {
-      return res.status(404).json({ error: "Transacciones compartidas no encontradas" });
-    }
-    
-    // Eliminar todas las transacciones existentes
-    await Transaction.deleteMany({
-      sharedTransactionId: sharedTransactionId
-    });
-    
-    // Crear nuevas transacciones con los datos actualizados
-    const updatedTransactions = await createSharedTransactions({
-      name,
-      type,
-      category,
-      value,
-      icon,
-      clientId,
-      sharedWith,
-      splitType,
-      customAmounts
-    });
-    
-    res.json({
-      message: "Transacciones compartidas actualizadas",
-      transactions: updatedTransactions
-    });
-    
-  } catch (error) {
-    console.error("Error al actualizar transacciones compartidas:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-}); */
 
 /**
  * Obtiene todas las categorías disponibles para el usuario autenticado

@@ -28,7 +28,6 @@ mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Auth Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Auth Service] Error al conectar:", err));
-// validateRequiredFields ahora se importa desde utils.js
 
 /**
  * Registra un nuevo usuario en el sistema
@@ -98,7 +97,6 @@ app.post('/register', async (req, res) => {
     
       const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-      console.log("pasa generacion de token");
        // Crear el mensaje de correo informativo
     //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
     const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net'
@@ -157,7 +155,6 @@ app.post('/register', async (req, res) => {
  * @since 1.0.0 
  */
   app.post('/login', async (req, res) => {
-    console.log('Petición recibida en /login:', req.body);
     try {
       // Check if required fields are present in the request body
       validateRequiredFields(req, ['email', 'password']);
@@ -366,73 +363,6 @@ app.put("/password", authMiddleware, async(req, res) => {
  
 });
 
-// app.post("/subscribe", authMiddleware, async (req, res) => {
-//   try {
-//     const clientId = req.user.id;
-//     const { plan } = req.body;
-    
-//     // Validar el plan
-//     if (!plan || !['basic', 'premium'].includes(plan)) {
-//       return res.status(400).json({ 
-//         message: "Plan inválido. Debe ser 'basic' o 'premium'" 
-//       });
-//     }  
-//     const user = await User.findById(clientId);
-  
-//     if (!user) {    
-//       return res.status(404).json({ message: "Usuario no encontrado" });
-//     }
-
-//     // Actualizar el plan del usuario
-//     user.isPremium = plan === 'premium';
-//     user.billingCycle = null;
-//     user.planExpirationDate = null;
-//     user.stripeSubscriptionId=null;
-   
-//     await user.save();  
-    
-//     // Generar un NUEVO token con la información actualizada
-//     const tokenPayload = { 
-//       userId: user._id,
-//       email: user.email,
-//       isPremium: user.isPremium 
-//     };
-    
-//     const newToken = jwt.sign(
-//       tokenPayload,
-//      process.env.SECRET_KEY,
-//       { expiresIn: '7d' }
-//     );
-    
-//     // Preparar respuesta
-//     const responseData = { 
-//       message: "Plan actualizado correctamente",
-//       token: newToken,
-//       user: {
-//         id: user._id,
-//         email: user.email,
-//         name: user.name,
-//         surname: user.surname,
-//         isPremium: user.isPremium
-//       }
-//     };
-    
-//     // UNA SOLA RESPUESTA
-//     res.json(responseData);
-//   } catch (error) {
-//     // Verificar si ya se envió una respuesta
-//     if (res.headersSent) {
-//       console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
-//       return;
-//     }
-    
-//     res.status(500).json({ 
-//       message: "Error al actualizar plan",
-//       error: error.message 
-//     });
-//   }
-// });
-
 /**
  * Solicita restablecimiento de contraseña
  * @route POST /forgot-password
@@ -479,7 +409,7 @@ app.post("/forgot-password", async (req, res) => {
     // Generar un token de restablecimiento
     const resetToken = generateResetToken();
 
-    // Aquí puedes guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
+    // guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
     user.resetToken = resetToken;
     user.resetTokenExpiration = Date.now() + 3600000; // 1 hora de validez
 

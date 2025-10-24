@@ -51,7 +51,7 @@ app.get('/gastos/rango', authMiddleware, async (req, res) => {
      params: { 
         start, 
         end,
-        clientId: req.user.id || req.user.userId // ✅ Agregar clientId
+        clientId: req.user.id || req.user.userId 
       },
       headers: {
         Authorization: req.headers.authorization,
@@ -83,18 +83,6 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
   }
 });
 
-
-
-/* app.get("/track", async (req, res) => {
-  try {
-    const response = await axios.get(`${statsServiceUrl}/gastos`);
-    res.json(response.data);
-  } catch (error) {
-    console.error("❌ Error en /track:", error.message);
-    res.status(500).json({ error: "Error al obtener gastos" });
-  }
-}); */
-
 app.post('/track', async (req, res) => {
   try {
     // Forward 
@@ -111,7 +99,7 @@ app.get("/profile", authMiddleware, async (req, res) => {
    try {
     const response = await axios.get(userServiceUrl+'/profile', {
       headers: {
-        Authorization: req.headers.authorization, // reenvías el token JWT
+        Authorization: req.headers.authorization, // reenvía el token JWT
       },
      
     });
@@ -128,10 +116,10 @@ app.put("/profile", authMiddleware, async (req, res) => {
     const response = await axios.put(userServiceUrl + '/profile',req.body, // datos a enviar en el body
   {
     headers: {
-      Authorization: req.headers.authorization, // envías el header correcto
+      Authorization: req.headers.authorization, // envía el header correcto
     },
     params: {
-      clientId: req.user.userId, // si usas params, pero parece que no es necesario para editar perfil
+      clientId: req.user.userId, 
     },
   }
 ); 
@@ -176,19 +164,8 @@ app.put("/password", authMiddleware, async (req, res) => {
   }
 });
 
-// app.post("/subscribe", authMiddleware, async (req, res) => {
-//   try {
-//     const response = await axios.post(userServiceUrl + "/subscribe", req.body, {
-//       headers: { Authorization: req.headers.authorization }
-//     });
-//     res.json(response.data);
-//   } catch (error) {
-//     res.status(error.response?.status || 500).json({ error: error.message });
-//   }
-// });
-
 app.post('/send-email', async (req, res) => {
-   console.log("📩 Recibida solicitud de envío de email:", req.body); // 👈 agrega esto
+   console.log("📩 Recibida solicitud de envío de email:", req.body); 
   try {
     // Enviar directamente el cuerpo de la solicitud al servicio de correo
     const response = await axios.post(mailServiceUrl+'/send-email', req.body);
@@ -325,7 +302,7 @@ app.get("/export", authMiddleware, ensurePremium, async (req, res) => {
    try {
     const response = await axios.get(statsServiceUrl+'/export', {
       headers: {
-        Authorization: req.headers.authorization, // reenvías el token JWT
+        Authorization: req.headers.authorization, // reenvía el token JWT
       },
       params: {
         clientId: req.user.id, 
@@ -413,7 +390,6 @@ app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, asy
   try {
     console.log("🔄 Gateway: Procesando aceptación de solicitud:", req.params.requestId);
     
-    // CORREGIDO: Usar PUT en lugar de GET y pasar el requestId correctamente
     const response = await axios.put(
       `${userServiceUrl}/friend-requests/${req.params.requestId}/accept`, 
       req.body, // Enviar el body si hay datos
@@ -435,7 +411,7 @@ app.put("/friend-requests/:requestId/accept", authMiddleware, ensurePremium, asy
   }
 });
 
-// Rechazar solicitud de amistad - NUEVA RUTA
+// Rechazar solicitud de amistad 
 app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, async(req, res) => {
   try {
     console.log("🔄 Gateway: Procesando rechazo de solicitud:", req.params.requestId);
@@ -460,7 +436,7 @@ app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, asy
     });
   }
 });
-// Eliminar amigo - NUEVA RUTA
+// Eliminar amigo 
 app.delete("/friends/:friendId", authMiddleware, ensurePremium, async(req, res) => {
   try {
     console.log("🔄 Gateway: Eliminando amigo:", req.params.friendId);
@@ -485,7 +461,7 @@ app.delete("/friends/:friendId", authMiddleware, ensurePremium, async(req, res) 
   }
 });
 
-// Obtener usuario por ID - NUEVA RUTA NECESARIA
+// Obtener usuario por ID 
 app.get("/users/:userId", authMiddleware, async(req, res) => {
   try {
     console.log("🔄 Gateway: Obteniendo usuario:", req.params.userId);
@@ -522,12 +498,6 @@ app.post("/create-checkout-session", authMiddleware, async(req, res) => {
     
     res.json(response.data);
   } catch (error) {
-  console.error("❌ Gateway Error en /create-checkout-session:");
-  console.error("message:", error.message);
-  console.error("code:", error.code);
-  console.error("config:", error.config);
-  console.error("response:", error.response?.data);
-
   res.status(error.response?.status || 500).json({
     error: error.message,
     code: error.code,
@@ -548,11 +518,6 @@ app.post("/create-checkout-session", authMiddleware, async(req, res) => {
     
     res.json(response.data);
   } catch (error) {
-  console.error("❌ Gateway Error en /create-checkout-session:");
-  console.error("message:", error.message);
-  console.error("code:", error.code);
-  console.error("config:", error.config);
-  console.error("response:", error.response?.data);
 
   res.status(error.response?.status || 500).json({
     error: error.message,
@@ -575,11 +540,6 @@ app.post("/verify-payment", authMiddleware, async(req, res) => {
     
     res.json(response.data);
   } catch (error) {
-  console.error("❌ Gateway Error en /verify-payment");
-  console.error("message:", error.message);
-  console.error("code:", error.code);
-  console.error("config:", error.config);
-  console.error("response:", error.response?.data);
 
   res.status(error.response?.status || 500).json({
     error: error.message,
@@ -602,14 +562,8 @@ app.post("/cancel-subscription", authMiddleware, async(req, res) => {
       }
     );
     
-    console.log("✅ Gateway: Suscripción cancelada exitosamente");
     res.json(response.data);
   } catch (error) {
-  console.error("❌ Gateway Error en /cancel-subscription");
-  console.error("message:", error.message);
-  console.error("code:", error.code);
-  console.error("config:", error.config);
-  console.error("response:", error.response?.data);
 
   res.status(error.response?.status || 500).json({
     error: error.message,
@@ -632,7 +586,6 @@ app.get('track/:id/details', authMiddleware, async(req, res) => {
     
     res.json(response.data);
   } catch (error) {
-    console.error("❌ Gateway Error en /track/:transactionId/details:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json({ 
       error: error.response?.data?.error || "Error al obtener usuario",
       details: error.response?.data

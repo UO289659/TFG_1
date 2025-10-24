@@ -73,7 +73,7 @@ const transporter = nodemailer.createTransport({
  * }
  */
 app.post('/send-email', (req, res) => {
-     console.log("📨 Microservicio de correo recibió:", req.body); // 👈 agrega esto
+     console.log("📨 Microservicio de correo recibió:", req.body); 
   const { name, email, subject, message } = req.body;
 
   if (!name || !email || !subject || !message) {
@@ -220,7 +220,7 @@ app.post('/send-registration-email', (req, res) => {
         <h2 style="color: #333;">Confirmación de Registro</h2>
         <p>${message}</p>
       </div>
-    `, // Si deseas enviar el correo con formato HTML
+    `, 
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

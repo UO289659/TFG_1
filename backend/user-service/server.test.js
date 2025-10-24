@@ -314,8 +314,6 @@ describe('Auth Service Tests', () => {
     });
   });
 
-  //?¿pruebas de restablecer contraseña?¿
-
   describe('GET /profile', () => {
     it('should get user profile', async () => {
       const res = await request(app)
@@ -470,45 +468,7 @@ describe('Auth Service Tests', () => {
 
     //que la nueva contraseña coincida con la repetición se comprueba en el frontend, no es necesario probarlo aquí
   });
-  
 
-  // describe('POST /subscribe', () => {
-  //   it('should update user to premium plan', async () => {
-  //     const res = await request(app)
-  //       .post('/subscribe')
-  //       .send({
-  //         plan: 'premium'
-  //       });
-
-  //     expect(res.status).toBe(200);
-  //     expect(res.body.message).toBe('Plan actualizado correctamente');
-  //     expect(res.body.token).toBeDefined();
-  //     expect(res.body.user.isPremium).toBe(true);
-  //   });
-
-  //   it('should update user to basic plan', async () => {
-  //     const res = await request(app)
-  //       .post('/subscribe')
-  //       .send({
-  //         plan: 'basic'
-  //       });
-
-  //     expect(res.status).toBe(200);
-  //     expect(res.body.message).toBe('Plan actualizado correctamente');
-  //     expect(res.body.user.isPremium).toBe(false);
-  //   });
-
-  //   it('should return 400 for invalid plan', async () => {
-  //     const res = await request(app)
-  //       .post('/subscribe')
-  //       .send({
-  //         plan: 'invalid'
-  //       });
-
-  //     expect(res.status).toBe(400);
-  //     expect(res.body.message).toBe("Plan inválido. Debe ser 'basic' o 'premium'");
-  //   });
-  // });
 
   describe('POST /forgot-password', () => {
     it('should send reset password email for existing user', async () => {
