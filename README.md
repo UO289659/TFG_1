@@ -1,4 +1,4 @@
-# Saldosmart - Gestor de Finanzas Personales
+# SaldoSmart - Gestor de Finanzas Personales
 
 Aplicación web para la gestión de finanzas personales.
 
