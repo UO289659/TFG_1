@@ -1,6 +1,6 @@
 # Saldosmart - Gestor de Finanzas Personales
 
-Aplicación web para gestionar ingresos y gastos, visualización de gráficos y posibilidad de añadir amigos.
+Aplicación web para la gestión de finanzas personales.
 
 ## Autora
 **Carmen Espinosa Martínez**  
