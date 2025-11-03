@@ -15,7 +15,6 @@ require("dotenv").config();
  * @private
  */
 const SECRET_KEY = process.env.SECRET_KEY;
-console.log("SECRET_KEY:", SECRET_KEY);
 
 /**
  * Middleware de autenticación que verifica la validez del token JWT
@@ -37,12 +36,9 @@ console.log("SECRET_KEY:", SECRET_KEY);
  * });
  */
 function authMiddleware(req, res, next) {
-   console.log("Middleware ejecutado");
   const authHeader = req.headers.authorization;
- console.log("Authorization Header:", authHeader);
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("No autorizado: falta token o formato incorrecto");
     return res.status(401).json({ error: "No autorizado: falta token" });
   }
 
@@ -53,7 +49,6 @@ function authMiddleware(req, res, next) {
     req.user = { id: decoded.id || decoded.userId, email: decoded.email,isPremium: decoded.isPremium  };
     next();
   } catch (error) {
-    console.log("Error verificando token:", error.message);
     return res.status(401).json({ error: "Token inválido" });
   }
 }

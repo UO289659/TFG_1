@@ -27,7 +27,7 @@ beforeAll(async () => {
   process.env.MONGO_URI = mongoUri;
   process.env.MAIL_USER = 'test@gmail.com';
   process.env.MAIL_PASS = 'testpass';
-  process.env.PORT = '5003'; // Puerto diferente para tests
+  process.env.PORT = '5004'; // Puerto diferente para tests
   
   // Conectar a la base de datos
   await mongoose.connect(mongoUri);

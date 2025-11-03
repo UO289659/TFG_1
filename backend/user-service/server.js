@@ -75,11 +75,9 @@ app.post('/register', async (req, res) => {
         throw new Error("El correo ya está registrado");
       }
 
-      console.log("pasa comprobacion del existing user");
       // Encrypt the password before saving it
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-      console.log("pasa encriptacion de contraseña");
 
       const newUser = new User({
           name:req.body.nombre,
@@ -89,11 +87,9 @@ app.post('/register', async (req, res) => {
           isPremium: false,
       });
 
-      console.log("pasa creacion del nuevo usuario");
 
       await newUser.save();
 
-      console.log("pasa almacenamiento en base de datos de usuario");
     
       const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
@@ -114,10 +110,8 @@ app.post('/register', async (req, res) => {
       ¡Gracias por unirte a nosotros!
       `,
     });
-    console.log("pasa envio de correo");
       res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación.", token });
   } catch (error) {
-    console.error("Error en /register:", error);
       res.status(400).json({ error: error.message }); 
       
   }});
@@ -221,10 +215,8 @@ app.post('/register', async (req, res) => {
         if (!user) {
         return res.status(401).json({ error: "Usuario no encontrado" });
       }
-      console.log(user);
       return res.json(user);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -277,9 +269,6 @@ app.post('/register', async (req, res) => {
     const clientId = req.user.id; // Se obtiene del middleware de autenticación
     const { name, surname } = req.body;
 
-     console.log('req.user:', req.user);
-    console.log('req.body:', req.body);
-
     if (!name || !surname) {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
@@ -294,7 +283,6 @@ app.post('/register', async (req, res) => {
 
     res.json({ message: "Perfil actualizado correctamente", user });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error del servidor" });
   }
 });
@@ -353,11 +341,9 @@ app.put("/password", authMiddleware, async(req, res) => {
   await user.save();
   res.json({ message: "Contraseña actualizada correctamente" });
  }else{
-  console.log("la contrasela actual es incorrecta");
   return res.status(400).json({ message: "La contraseña actual es incorrecta." });
  }
   }catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error del servidor" });
   }
  
@@ -433,7 +419,6 @@ app.post("/forgot-password", async (req, res) => {
     }
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error al procesar la solicitud." });
   }
 });
@@ -496,7 +481,6 @@ app.post("/reset-password/:token", async (req, res) => {
 
     res.json({ message: "Contraseña restablecida con éxito. Puede cerrar esta ventana." });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error al restablecer la contraseña." });
   }
 });
@@ -560,7 +544,6 @@ app.get("/friends", authMiddleware, async (req, res) => {
     
     res.json(activeFriends);
   } catch (error) {
-    console.error("Error al obtener amigos:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -597,7 +580,6 @@ app.get("/friends", authMiddleware, async (req, res) => {
       const users = await User.find({isPremium:true});
       return res.json(users);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -687,7 +669,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       }
     });
     await user.save();
-    console.log(`✅ Usuario ${user.email} actualizado desde payments-service`);
     res.json({ 
       message: "Usuario actualizado correctamente",
       user: {
@@ -702,7 +683,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error("❌ Error al actualizar usuario:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
@@ -783,7 +763,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       .sort({ createdAt: -1 });
       res.json(requests);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -817,7 +796,6 @@ app.patch('/users/:userId', async (req, res, next) => {
        .populate('receiverId', 'name surname email'); // Campos que quieres obtener
       res.json(requests);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -958,7 +936,6 @@ app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, asy
     res.json({ message: "Solicitud rechazada" });
     
   } catch (error) {
-    console.error("Error al rechazar solicitud:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1005,7 +982,6 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     
     res.json({ message: "Amigo eliminado correctamente" });
   } catch (error) {
-    console.error("Error al eliminar amigo:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1049,11 +1025,9 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    
-    console.log("✅ Usuario encontrado:", user);
+
     res.json(user);
   } catch (error) {
-    console.error("❌ Error al obtener usuario por ID:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
@@ -1113,7 +1087,6 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('Error al eliminar todos los amigos:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
@@ -1134,7 +1107,6 @@ app.post('/users/batch', async (req, res) => {
       _id: { $in: userIds }
     }).select('_id name surname').lean();
     
-    console.log('Usuarios encontrados en batch:', users);
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener usuarios' });

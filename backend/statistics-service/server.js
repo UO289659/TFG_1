@@ -89,7 +89,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 
     res.json(gastos);
   } catch (error) {
-    console.error("Error al obtener datos por rango:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
@@ -192,8 +191,6 @@ async function updateTransaction(transactionId, updateData, userId) {
       const wasIndividual = !originalTransaction.sharedWith || originalTransaction.sharedWith.length === 0;
       
       if (wasIndividual) {
-        console.log("Convirtiendo transacción individual en compartida");
-        
         // Filtrar IDs válidos (eliminar strings vacíos y valores nulos)
         const friendIds = preparedData.sharedWith.filter(id => {
           if (typeof id === 'string') {
@@ -233,22 +230,16 @@ async function updateTransaction(transactionId, updateData, userId) {
         }
       } else {
         // La transacción ya estaba compartida, solo actualizar
-        console.log("Actualizando transacción compartida existente");
-
         // SINCRONIZAR TODAS LAS TRANSACCIONES DEL GRUPO
         if (originalTransaction.createdBy) {
           const createdBy = originalTransaction.createdBy;
           const originalClientId = originalTransaction.clientId.toString();
-          
-          console.log("Sincronizando grupo con createdBy:", createdBy);
           
           // Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
           const groupTransactions = await Transaction.find({ 
             createdBy,
             name: originalTransaction.name
           });
-
-          console.log("Transacciones del grupo encontradas:", groupTransactions.length);
 
           // Obtener IDs de los participantes actuales (incluyendo al creador)
           const currentParticipantIds = [];
@@ -270,8 +261,6 @@ async function updateTransaction(transactionId, updateData, userId) {
             currentParticipantIds.push(creatorId);
           }
 
-          console.log("Participantes actuales:", currentParticipantIds);
-
           // Procesar cada transacción del grupo
           const updatedTransactions = [];
           let transactionToReturn = null;
@@ -282,11 +271,9 @@ async function updateTransaction(transactionId, updateData, userId) {
 
             if (!isStillParticipant) {
               // Este usuario fue removido => borrar su transacción
-              console.log("Eliminando transacción de usuario removido:", txUserId);
               await Transaction.findByIdAndDelete(tx._id);
             } else {
               // El usuario sigue participando => actualizar su transacción
-              console.log("Actualizando transacción de usuario:", txUserId);
               
               // Preservar correctamente sharedWith según el tipo de división
               let updatedSharedWith;
@@ -373,8 +360,6 @@ async function updateTransaction(transactionId, updateData, userId) {
           const newParticipants = currentParticipantIds.filter(id => !existingUserIds.includes(id));
 
           if (newParticipants.length > 0) {
-            console.log("Creando transacciones para nuevos participantes:", newParticipants);
-            
             for (const newUserId of newParticipants) {
               let newValue;
               let newSharedWith;
@@ -464,7 +449,6 @@ async function updateTransaction(transactionId, updateData, userId) {
       }
     } else if (preparedData.sharedWith && Array.isArray(preparedData.sharedWith) && preparedData.sharedWith.length === 0) {
       // Convertir transacción compartida en individual
-      console.log("Convirtiendo transacción compartida en individual");
       
       // Si la transacción original era compartida, eliminar todas las otras transacciones del grupo
       if (originalTransaction.createdBy && originalTransaction.sharedWith && originalTransaction.sharedWith.length > 0) {
@@ -476,8 +460,6 @@ async function updateTransaction(transactionId, updateData, userId) {
           name: originalTransaction.name,
           _id: { $ne: transactionId } // Excluir la transacción actual
         });
-        
-        console.log("Eliminando transacciones compartidas del grupo:", groupTransactions.length);
         
         for (const tx of groupTransactions) {
           await Transaction.findByIdAndDelete(tx._id);
@@ -500,8 +482,6 @@ async function updateTransaction(transactionId, updateData, userId) {
       return updated;
     }
 
-    console.log("updateData.value:", updateData.value);
-    console.log("preparedData.value:", preparedData.value);
     if (updateData.value !== undefined) {
         preparedData.originalValue = updateData.value;
     }
@@ -514,7 +494,6 @@ async function updateTransaction(transactionId, updateData, userId) {
     return updated;
 
   } catch (error) {
-    console.error("Error en updateTransaction:", error.message);
     throw error;
   }
 }
@@ -566,14 +545,9 @@ app.post('/track', async (req, res) => {
     return res.status(400).json({ error: "Datos incompletos" });
   }
 
-  console.log("categoria recibida", category);
-
   const categoryExists = await Categoria.findOne({
   name: { $regex: new RegExp(`^${category}$`, 'i') }
 });
-
-
-      console.log("category exists: ", categoryExists);
 
   try {
     // Si no hay usuarios compartidos, crear transacción individual
@@ -614,7 +588,6 @@ app.post('/track', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error al guardar transacción:", err);
     return res.status(500).json({ error: "Error al registrar la transacción" });
   }
 });
@@ -640,8 +613,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
     
     const result = await updateTransaction(id, req.body, req.user.id);
 
-    console.log("resultado de update: ", result);
-
     // Si se convirtió a transacción compartida, retornar todas las transacciones
     if (result.isConverted) {
       return res.status(200).json({
@@ -657,7 +628,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
     res.status(200).json(result);
 
   } catch (err) {
-    console.error("Error al actualizar transacción:", err.message);
     
     if (err.message === 'Transacción no encontrada') {
       return res.status(404).json({ message: 'Transacción no encontrada' });
@@ -707,7 +677,6 @@ app.delete('/track/:id', async (req, res) => {
     }
     res.status(200).json({ message: "Transacción eliminada" });
   } catch (err) {
-    console.error("Error al eliminar transacción:", err.message);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
@@ -790,8 +759,7 @@ app.get("/categories", authMiddleware, async (req, res) => {
         };    
 
     res.json(porTipo);    
-  } catch (err) {     
-    console.error("❌ Error exacto en /categories:", err);     
+  } catch (err) {        
     res.status(500).json({ error: err.message || "Fallo interno" });   
   } 
 });
@@ -971,7 +939,6 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
     // Si hemos llegado aquí, al menos una de las eliminaciones fue exitosa
     res.status(200).json({ message: "Categoría eliminada correctamente" });
   } catch (err) {
-    console.error("Error al eliminar categoría:", err.message);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
@@ -1031,7 +998,6 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
 app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
   try {
     const clientId = req.user.id;
-    console.log("clienteid",clientId);
     
     // Obtener todas las transacciones del usuario
     const transactions = await Transaction.find({ clientId })
@@ -1130,7 +1096,6 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     res.status(200).json(formattedResponse);
     
   } catch(err) {
-    console.error("Error en export:", err);
     res.status(500).json({ message: "Error: no se pudo extraer transacciones" });
   }
 });

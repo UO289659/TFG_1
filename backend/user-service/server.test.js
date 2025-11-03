@@ -517,7 +517,6 @@ describe('Auth Service Tests', () => {
         .send({
           password: 'newpassword123'
         });
-      console.log("Response body:", res.body);
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Contraseña restablecida con éxito. Puede cerrar esta ventana.');
     });

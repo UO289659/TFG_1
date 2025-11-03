@@ -25,8 +25,6 @@ let app;
 let comidaCategoryId;
 let transporteCategoryId;
 let salarioCategoryId;
-let electronicaCategoryId;
-let metaAhorroCategoryId;
 
 // Función para agregar datos de prueba
 async function addTestData() {
@@ -372,8 +370,6 @@ describe('Server Tests', () => {
         icon: '🍕',
         createdBy: clientId,
       });
-
-       console.log('Transaction created:', transaction._id);
 
       const updateData = {
         name: 'Updated Transaction',
@@ -773,7 +769,6 @@ it('should update shared transaction from custom split to equal split', async ()
     name: 'Custom to Equal Test',
     createdBy: createdBy
   });
-  console.log("de custom a equal", updatedTransactions);
 
   expect(updatedTransactions).toHaveLength(3);
 

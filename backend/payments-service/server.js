@@ -50,7 +50,6 @@ io.use((socket, next) => {
     socket.userEmail = decoded.email;
     next();
   } catch (error) {
-    console.error('Socket authentication error:', error);
     next(new Error('Invalid token'));
   }
 });
@@ -77,7 +76,6 @@ io.use((socket, next) => {
  * Gestiona la conexión, desconexión y actualización de tokens en tiempo real
  */
 io.on('connection', (socket) => {
-  console.log(`🔌 Usuario conectado: ${socket.userEmail} (${socket.userId})`);
   
   // Guardar la conexión del usuario
   userConnections.set(socket.userId, socket);
@@ -116,14 +114,12 @@ io.on('connection', (socket) => {
         });
       }
     } catch (error) {
-      console.error('Error updating token:', error);
       socket.emit('token-update-error', { error: 'Error updating token' });
     }
   });
 
   // Limpiar conexión cuando el usuario se desconecta
   socket.on('disconnect', () => {
-    console.log(`🔌 Usuario desconectado: ${socket.userEmail} (${socket.userId})`);
     userConnections.delete(socket.userId);
   });
 });
@@ -169,8 +165,6 @@ const notifyTokenUpdate = async (userId) => {
             planExpirationDate: user.planExpirationDate
           }
         });
-        
-        console.log(`✅ Token actualizado enviado a usuario: ${user.email}`);
       }
     } catch (error) {
       console.error('Error notifying token update:', error);
@@ -199,7 +193,6 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.log(`Webhook signature verification failed.`, err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -207,19 +200,16 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object;
-      console.log('Checkout session completed:', session.id);
       await handleSuccessfulPayment(req, session);
       break;
 
     case 'invoice.payment_succeeded':
       const invoice = event.data.object;
-      console.log('Invoice payment succeeded:', invoice.id);
       await handleSubscriptionRenewal(req, invoice);
       break;
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
-      console.log('Subscription cancelled:', subscription.id);
       const cancelledUserId = await handleSubscriptionCancellation(req, subscription);
       if (cancelledUserId) {
         await notifyTokenUpdate(cancelledUserId);
@@ -252,8 +242,6 @@ requiredEnvVars.forEach(varName => {
   }
 });
 
-console.log('✅ Variables de entorno verificadas');
-
 /**
  * @typedef {Object} CheckoutRequest
  * @property {string} priceId - ID del precio en Stripe
@@ -280,8 +268,6 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
     const { priceId, billingCycle, plan } = req.body;
     const userId = req.user.id;
 
-    console.log('📝 Creando sesión para usuario:', userId);
-    console.log('📝 Datos recibidos:', { priceId, billingCycle, plan });
 
     // Validar datos requeridos
     if (!priceId || !billingCycle || !plan) {
@@ -290,7 +276,6 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log('Mongoose readyState at request time:', mongoose.connection.readyState);
 
     // Obtener usuario vía user-service
     const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
@@ -304,14 +289,12 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    console.log('👤 Usuario encontrado:', user.email);
 
     // URLs de redirección
     const YOUR_DOMAIN = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     // VERIFICAR: Que Stripe esté inicializado
     if (!stripe) {
-      console.error('❌ Stripe no está inicializado');
       return res.status(500).json({ error: 'Stripe no configurado' });
     }
 
@@ -342,11 +325,9 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       }
     });
 
-    console.log('✅ Sesión creada exitosamente:', session.id);
     res.json({ sessionId: session.id });
 
   } catch (error) {
-    console.error('❌ Error creando sesión de checkout:', error);
     
     // Manejo específico de errores
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
@@ -399,7 +380,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'sessionId requerido' });
     }
 
-    console.log('🔍 Verificando pago para sesión:', sessionId);
 
     // Obtener la sesión de Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -448,7 +428,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
     });
 
     const updatedUser = updateResponse.data.user;
-    console.log('✅ Usuario actualizado a Premium:', updatedUser.email);
 
     // Generar nuevo token con la información actualizada
     const token = jwt.sign(
@@ -475,7 +454,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error verificando pago:', error);
     
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       return res.status(503).json({ 
@@ -654,7 +632,6 @@ app.post('/cancel-subscription', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error cancelando suscripción:', error);
     res.status(500).json({ 
       error: 'Error interno del servidor',
       details: error.message 

@@ -73,7 +73,6 @@ const transporter = nodemailer.createTransport({
  * }
  */
 app.post('/send-email', (req, res) => {
-     console.log("📨 Microservicio de correo recibió:", req.body); 
   const { name, email, subject, message } = req.body;
 
   if (!name || !email || !subject || !message) {
@@ -104,7 +103,6 @@ app.post('/send-email', (req, res) => {
   // Enviar el correo
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log(error);
       return res.status(500).send('Error al enviar el correo');
     }
     res.status(200).send('Correo enviado correctamente');
@@ -132,7 +130,6 @@ app.post('/send-email', (req, res) => {
  * }
  */
 app.post('/send-reset-email', (req, res) => {
-  console.log("📨 Enviando correo de restablecimiento:", req.body);
   
   const { to, resetLink } = req.body;
 
@@ -171,10 +168,8 @@ app.post('/send-reset-email', (req, res) => {
   // Enviar el correo
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error("Error al enviar correo:", error);
       return res.status(500).json({ error: 'Error al enviar el correo' });
     }
-    console.log("Correo enviado:", info.messageId);
     res.json({ message: 'Correo de restablecimiento enviado correctamente' });
   });
 });
@@ -202,7 +197,6 @@ app.post('/send-reset-email', (req, res) => {
  * }
  */
 app.post('/send-registration-email', (req, res) => {
-  console.log("📨 Enviando correo de registro:", req.body);
 
   const { to, subject, message } = req.body;
 
@@ -225,10 +219,8 @@ app.post('/send-registration-email', (req, res) => {
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error("Error al enviar correo:", error);
       return res.status(500).json({ error: 'Error al enviar el correo' });
     }
-    console.log("Correo enviado:", info.messageId);
     res.json({ message: 'Correo de registro enviado correctamente' });
   });
 });

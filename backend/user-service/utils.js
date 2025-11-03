@@ -24,7 +24,6 @@ function validateRequiredFields(req, requiredFields) {
       throw new Error(`Missing required field: ${field}`);
     }
   }
-  console.log("cumple required fields");
 }
 
 /**
