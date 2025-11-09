@@ -99,6 +99,7 @@ app.post('/register', async (req, res) => {
     //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
     const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net'
 
+    setImmediate(() => {
     // Enviar un correo informativo al usuario
     axios.post(`${mailServiceUrl}/send-registration-email`, {
       to: req.body.email,
@@ -111,7 +112,9 @@ app.post('/register', async (req, res) => {
 
       ¡Gracias por unirte a nosotros!
       `,
-    }).catch(err => console.error('Error enviando correo:', err.message));
+    }).then(() => console.log('✅ Email de registro enviado correctamente'))
+      .catch(err => console.error('❌ Error enviando correo:', err.message));
+    });
      
 } catch (error) {
       res.status(400).json({ error: error.message }); 
