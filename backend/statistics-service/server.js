@@ -1075,6 +1075,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         // Si no es compartido, estos campos deben mostrar N/A
         formattedTx.splitType = 'N/A';
         formattedTx.totalParticipants = 'N/A';
+        formattedTx.customAmounts = 'N/A';
       } else {
         // Si es compartido, formatear campos apropiadamente
         formattedTx.splitType = formattedTx.splitType || 'N/A';
