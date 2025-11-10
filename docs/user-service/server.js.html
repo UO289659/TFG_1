@@ -43,6 +43,10 @@ const cors = require("cors");
 const {authMiddleware, ensurePremium} = require("./auth-middleware/index");
 const crypto = require("crypto");
 const axios = require("axios");
+const { 
+  validateRequiredFields, 
+  generateResetToken,
+} = require('./utils');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -52,23 +56,6 @@ mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Auth Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Auth Service] Error al conectar:", err));
-/**
- * Valida que los campos requeridos estén presentes en el cuerpo de la solicitud
- * @function validateRequiredFields
- * @param {Object} req - Objeto de solicitud de Express
- * @param {string[]} requiredFields - Array de nombres de campos requeridos
- * @throws {Error} Si falta algún campo requerido
- * @example
- * validateRequiredFields(req, ['email', 'password']);
- */
-function validateRequiredFields(req, requiredFields) {
-  for (const field of requiredFields) {
-    if (!(field in req.body)) {
-      throw new Error(`Missing required field: ${field}`);
-    }
-  }
-  console.log("cumple required fields");
-}
 
 /**
  * Registra un nuevo usuario en el sistema
@@ -116,11 +103,9 @@ app.post('/register', async (req, res) => {
         throw new Error("El correo ya está registrado");
       }
 
-      console.log("pasa comprobacion del existing user");
       // Encrypt the password before saving it
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-      console.log("pasa encriptacion de contraseña");
 
       const newUser = new User({
           name:req.body.nombre,
@@ -130,21 +115,21 @@ app.post('/register', async (req, res) => {
           isPremium: false,
       });
 
-      console.log("pasa creacion del nuevo usuario");
 
       await newUser.save();
 
-      console.log("pasa almacenamiento en base de datos de usuario");
     
       const token = jwt.sign({ userId: newUser._id, isPremium: newUser.isPremium, email:newUser.email }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
-      console.log("pasa generacion de token");
+       res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación.", token });
+
        // Crear el mensaje de correo informativo
     //const mailServiceUrl = process.env.MAIL_SERVICE_URL || 'http://localhost:5002';
     const mailServiceUrl = 'https://mail-service-tfg-ade3ftcea6fpb6fz.germanywestcentral-01.azurewebsites.net'
 
+    setImmediate(() => {
     // Enviar un correo informativo al usuario
-    await axios.post(`${mailServiceUrl}/send-registration-email`, {
+    axios.post(`${mailServiceUrl}/send-registration-email`, {
       to: req.body.email,
       subject: 'Cuenta Creada - Gestor de Finanzas',
       message: `¡Hola ${req.body.nombre} ${req.body.apellido}!
@@ -155,11 +140,11 @@ app.post('/register', async (req, res) => {
 
       ¡Gracias por unirte a nosotros!
       `,
+    }).then(() => console.log('✅ Email de registro enviado correctamente'))
+      .catch(err => console.error('❌ Error enviando correo:', err.message));
     });
-    console.log("pasa envio de correo");
-      res.json({ message: "Usuario registrado con éxito. Se ha enviado un correo de confirmación.", token });
-  } catch (error) {
-    console.error("Error en /register:", error);
+     
+} catch (error) {
       res.status(400).json({ error: error.message }); 
       
   }});
@@ -197,7 +182,6 @@ app.post('/register', async (req, res) => {
  * @since 1.0.0 
  */
   app.post('/login', async (req, res) => {
-    console.log('Petición recibida en /login:', req.body);
     try {
       // Check if required fields are present in the request body
       validateRequiredFields(req, ['email', 'password']);
@@ -264,10 +248,8 @@ app.post('/register', async (req, res) => {
         if (!user) {
         return res.status(401).json({ error: "Usuario no encontrado" });
       }
-      console.log(user);
       return res.json(user);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -320,9 +302,6 @@ app.post('/register', async (req, res) => {
     const clientId = req.user.id; // Se obtiene del middleware de autenticación
     const { name, surname } = req.body;
 
-     console.log('req.user:', req.user);
-    console.log('req.body:', req.body);
-
     if (!name || !surname) {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
@@ -337,7 +316,6 @@ app.post('/register', async (req, res) => {
 
     res.json({ message: "Perfil actualizado correctamente", user });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error del servidor" });
   }
 });
@@ -396,82 +374,13 @@ app.put("/password", authMiddleware, async(req, res) => {
   await user.save();
   res.json({ message: "Contraseña actualizada correctamente" });
  }else{
-  console.log("la contrasela actual es incorrecta");
   return res.status(400).json({ message: "La contraseña actual es incorrecta." });
  }
   }catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error del servidor" });
   }
  
 });
-
-// app.post("/subscribe", authMiddleware, async (req, res) => {
-//   try {
-//     const clientId = req.user.id;
-//     const { plan } = req.body;
-    
-//     // Validar el plan
-//     if (!plan || !['basic', 'premium'].includes(plan)) {
-//       return res.status(400).json({ 
-//         message: "Plan inválido. Debe ser 'basic' o 'premium'" 
-//       });
-//     }  
-//     const user = await User.findById(clientId);
-  
-//     if (!user) {    
-//       return res.status(404).json({ message: "Usuario no encontrado" });
-//     }
-
-//     // Actualizar el plan del usuario
-//     user.isPremium = plan === 'premium';
-//     user.billingCycle = null;
-//     user.planExpirationDate = null;
-//     user.stripeSubscriptionId=null;
-   
-//     await user.save();  
-    
-//     // Generar un NUEVO token con la información actualizada
-//     const tokenPayload = { 
-//       userId: user._id,
-//       email: user.email,
-//       isPremium: user.isPremium 
-//     };
-    
-//     const newToken = jwt.sign(
-//       tokenPayload,
-//      process.env.SECRET_KEY,
-//       { expiresIn: '7d' }
-//     );
-    
-//     // Preparar respuesta
-//     const responseData = { 
-//       message: "Plan actualizado correctamente",
-//       token: newToken,
-//       user: {
-//         id: user._id,
-//         email: user.email,
-//         name: user.name,
-//         surname: user.surname,
-//         isPremium: user.isPremium
-//       }
-//     };
-    
-//     // UNA SOLA RESPUESTA
-//     res.json(responseData);
-//   } catch (error) {
-//     // Verificar si ya se envió una respuesta
-//     if (res.headersSent) {
-//       console.error('⚠️ SUBSCRIBE: Headers ya enviados - no se puede enviar respuesta de error');
-//       return;
-//     }
-    
-//     res.status(500).json({ 
-//       message: "Error al actualizar plan",
-//       error: error.message 
-//     });
-//   }
-// });
 
 /**
  * Solicita restablecimiento de contraseña
@@ -517,9 +426,9 @@ app.post("/forgot-password", async (req, res) => {
     }
 
     // Generar un token de restablecimiento
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = generateResetToken();
 
-    // Aquí puedes guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
+    // guardar el token en la base de datos, junto con su vencimiento, para usarlo en la verificación
     user.resetToken = resetToken;
     user.resetTokenExpiration = Date.now() + 3600000; // 1 hora de validez
 
@@ -543,7 +452,6 @@ app.post("/forgot-password", async (req, res) => {
     }
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error al procesar la solicitud." });
   }
 });
@@ -606,10 +514,10 @@ app.post("/reset-password/:token", async (req, res) => {
 
     res.json({ message: "Contraseña restablecida con éxito. Puede cerrar esta ventana." });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Error al restablecer la contraseña." });
   }
 });
+
 
 /**
  * Obtiene la lista de amigos del usuario autenticado
@@ -669,7 +577,6 @@ app.get("/friends", authMiddleware, async (req, res) => {
     
     res.json(activeFriends);
   } catch (error) {
-    console.error("Error al obtener amigos:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -706,7 +613,6 @@ app.get("/friends", authMiddleware, async (req, res) => {
       const users = await User.find({isPremium:true});
       return res.json(users);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -796,7 +702,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       }
     });
     await user.save();
-    console.log(`✅ Usuario ${user.email} actualizado desde payments-service`);
     res.json({ 
       message: "Usuario actualizado correctamente",
       user: {
@@ -811,7 +716,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error("❌ Error al actualizar usuario:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
@@ -892,7 +796,6 @@ app.patch('/users/:userId', async (req, res, next) => {
       .sort({ createdAt: -1 });
       res.json(requests);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -926,7 +829,6 @@ app.patch('/users/:userId', async (req, res, next) => {
        .populate('receiverId', 'name surname email'); // Campos que quieres obtener
       res.json(requests);
     }catch (error) {
-      console.log(error);
     res.status(500).json({ error: "Error del servidor" });
   }
   });
@@ -1067,7 +969,6 @@ app.put("/friend-requests/:requestId/reject", authMiddleware, ensurePremium, asy
     res.json({ message: "Solicitud rechazada" });
     
   } catch (error) {
-    console.error("Error al rechazar solicitud:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1114,7 +1015,6 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     
     res.json({ message: "Amigo eliminado correctamente" });
   } catch (error) {
-    console.error("Error al eliminar amigo:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1158,11 +1058,9 @@ app.delete("/friends/:friendId", authMiddleware,ensurePremium, async (req, res) 
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    
-    console.log("✅ Usuario encontrado:", user);
+
     res.json(user);
   } catch (error) {
-    console.error("❌ Error al obtener usuario por ID:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 });
@@ -1222,7 +1120,6 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('Error al eliminar todos los amigos:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
@@ -1235,16 +1132,19 @@ app.patch("/delete-all-friends/:userId", async (req, res, next) => {
     console.log(`🚀 Auth service corriendo en puerto ${PORT}`);
   });
 
-// Agregar INTERNAL_API_KEY a las variables requeridas
-/* const requiredEnvVars = [
-  'MONGO_URI', 'SECRET_KEY', 'INTERNAL_API_KEY'
-];
-requiredEnvVars.forEach(varName => {
-  if (!process.env[varName]) {
-    console.error(`❌ Variable de entorno requerida no encontrada: ${varName}`);
-    process.exit(1);
+app.post('/users/batch', async (req, res) => {
+  try {
+    const { userIds } = req.body;
+    
+    const users = await User.find({
+      _id: { $in: userIds }
+    }).select('_id name surname').lean();
+    
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener usuarios' });
   }
-}); */
+});
 
 app.get('/health', (req, res) => res.send('OK'));
 
@@ -1259,13 +1159,13 @@ module.exports = app;</code></pre>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#validateRequiredFields">validateRequiredFields</a></li></ul>
+    <h2><a href="index.html">Home</a></h2>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 30 2025 12:15:07 GMT+0200 (hora de verano de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Nov 10 2025 19:24:05 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

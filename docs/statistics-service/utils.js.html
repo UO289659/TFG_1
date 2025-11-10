@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: utils.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: utils.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Funciones auxiliares para Statistics Service
+ * @description Módulo con utilidades compartidas: validación, tokens y helpers de transacciones compartidas
+ * @version 1.0.0
+ * @author Carmen Espinosa Martínez
+ */
+
+const mongoose = require('mongoose');
+const Transaction = require('./statistics-model');
+const Categoria = require('./category-model');
+
+/**
+ * @typedef {Object} IndividualTransactionOptions
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente
+ */
+/**
+ * Función helper para transformar datos de sharedWith
+ * @function transformSharedWithData
+ * @param {Array&lt;string|Object>} sharedWith - Array de usuarios compartidos
+ * @returns {SharedParticipant[]} Array transformado con estructura consistente
+ * @description Normaliza los datos de usuarios compartidos a una estructura consistente
+ */
+function transformSharedWithData(sharedWith) {
+  if (!sharedWith || !Array.isArray(sharedWith)) return [];
+  
+  return sharedWith.map(item => {
+    // Si el item ya tiene la estructura correcta
+    if (typeof item === 'object' &amp;&amp; item.userId &amp;&amp; item.amount !== undefined) {
+      return {
+        userId: new mongoose.Types.ObjectId(item.userId),
+        amount: item.amount
+      };
+    }
+    
+    // Si el item es solo un string (userId)
+    if (typeof item === 'string') {
+      return {
+        userId: new mongoose.Types.ObjectId(item),
+        amount: 0
+      };
+    }
+    
+    // Si el item tiene userId como string
+    if (item.userId &amp;&amp; typeof item.userId === 'string') {
+      return {
+        userId: new mongoose.Types.ObjectId(item.userId),
+        amount: item.amount || 0
+      };
+    }
+    
+    return item;
+  });
+}
+
+
+/**
+ * @typedef {Object} SharedTransactionOptions
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor total
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente creador
+ * @property {string[]} sharedWith - IDs de usuarios compartidos
+ * @property {string} splitType - Tipo de división (equal/custom)
+ * @property {Object} customAmounts - Montos personalizados
+ */
+
+/**
+ * Función helper para crear transacciones compartidas
+ * @async
+ * @function createSharedTransactions
+ * @param {SharedTransactionOptions} options - Opciones para crear transacciones compartidas
+ * @returns {Promise&lt;TransactionData[]>} Array de transacciones creadas
+ * @description Crea múltiples transacciones para gastos compartidos entre usuarios
+ */
+async function createSharedTransactions({
+  name,
+  type,
+  category,
+  value,
+  icon,
+  clientId,
+  sharedWith,
+  splitType,
+  customAmounts
+}) {
+  const transactions = [];
+  
+  // Crear lista completa de todos los participantes (incluyendo al creador)
+  const allParticipants = [clientId, ...sharedWith];
+  
+  // Calcular los montos según el tipo de división
+  let amounts = {};
+  
+  if (splitType === 'equal') {
+   const amountPerPerson = parseFloat((value / allParticipants.length).toFixed(2));
+    allParticipants.forEach(userId => {
+      amounts[userId] = amountPerPerson;
+    });
+  } else if (splitType === 'custom') {
+    amounts = { ...customAmounts };
+    // Asegurar que el creador tenga su monto
+    if (!amounts[clientId]) {
+      const sumOthers = Object.values(customAmounts).reduce((sum, amount) => sum + amount, 0);
+      amounts[clientId] = value - sumOthers;
+    }
+  }
+  
+  // Crear array de sharedWith que será IGUAL para todas las transacciones
+  // Contiene TODOS los participantes con sus montos
+  const completeSharedWith = allParticipants.map(userId => ({
+    userId,
+    amount: amounts[userId] || 0
+  }));
+  
+  // Crear una transacción para cada participante
+  // TODAS tendrán la misma información en sharedWith
+  for (const participantId of allParticipants) {
+    const transaction = new Transaction({
+      clientId: participantId,
+      name,
+      type,
+      category,
+      value: amounts[participantId] || 0, // Su parte individual
+      originalValue: value,
+      icon,
+      sharedWith: completeSharedWith, // TODOS tienen la misma info completa
+      splitType,
+      totalParticipants: allParticipants.length,
+      createdBy: new mongoose.Types.ObjectId(clientId),
+      isShared: true
+    });
+    
+    const savedTransaction = await transaction.save();
+    transactions.push(savedTransaction);
+  }
+  
+  return transactions;
+}
+
+/**
+ * @typedef {Object} IndividualTransactionOptions
+ * @property {string} name - Nombre de la transacción
+ * @property {string} type - Tipo (income/expense)
+ * @property {string} category - Categoría
+ * @property {number} value - Valor
+ * @property {string} icon - Icono
+ * @property {string} clientId - ID del cliente
+ */
+
+/**
+ * Función helper para crear transacción individual
+ * @async
+ * @function createIndividualTransaction
+ * @param {IndividualTransactionOptions} options - Opciones para crear transacción individual
+ * @returns {Promise&lt;TransactionData>} Transacción creada
+ * @description Crea una transacción individual (no compartida)
+ */
+async function createIndividualTransaction({name, type, category, value, icon, clientId}) {
+  const transaction = new Transaction({clientId, name, type, category, value, originalValue: value, icon, sharedWith: [],
+    splitType: null, totalParticipants: 1,createdBy: new mongoose.Types.ObjectId(clientId)});
+
+  await transaction.save();
+  return transaction;
+}
+
+module.exports = {
+  transformSharedWithData,
+  createSharedTransactions,
+  createIndividualTransaction,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#createIndividualTransaction">createIndividualTransaction</a></li><li><a href="global.html#createSharedTransactions">createSharedTransactions</a></li><li><a href="global.html#transformSharedWithData">transformSharedWithData</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Nov 10 2025 19:22:36 GMT+0100 (hora estándar de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

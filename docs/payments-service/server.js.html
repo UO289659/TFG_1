@@ -78,7 +78,6 @@ io.use((socket, next) => {
     socket.userEmail = decoded.email;
     next();
   } catch (error) {
-    console.error('Socket authentication error:', error);
     next(new Error('Invalid token'));
   }
 });
@@ -105,7 +104,6 @@ io.use((socket, next) => {
  * Gestiona la conexión, desconexión y actualización de tokens en tiempo real
  */
 io.on('connection', (socket) => {
-  console.log(`🔌 Usuario conectado: ${socket.userEmail} (${socket.userId})`);
   
   // Guardar la conexión del usuario
   userConnections.set(socket.userId, socket);
@@ -144,14 +142,12 @@ io.on('connection', (socket) => {
         });
       }
     } catch (error) {
-      console.error('Error updating token:', error);
       socket.emit('token-update-error', { error: 'Error updating token' });
     }
   });
 
   // Limpiar conexión cuando el usuario se desconecta
   socket.on('disconnect', () => {
-    console.log(`🔌 Usuario desconectado: ${socket.userEmail} (${socket.userId})`);
     userConnections.delete(socket.userId);
   });
 });
@@ -197,8 +193,6 @@ const notifyTokenUpdate = async (userId) => {
             planExpirationDate: user.planExpirationDate
           }
         });
-        
-        console.log(`✅ Token actualizado enviado a usuario: ${user.email}`);
       }
     } catch (error) {
       console.error('Error notifying token update:', error);
@@ -227,7 +221,6 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.log(`Webhook signature verification failed.`, err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -235,19 +228,16 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object;
-      console.log('Checkout session completed:', session.id);
       await handleSuccessfulPayment(req, session);
       break;
 
     case 'invoice.payment_succeeded':
       const invoice = event.data.object;
-      console.log('Invoice payment succeeded:', invoice.id);
       await handleSubscriptionRenewal(req, invoice);
       break;
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
-      console.log('Subscription cancelled:', subscription.id);
       const cancelledUserId = await handleSubscriptionCancellation(req, subscription);
       if (cancelledUserId) {
         await notifyTokenUpdate(cancelledUserId);
@@ -261,17 +251,17 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   res.json({received: true});
 });
 
-// ✅ AHORA sí aplicar middlewares
+
 app.use(cors());
 app.use(express.json());
 
-// ✅ MEJORAR: Conexión a MongoDB con mejor manejo de errores
+
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ [Payments Service] Conectado a MongoDB"))
   .catch((err) => console.error("❌ [Payments Service] Error al conectar:", err));
 
-// ✅ VERIFICAR: Variables de entorno al iniciar
+//VERIFICAR: Variables de entorno al iniciar
 const requiredEnvVars = ['MONGO_URI', 'STRIPE_SECRET_KEY', 'SECRET_KEY', 'USER_SERVICE_URL'];
 requiredEnvVars.forEach(varName => {
   if (!process.env[varName]) {
@@ -279,8 +269,6 @@ requiredEnvVars.forEach(varName => {
     process.exit(1);
   }
 });
-
-console.log('✅ Variables de entorno verificadas');
 
 /**
  * @typedef {Object} CheckoutRequest
@@ -308,8 +296,6 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
     const { priceId, billingCycle, plan } = req.body;
     const userId = req.user.id;
 
-    console.log('📝 Creando sesión para usuario:', userId);
-    console.log('📝 Datos recibidos:', { priceId, billingCycle, plan });
 
     // Validar datos requeridos
     if (!priceId || !billingCycle || !plan) {
@@ -318,7 +304,6 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log('Mongoose readyState at request time:', mongoose.connection.readyState);
 
     // Obtener usuario vía user-service
     const userResponse = await axios.get(`${process.env.USER_SERVICE_URL}/users/${userId}`, {
@@ -332,14 +317,12 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    console.log('👤 Usuario encontrado:', user.email);
 
     // URLs de redirección
     const YOUR_DOMAIN = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    // ✅ VERIFICAR: Que Stripe esté inicializado
+    // VERIFICAR: Que Stripe esté inicializado
     if (!stripe) {
-      console.error('❌ Stripe no está inicializado');
       return res.status(500).json({ error: 'Stripe no configurado' });
     }
 
@@ -357,26 +340,24 @@ app.post('/create-checkout-session', authMiddleware, async (req, res) => {
       cancel_url: `${YOUR_DOMAIN}/subscribe?cancelled=true`,
       customer_email: user.email,
       metadata: {
-        userId: userId.toString(), // ✅ IMPORTANTE: Convertir a string
+        userId: userId.toString(), // Convertir a string
         plan: plan,
         billingCycle: billingCycle
       },
       subscription_data: {
         metadata: {
-          userId: userId.toString(), // ✅ IMPORTANTE: Convertir a string
+          userId: userId.toString(), // Convertir a string
           plan: plan,
           billingCycle: billingCycle
         }
       }
     });
 
-    console.log('✅ Sesión creada exitosamente:', session.id);
     res.json({ sessionId: session.id });
 
   } catch (error) {
-    console.error('❌ Error creando sesión de checkout:', error);
     
-    // ✅ MEJORAR: Manejo específico de errores
+    // Manejo específico de errores
     if (error.name === 'MongooseError' &amp;&amp; error.message.includes('buffering timed out')) {
       return res.status(503).json({ 
         error: 'Error de conexión a base de datos. Intenta de nuevo.' 
@@ -427,7 +408,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'sessionId requerido' });
     }
 
-    console.log('🔍 Verificando pago para sesión:', sessionId);
 
     // Obtener la sesión de Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -476,7 +456,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
     });
 
     const updatedUser = updateResponse.data.user;
-    console.log('✅ Usuario actualizado a Premium:', updatedUser.email);
 
     // Generar nuevo token con la información actualizada
     const token = jwt.sign(
@@ -503,7 +482,6 @@ app.post('/verify-payment', authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error verificando pago:', error);
     
     if (error.name === 'MongooseError' &amp;&amp; error.message.includes('buffering timed out')) {
       return res.status(503).json({ 
@@ -674,13 +652,14 @@ app.post('/cancel-subscription', authMiddleware, async (req, res) => {
       cancel_at_period_end: true
     });
 
+    await notifyTokenUpdate(userId);
+
     res.json({ 
       success: true, 
       message: 'Suscripción cancelada. Se mantendrá activa hasta el final del período actual.' 
     });
 
   } catch (error) {
-    console.error('Error cancelando suscripción:', error);
     res.status(500).json({ 
       error: 'Error interno del servidor',
       details: error.message 
@@ -720,7 +699,7 @@ server.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });
 
-// ✅ AGREGAR: Manejo de errores no capturados
+// Manejo de errores no capturados
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
   process.exit(1);
@@ -746,7 +725,7 @@ module.exports = app;</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 30 2025 12:11:24 GMT+0200 (hora de verano de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Nov 10 2025 19:19:43 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

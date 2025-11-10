@@ -96,24 +96,509 @@
     
 
     
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="createIndividualTransaction"><span class="type-signature">(async) </span>createIndividualTransaction<span class="signature">(options)</span><span class="type-signature"> &rarr; {Promise.&lt;TransactionData>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Crea una transacción individual (no compartida)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#IndividualTransactionOptions">IndividualTransactionOptions</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Opciones para crear transacción individual</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line157">line 157</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Transacción creada
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;TransactionData></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="createSharedTransactions"><span class="type-signature">(async) </span>createSharedTransactions<span class="signature">(options)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;TransactionData>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Crea múltiples transacciones para gastos compartidos entre usuarios
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#SharedTransactionOptions">SharedTransactionOptions</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Opciones para crear transacciones compartidas</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line74">line 74</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Array de transacciones creadas
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;TransactionData>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="transformSharedWithData"><span class="type-signature"></span>transformSharedWithData<span class="signature">(sharedWith)</span><span class="type-signature"> &rarr; {Array.&lt;SharedParticipant>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Normaliza los datos de usuarios compartidos a una estructura consistente
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>sharedWith</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;(string|Object)></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Array de usuarios compartidos</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line21">line 21</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Array transformado con estructura consistente
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;SharedParticipant></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
 
     
         <h3 class="subsection-title">Type Definitions</h3>
 
         
                 
-<h4 class="name" id="Transaction">Transaction</h4>
+<h4 class="name" id="IndividualTransactionOptions">IndividualTransactionOptions</h4>
 
 
 
 
-<div class="description">
-    Esquema que representa una transacción financiera.
-Cada transacción puede ser un gasto o un ingreso y puede estar asociada
-a una categoría, tener un valor original y estar compartida entre varios usuarios.
-</div>
 
 
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
 
 
 
@@ -133,8 +618,6 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -147,58 +630,23 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
 
         <tr>
             
-                <td class="name"><code>clientId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Identificador del cliente que creó la transacción. (Requerido)</td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Nombre o descripción de la transacción. (Requerido)</td>
+            <td class="description last">Nombre de la transacción</td>
         </tr>
 
     
@@ -211,26 +659,17 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
             <td class="type">
             
                 
-<span class="param-type">"expense"</span>
-|
-
-<span class="param-type">"income"</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Tipo de transacción: gasto o ingreso. (Requerido)</td>
+            <td class="description last">Tipo (income/expense)</td>
         </tr>
 
     
@@ -243,23 +682,17 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
             <td class="type">
             
                 
-<span class="param-type">ObjectId</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Referencia al modelo `Categoria` que clasifica la transacción. (Requerido)</td>
+            <td class="description last">Categoría</td>
         </tr>
 
     
@@ -272,54 +705,17 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
             <td class="type">
             
                 
-<span class="param-type">Number</span>
+<span class="param-type">number</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Valor actual de la transacción. (Requerido)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>originalValue</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Valor original antes de ajustes o divisiones. (Opcional)</td>
+            <td class="description last">Valor</td>
         </tr>
 
     
@@ -332,208 +728,40 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
             <td class="type">
             
                 
-<span class="param-type">String</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Icono asociado a la transacción (por ejemplo, un emoji).</td>
+            <td class="description last">Icono</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>createdAt</code></td>
+                <td class="name"><code>clientId</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Date</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last">Fecha de creación de la transacción. (Por defecto: fecha actual)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sharedWith</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;SharedWith></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Lista de usuarios con los que se comparte el gasto.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>splitType</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">"equal"</span>
-|
-
-<span class="param-type">"custom"</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Método de división del gasto: igualitario o personalizado. (Por defecto: `equal`)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>totalParticipants</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Número total de participantes en el gasto compartido.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>createdBy</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ObjectId</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Usuario que creó la transacción.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>isShared</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Indica si la transacción es compartida. (Por defecto: `false`)</td>
+            <td class="description last">ID del cliente</td>
         </tr>
 
     
@@ -572,7 +800,546 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="statistics-model.js.html">statistics-model.js</a>, <a href="statistics-model.js.html#line8">line 8</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line12">line 12</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="IndividualTransactionOptions">IndividualTransactionOptions</h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Nombre de la transacción</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tipo (income/expense)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>category</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Categoría</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Valor</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>icon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Icono</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>clientId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">ID del cliente</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line147">line 147</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="SharedTransactionOptions">SharedTransactionOptions</h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Nombre de la transacción</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tipo (income/expense)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>category</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Categoría</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Valor total</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>icon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Icono</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>clientId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">ID del cliente creador</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sharedWith</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">IDs de usuarios compartidos</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>splitType</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tipo de división (equal/custom)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>customAmounts</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Montos personalizados</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line61">line 61</a>
     </li></ul></dd>
     
 
@@ -602,13 +1369,13 @@ a una categoría, tener un valor original y estar compartida entre varios usuari
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#createIndividualTransaction">createIndividualTransaction</a></li><li><a href="global.html#createSharedTransactions">createSharedTransactions</a></li><li><a href="global.html#transformSharedWithData">transformSharedWithData</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 30 2025 12:13:28 GMT+0200 (hora de verano de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Nov 10 2025 19:22:36 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>

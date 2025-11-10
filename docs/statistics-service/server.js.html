@@ -46,29 +46,20 @@ const app = express();
 const Transaction = require("./statistics-model")
 const Categoria = require("./category-model")
 const UserCategory=require("./user-category");
-const Icono = require("./icon-model")
+const Icono = require("./icon-model");
+const axios = require('axios');
+
+
 //const User = require("../user-service/user-model");
 app.use(cors());
 app.use(express.json());
+const { transformSharedWithData, createSharedTransactions, createIndividualTransaction } = require('./utils');
 
 const localizedFormat = require('dayjs/plugin/localizedFormat');
 const es = require('dayjs/locale/es'); // Importa el idioma español
 
 dayjs.extend(localizedFormat);
 dayjs.locale('es');
-
-const userSchemaLocal = new mongoose.Schema({
-  name: { type: String, required: true },
-  surname: { type: String, required: true },
-  email: { type: String, required: true }
-}, {
-  collection: 'users', // Asegúrate de que apunte a la misma colección que tu microservicio de usuarios
-  _id: true, // Asegurar que se reconozca el _id
-  versionKey: false // Opcional: remover __v
-});
-
-// Crear el modelo User local
-const UserLocal = mongoose.model("UserLocal", userSchemaLocal);
 
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -106,8 +97,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   app.get('/gastos/rango', authMiddleware, async (req, res) => {
   const { start, end } = req.query;
   const clientId = req.user.id;
-  //console.log("startDate:", start);
-  //console.log("endDate:", end);
 
   if (!start || !end) {
     return res.status(400).json({ error: "Se requieren fechas de inicio y fin" });
@@ -128,7 +117,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 
     res.json(gastos);
   } catch (error) {
-    console.error("Error al obtener datos por rango:", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 });
@@ -150,7 +138,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 app.get("/gastos/:period", authMiddleware, async (req, res) => {
   try {
     const { period } = req.params;
-   // console.log("Periodo escogido:"+period);
     const gastos = await Transaction.find({ 
       clientId: req.user.id,   
       $expr: {
@@ -163,137 +150,11 @@ app.get("/gastos/:period", authMiddleware, async (req, res) => {
  if(gastos==null){
   res.status(404).json({ error: "Todavía no hay datos" });
  }
- //const resultadoAgrupado = agruparPorCategoria(gastos);
  res.json(gastos);
   } catch (error) {
     res.status(500).json({ error: "Error del servidor" });
   }
 });
-
-/**
- * Función helper para transformar datos de sharedWith
- * @function transformSharedWithData
- * @param {Array&lt;string|Object>} sharedWith - Array de usuarios compartidos
- * @returns {SharedParticipant[]} Array transformado con estructura consistente
- * @description Normaliza los datos de usuarios compartidos a una estructura consistente
- */
-function transformSharedWithData(sharedWith) {
-  if (!sharedWith || !Array.isArray(sharedWith)) return [];
-  
-  return sharedWith.map(item => {
-    // Si el item ya tiene la estructura correcta
-    if (typeof item === 'object' &amp;&amp; item.userId &amp;&amp; item.amount !== undefined) {
-      return {
-        userId: new mongoose.Types.ObjectId(item.userId),
-        amount: item.amount
-      };
-    }
-    
-    // Si el item es solo un string (userId)
-    if (typeof item === 'string') {
-      return {
-        userId: new mongoose.Types.ObjectId(item),
-        amount: 0
-      };
-    }
-    
-    // Si el item tiene userId como string
-    if (item.userId &amp;&amp; typeof item.userId === 'string') {
-      return {
-        userId: new mongoose.Types.ObjectId(item.userId),
-        amount: item.amount || 0
-      };
-    }
-    
-    return item;
-  });
-}
-
-/**
- * @typedef {Object} SharedTransactionOptions
- * @property {string} name - Nombre de la transacción
- * @property {string} type - Tipo (income/expense)
- * @property {string} category - Categoría
- * @property {number} value - Valor total
- * @property {string} icon - Icono
- * @property {string} clientId - ID del cliente creador
- * @property {string[]} sharedWith - IDs de usuarios compartidos
- * @property {string} splitType - Tipo de división (equal/custom)
- * @property {Object} customAmounts - Montos personalizados
- */
-
-/**
- * Función helper para crear transacciones compartidas
- * @async
- * @function createSharedTransactions
- * @param {SharedTransactionOptions} options - Opciones para crear transacciones compartidas
- * @returns {Promise&lt;TransactionData[]>} Array de transacciones creadas
- * @description Crea múltiples transacciones para gastos compartidos entre usuarios
- */
-async function createSharedTransactions({
-  name,
-  type,
-  category,
-  value,
-  icon,
-  clientId,
-  sharedWith,
-  splitType,
-  customAmounts
-}) {
-  const transactions = [];
-  
-  // Crear lista completa de todos los participantes (incluyendo al creador)
-  const allParticipants = [clientId, ...sharedWith];
-  
-  // Calcular los montos según el tipo de división
-  let amounts = {};
-  
-  if (splitType === 'equal') {
-   const amountPerPerson = parseFloat((value / allParticipants.length).toFixed(2));
-    allParticipants.forEach(userId => {
-      amounts[userId] = amountPerPerson;
-    });
-  } else if (splitType === 'custom') {
-    amounts = { ...customAmounts };
-    // Asegurar que el creador tenga su monto
-    if (!amounts[clientId]) {
-      const sumOthers = Object.values(customAmounts).reduce((sum, amount) => sum + amount, 0);
-      amounts[clientId] = value - sumOthers;
-    }
-  }
-  
-  // Crear array de sharedWith que será IGUAL para todas las transacciones
-  // Contiene TODOS los participantes con sus montos
-  const completeSharedWith = allParticipants.map(userId => ({
-    userId,
-    amount: amounts[userId] || 0
-  }));
-  
-  // Crear una transacción para cada participante
-  // TODAS tendrán la misma información en sharedWith
-  for (const participantId of allParticipants) {
-    const transaction = new Transaction({
-      clientId: participantId,
-      name,
-      type,
-      category,
-      value: amounts[participantId] || 0, // Su parte individual
-      originalValue: value,
-      icon,
-      sharedWith: completeSharedWith, // TODOS tienen la misma info completa
-      splitType,
-      totalParticipants: allParticipants.length,
-      createdBy: new mongoose.Types.ObjectId(clientId),
-      isShared: true
-    });
-    
-    const savedTransaction = await transaction.save();
-    transactions.push(savedTransaction);
-  }
-  
-  return transactions;
-}
 
 /**
  * @typedef {Object} UpdateResult
@@ -329,7 +190,7 @@ async function updateTransaction(transactionId, updateData, userId) {
     }
 
     // Limpiar y preparar datos - solo campos permitidos
-    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy'];
+    const allowedFields = ['name', 'type', 'category', 'value', 'icon', 'sharedWith', 'splitType', 'customAmounts', 'totalParticipants', 'createdBy', 'originalValue'];
     const preparedData = {};
     
     for (const field of allowedFields) {
@@ -358,8 +219,6 @@ async function updateTransaction(transactionId, updateData, userId) {
       const wasIndividual = !originalTransaction.sharedWith || originalTransaction.sharedWith.length === 0;
       
       if (wasIndividual) {
-        console.log("Convirtiendo transacción individual en compartida");
-        
         // Filtrar IDs válidos (eliminar strings vacíos y valores nulos)
         const friendIds = preparedData.sharedWith.filter(id => {
           if (typeof id === 'string') {
@@ -382,12 +241,16 @@ async function updateTransaction(transactionId, updateData, userId) {
             customAmounts: preparedData.customAmounts || {}
           });
 
+           const populatedTransactions = await Transaction.find({
+          _id: { $in: transactions.map(t => t._id) }
+         }).populate('category');
+
           // Eliminar la transacción original ya que ahora tenemos múltiples transacciones
           await Transaction.findByIdAndDelete(transactionId);
 
           return { 
             message: "Transacción convertida a compartida",
-            transactions,
+            transactions: populatedTransactions,
             isConverted: true,
             originalClientId: originalTransaction.clientId.toString(),
             deletedTransactionId: transactionId
@@ -395,24 +258,18 @@ async function updateTransaction(transactionId, updateData, userId) {
         }
       } else {
         // La transacción ya estaba compartida, solo actualizar
-        console.log("Actualizando transacción compartida existente");
-
         // SINCRONIZAR TODAS LAS TRANSACCIONES DEL GRUPO
         if (originalTransaction.createdBy) {
           const createdBy = originalTransaction.createdBy;
           const originalClientId = originalTransaction.clientId.toString();
           
-          console.log("Sincronizando grupo con createdBy:", createdBy);
-          
-          // 1️⃣ Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
+          // Buscar TODAS las transacciones del grupo (mismo createdBy + mismo nombre)
           const groupTransactions = await Transaction.find({ 
             createdBy,
             name: originalTransaction.name
           });
 
-          console.log("Transacciones del grupo encontradas:", groupTransactions.length);
-
-          // 2️⃣ Obtener IDs de los participantes actuales (incluyendo al creador)
+          // Obtener IDs de los participantes actuales (incluyendo al creador)
           const currentParticipantIds = [];
           
           // Agregar IDs de sharedWith
@@ -432,9 +289,7 @@ async function updateTransaction(transactionId, updateData, userId) {
             currentParticipantIds.push(creatorId);
           }
 
-          console.log("Participantes actuales:", currentParticipantIds);
-
-          // 3️⃣ Procesar cada transacción del grupo
+          // Procesar cada transacción del grupo
           const updatedTransactions = [];
           let transactionToReturn = null;
 
@@ -444,13 +299,11 @@ async function updateTransaction(transactionId, updateData, userId) {
 
             if (!isStillParticipant) {
               // Este usuario fue removido => borrar su transacción
-              console.log("Eliminando transacción de usuario removido:", txUserId);
               await Transaction.findByIdAndDelete(tx._id);
             } else {
               // El usuario sigue participando => actualizar su transacción
-              console.log("Actualizando transacción de usuario:", txUserId);
               
-              // 🔧 SOLUCIÓN: Preservar correctamente sharedWith según el tipo de división
+              // Preservar correctamente sharedWith según el tipo de división
               let updatedSharedWith;
               
               if (preparedData.splitType === 'custom' &amp;&amp; preparedData.customAmounts) {
@@ -502,7 +355,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                 isShared: true
               };
 
-              // 🔧 SOLUCIÓN: Calcular correctamente el valor según el tipo de división
+              // Calcular correctamente el valor según el tipo de división
               if (preparedData.value !== undefined) {
                 if (preparedData.splitType === 'custom' &amp;&amp; preparedData.customAmounts) {
                   // Para división personalizada: usar el monto específico del usuario
@@ -510,12 +363,12 @@ async function updateTransaction(transactionId, updateData, userId) {
                   updateFields.originalValue = preparedData.value; // Mantener el valor total original
                 } else {
                   // Para división equitativa: dividir por igual
-                  updateFields.value = preparedData.value / currentParticipantIds.length;
+                  updateFields.value = parseFloat((preparedData.value / currentParticipantIds.length).toFixed(2));
                   updateFields.originalValue = preparedData.value;
                 }
               }
 
-              // 🔧 SOLUCIÓN: Preservar customAmounts si es división personalizada
+              // Preservar customAmounts si es división personalizada
               if (preparedData.splitType === 'custom' &amp;&amp; preparedData.customAmounts) {
                 updateFields.customAmounts = preparedData.customAmounts;
               }
@@ -530,13 +383,11 @@ async function updateTransaction(transactionId, updateData, userId) {
             }
           }
 
-          // 4️⃣ Si se agregaron nuevos participantes, crear sus transacciones
+          // Si se agregaron nuevos participantes, crear sus transacciones
           const existingUserIds = groupTransactions.map(tx => tx.clientId.toString());
           const newParticipants = currentParticipantIds.filter(id => !existingUserIds.includes(id));
 
           if (newParticipants.length > 0) {
-            console.log("Creando transacciones para nuevos participantes:", newParticipants);
-            
             for (const newUserId of newParticipants) {
               let newValue;
               let newSharedWith;
@@ -552,7 +403,7 @@ async function updateTransaction(transactionId, updateData, userId) {
                   }));
               } else {
                 // División equitativa
-                newValue = (preparedData.value || originalTransaction.value) / currentParticipantIds.length;
+                newValue = parseFloat(((preparedData.value || originalTransaction.value) / currentParticipantIds.length).toFixed(2));
                 newSharedWith = currentParticipantIds
                   .filter(id => id !== newUserId)
                   .map(id => ({
@@ -582,7 +433,7 @@ async function updateTransaction(transactionId, updateData, userId) {
             }
           }
 
-          // 🔧 SOLUCIÓN: Retornar la transacción correcta
+          // Retornar la transacción correcta
           if (transactionToReturn) {
             return transactionToReturn;
           } else {
@@ -626,7 +477,6 @@ async function updateTransaction(transactionId, updateData, userId) {
       }
     } else if (preparedData.sharedWith &amp;&amp; Array.isArray(preparedData.sharedWith) &amp;&amp; preparedData.sharedWith.length === 0) {
       // Convertir transacción compartida en individual
-      console.log("Convirtiendo transacción compartida en individual");
       
       // Si la transacción original era compartida, eliminar todas las otras transacciones del grupo
       if (originalTransaction.createdBy &amp;&amp; originalTransaction.sharedWith &amp;&amp; originalTransaction.sharedWith.length > 0) {
@@ -639,8 +489,6 @@ async function updateTransaction(transactionId, updateData, userId) {
           _id: { $ne: transactionId } // Excluir la transacción actual
         });
         
-        console.log("Eliminando transacciones compartidas del grupo:", groupTransactions.length);
-        
         for (const tx of groupTransactions) {
           await Transaction.findByIdAndDelete(tx._id);
         }
@@ -651,6 +499,7 @@ async function updateTransaction(transactionId, updateData, userId) {
       preparedData.totalParticipants = 1;
       preparedData.isShared = false;
       preparedData.customAmounts = null; // Limpiar customAmounts también
+      preparedData.originalValue= preparedData.value !== undefined ? preparedData.value : originalTransaction.value;
       
       // Actualizar la transacción actual y retornar
       const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
@@ -661,6 +510,9 @@ async function updateTransaction(transactionId, updateData, userId) {
       return updated;
     }
 
+    if (updateData.value !== undefined) {
+        preparedData.originalValue = updateData.value;
+    }
     // Si no hay cambios en sharedWith, actualización normal
     const updated = await Transaction.findByIdAndUpdate(transactionId, preparedData, {
       new: true,
@@ -670,54 +522,10 @@ async function updateTransaction(transactionId, updateData, userId) {
     return updated;
 
   } catch (error) {
-    console.error("Error en updateTransaction:", error.message);
     throw error;
   }
 }
 
-/**
- * @typedef {Object} IndividualTransactionOptions
- * @property {string} name - Nombre de la transacción
- * @property {string} type - Tipo (income/expense)
- * @property {string} category - Categoría
- * @property {number} value - Valor
- * @property {string} icon - Icono
- * @property {string} clientId - ID del cliente
- */
-
-/**
- * Función helper para crear transacción individual
- * @async
- * @function createIndividualTransaction
- * @param {IndividualTransactionOptions} options - Opciones para crear transacción individual
- * @returns {Promise&lt;TransactionData>} Transacción creada
- * @description Crea una transacción individual (no compartida)
- */
-async function createIndividualTransaction({
-  name,
-  type,
-  category,
-  value,
-  icon,
-  clientId
-}) {
-  const transaction = new Transaction({
-    clientId,
-    name,
-    type,
-    category,
-    value,
-    originalValue: value, 
-    icon,
-    sharedWith: [],
-    splitType: null,
-    totalParticipants: 1,
-    createdBy: new mongoose.Types.ObjectId(clientId)
-  });
-
-  await transaction.save();
-  return transaction;
-}
 
 /**
  * @typedef {Object} TrackRequest
@@ -765,14 +573,9 @@ app.post('/track', async (req, res) => {
     return res.status(400).json({ error: "Datos incompletos" });
   }
 
-  console.log("categoria recibida", category);
-
   const categoryExists = await Categoria.findOne({
   name: { $regex: new RegExp(`^${category}$`, 'i') }
 });
-
-
-      console.log("category exists: ", categoryExists);
 
   try {
     // Si no hay usuarios compartidos, crear transacción individual
@@ -813,7 +616,6 @@ app.post('/track', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error al guardar transacción:", err);
     return res.status(500).json({ error: "Error al registrar la transacción" });
   }
 });
@@ -839,8 +641,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
     
     const result = await updateTransaction(id, req.body, req.user.id);
 
-    console.log("resultado de update: ", result);
-
     // Si se convirtió a transacción compartida, retornar todas las transacciones
     if (result.isConverted) {
       return res.status(200).json({
@@ -856,7 +656,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
     res.status(200).json(result);
 
   } catch (err) {
-    console.error("Error al actualizar transacción:", err.message);
     
     if (err.message === 'Transacción no encontrada') {
       return res.status(404).json({ message: 'Transacción no encontrada' });
@@ -866,29 +665,6 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// function agruparPorCategoria(transactions) {
-//   // Usamos un objeto para acumular por categoría
-//   const agrupados = {};
-
-//   transactions.forEach(({ category, type, value, icon, name, createdAt, _id }) => {
-//     const key = `${type}-${category}`; // diferenciamos gastos e ingresos por categoría
-//     if (!agrupados[key]) {
-//       agrupados[key] = {
-//         category,
-//         type,
-//         value: 0,
-//         icon,
-//         name,
-//         createdAt,
-//         _id 
-//       };
-//     }
-//     agrupados[key].value += Number(value);
-//   });
-
-//   // Convertimos el objeto a array
-//   return Object.values(agrupados);
-// }
 
 /**
  * Elimina una transacción por su ID
@@ -929,90 +705,9 @@ app.delete('/track/:id', async (req, res) => {
     }
     res.status(200).json({ message: "Transacción eliminada" });
   } catch (err) {
-    console.error("Error al eliminar transacción:", err.message);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
-
-/* // Endpoint para obtener todas las transacciones compartidas relacionadas
-app.get('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
-  try {
-    const { sharedTransactionId } = req.params;
-    
-    if (!sharedTransactionId) {
-      return res.status(400).json({ error: "ID de transacción compartida requerido" });
-    }
-    
-    // Buscar todas las transacciones con el mismo sharedTransactionId
-    const sharedTransactions = await Transaction.find({
-      sharedTransactionId: sharedTransactionId
-    }).populate('sharedWith.userId', 'name email'); // Si tienes modelo de usuarios
-    
-    if (!sharedTransactions || sharedTransactions.length === 0) {
-      return res.status(404).json({ error: "No se encontraron transacciones compartidas" });
-    }
-    
-    res.json(sharedTransactions);
-    
-  } catch (error) {
-    console.error("Error al obtener transacciones compartidas:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
-// Endpoint para actualizar una transacción compartida
-app.put('/api/transactions/shared/:sharedTransactionId', async (req, res) => {
-  try {
-    const { sharedTransactionId } = req.params;
-    const {
-      name,
-      type,
-      category,
-      value,
-      icon,
-      sharedWith,
-      splitType,
-      customAmounts,
-      clientId
-    } = req.body;
-    
-    // Obtener todas las transacciones relacionadas
-    const existingTransactions = await Transaction.find({
-      sharedTransactionId: sharedTransactionId
-    });
-    
-    if (!existingTransactions || existingTransactions.length === 0) {
-      return res.status(404).json({ error: "Transacciones compartidas no encontradas" });
-    }
-    
-    // Eliminar todas las transacciones existentes
-    await Transaction.deleteMany({
-      sharedTransactionId: sharedTransactionId
-    });
-    
-    // Crear nuevas transacciones con los datos actualizados
-    const updatedTransactions = await createSharedTransactions({
-      name,
-      type,
-      category,
-      value,
-      icon,
-      clientId,
-      sharedWith,
-      splitType,
-      customAmounts
-    });
-    
-    res.json({
-      message: "Transacciones compartidas actualizadas",
-      transactions: updatedTransactions
-    });
-    
-  } catch (error) {
-    console.error("Error al actualizar transacciones compartidas:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-}); */
 
 /**
  * Obtiene todas las categorías disponibles para el usuario autenticado
@@ -1092,8 +787,7 @@ app.get("/categories", authMiddleware, async (req, res) => {
         };    
 
     res.json(porTipo);    
-  } catch (err) {     
-    console.error("❌ Error exacto en /categories:", err);     
+  } catch (err) {        
     res.status(500).json({ error: err.message || "Fallo interno" });   
   } 
 });
@@ -1273,7 +967,6 @@ app.delete('/categorie', authMiddleware, async (req, res) => {
     // Si hemos llegado aquí, al menos una de las eliminaciones fue exitosa
     res.status(200).json({ message: "Categoría eliminada correctamente" });
   } catch (err) {
-    console.error("Error al eliminar categoría:", err.message);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
@@ -1339,31 +1032,38 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
       .select('-_id -clientId -icon -__v -createdBy')
       .lean();
 
-    // Crear un Set con todos los userIds únicos de sharedWith
+    // Crear un Set con todos los userIds únicos de sharedWith (excluyendo el clientId)
     const userIds = new Set();
     transactions.forEach(tx => {
       if (tx.sharedWith &amp;&amp; Array.isArray(tx.sharedWith)) {
         tx.sharedWith.forEach(share => {
-          if (share.userId) {
+          if (share.userId &amp;&amp; share.userId.toString() !== clientId) {
             userIds.add(share.userId.toString());
           }
         });
       }
     });
 
-    // Obtener información de usuarios en lote
+    // Obtener información de usuarios en lote desde el microservicio
     let userMap = {};
     if (userIds.size > 0) {
-      const users = await UserLocal.find({
-        _id: { $in: Array.from(userIds) }
-      }).select('name surname').lean();
+      try {
+        // Llamar al microservicio de usuarios y devuelve un array de objetos 
+        const response = await axios.post(`${process.env.USER_SERVICE_URL}/users/batch`, {
+          userIds: Array.from(userIds)
+        });
 
-      // Crear un mapa de userId -> userData para acceso rápido
-      users.forEach(user => {
-        userMap[user._id.toString()] = `${user.name} ${user.surname}`;
-      });
+        if (response.data &amp;&amp; Array.isArray(response.data)) {
+          response.data.forEach(user => {
+            userMap[user._id || user.id] = `${user.name} ${user.surname}`;
+          });
+        }
+      } catch (error) {
+        console.error('Error al obtener usuarios del microservicio:', error.message);
+        // Continuar con userMap vacío en caso de error
+      }
     }
-
+    
     // Formatear las transacciones
     const formattedResponse = transactions.map(tx => {
       // Crear una copia del objeto para evitar mutaciones
@@ -1374,23 +1074,26 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         formattedTx.createdAt = dayjs(formattedTx.createdAt).format('D [de] MMMM [de] YYYY');
       }
       //formatear categoría a nombre
-      formattedTx.category= formattedTx.category.name || 'N/A';
+      formattedTx.category = formattedTx.category.name || 'N/A';
       
       // Verificar si el gasto es compartido
       const isSharedExpense = formattedTx.sharedWith &amp;&amp; Array.isArray(formattedTx.sharedWith) &amp;&amp; formattedTx.sharedWith.length > 0;
       
-      // Formatear sharedWith
+      // Formatear sharedWith (filtrando el clientId)
       if (isSharedExpense) {
         formattedTx.sharedWith = formattedTx.sharedWith
+          .filter(share => share.userId &amp;&amp; share.userId.toString() !== clientId.toString()) // Filtrar el propio usuario
           .map(share => {
-            if (share.userId) {
-              const userId = share.userId.toString();
-              return userMap[userId] || `Usuario ${userId}`;
-            }
-            return '';
+            const userId = share.userId.toString();
+            return userMap[userId] || `Usuario ${userId}`;
           })
           .filter(name => name !== '') // Filtrar nombres vacíos
           .join(', ');
+        
+        // Si después de filtrar no quedan usuarios, poner N/A
+        if (!formattedTx.sharedWith) {
+          formattedTx.sharedWith = 'N/A';
+        }
       } else {
         formattedTx.sharedWith = 'N/A'; // N/A si no hay usuarios compartidos
       }
@@ -1404,7 +1107,7 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
         // Si es compartido, formatear campos apropiadamente
         formattedTx.splitType = formattedTx.splitType || 'N/A';
         formattedTx.totalParticipants = formattedTx.totalParticipants || 'N/A';
-        formattedTx.isShared = formattedTx.isShared ? 'Sí' : 'No';
+        formattedTx.isShared = formattedTx.isShared ? 'Si' : 'No';
         
         // Formatear customAmounts
         if (formattedTx.customAmounts &amp;&amp; typeof formattedTx.customAmounts === 'object') {
@@ -1421,7 +1124,6 @@ app.get('/export', authMiddleware, ensurePremium, async(req, res) => {
     res.status(200).json(formattedResponse);
     
   } catch(err) {
-    console.error("Error en export:", err);
     res.status(500).json({ message: "Error: no se pudo extraer transacciones" });
   }
 });
@@ -1436,13 +1138,13 @@ module.exports = app;</code></pre>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#createIndividualTransaction">createIndividualTransaction</a></li><li><a href="global.html#createSharedTransactions">createSharedTransactions</a></li><li><a href="global.html#transformSharedWithData">transformSharedWithData</a></li><li><a href="global.html#updateTransaction">updateTransaction</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#updateTransaction">updateTransaction</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Sep 30 2025 12:12:05 GMT+0200 (hora de verano de Europa central)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Nov 10 2025 19:20:30 GMT+0100 (hora estándar de Europa central)
 </footer>
 
 <script> prettyPrint(); </script>
