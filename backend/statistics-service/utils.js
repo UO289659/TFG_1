@@ -108,7 +108,7 @@ async function createSharedTransactions({
     // Asegurar que el creador tenga su monto
     if (!amounts[clientId]) {
       const sumOthers = Object.values(customAmounts).reduce((sum, amount) => sum + amount, 0);
-      amounts[clientId] = value - sumOthers;
+      amounts[clientId] = Math.round((value - sumOthers) * 100) / 100; // Redondea a 2 decimales
     }
   }
   
