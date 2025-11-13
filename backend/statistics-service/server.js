@@ -588,6 +588,19 @@ app.post('/track', async (req, res) => {
     });
 
   } catch (err) {
+    if (err.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        error: 'El servicio no está disponible. Por favor, intenta más tarde.'});
+    }
+    // ERRORES DE AZURE (reinicio o problemas de infraestructura)
+    else if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
+    return res.status(502).json({
+      error: 'Error de conexión con el servidor. La infraestructura puede estar reiniciándose. Intenta en unos segundos.'});
+  }else if (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN') {
+    //ERROR DE RED GENERAL
+    return res.status(503).json({
+      error: 'No se pudo conectar con el servicio. Verifica tu conexión a internet.'});
+  }
     return res.status(500).json({ error: "Error al registrar la transacción" });
   }
 });
@@ -632,6 +645,19 @@ app.put('/track/:id', authMiddleware, async (req, res) => {
     if (err.message === 'Transacción no encontrada') {
       return res.status(404).json({ message: 'Transacción no encontrada' });
     }
+    else if (err.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        error: 'El servicio no está disponible. Por favor, intenta más tarde.'});
+    }
+    // ERRORES DE AZURE (reinicio o problemas de infraestructura)
+    else if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
+    return res.status(502).json({
+      error: 'Error de conexión con el servidor. La infraestructura puede estar reiniciándose. Intenta en unos segundos.'});
+  }else if (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN') {
+    //ERROR DE RED GENERAL
+    return res.status(503).json({
+      error: 'No se pudo conectar con el servicio. Verifica tu conexión a internet.'});
+  }
     
     res.status(500).json({ message: 'Error interno del servidor', error: err.message });
   }
