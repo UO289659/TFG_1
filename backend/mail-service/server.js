@@ -94,9 +94,6 @@ app.post('/send-email', (req, res) => {
 
         💬 Mensaje:
         ${message}
-
-        ---
-        📅 Enviado: ${new Date().toLocaleString('es-ES')}
             `
           };
 
