@@ -5,7 +5,7 @@
 .main-container {
   min-height: 100vh;
   padding: 2rem;
-  position: relative;
+  position: relative; 
   overflow-x: hidden;
 }
 

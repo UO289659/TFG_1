@@ -17,31 +17,20 @@ const Navbar = () => {
     navigate('/login');  // redirige al login
     setIsMenuOpen(false); // cierra el menú móvil
   };
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const handleNavClick = () => {
-    setIsMenuOpen(false); // cierra el menú móvil al hacer clic en un enlace
-  };
-
-  console.log('Navbar user:', user);
   
   return (
     <nav className="navbar-professional">
       <div className="nav-content">
-        {/* Logo section - descomentado para mejor estructura */}
+        {/* Logo section */}
         <div className="logo-container-new" onClick={() => navigate('/')}>
           { <SaldoSmartLogo size={45} /> }
           <h1 className="logo-text-new">SaldoSmart</h1>
         </div>
          {/* Menú de navegación */}
         <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
-          <a className="nav-link" href="/" >Inicio</a>
-          <a className="nav-link" href="/track" >Track</a>
+          <a className="nav-link" href="/track" >Transacciones</a> 
           <a className="nav-link" href="/profile" >Perfil</a>
-          <a className="nav-link" href="/categories" >Categorias</a>
+          <a className="nav-link" href="/categories" >Categorías</a>
           <a className="nav-link" href="/contact" >Contacto</a>
           <a className="nav-link" href="/help" >Ayuda</a>
           
@@ -75,8 +64,7 @@ const Navbar = () => {
         {/* Menú móvil */}
         {isMenuOpen && (
           <div className="mobile-menu">
-            <a className="mobile-nav-link" href="/" >Inicio</a>
-          <a className="mobile-nav-link" href="/track" >Track</a>
+          <a className="mobile-nav-link" href="/track" >Transacciones</a>
           <a className="mobile-nav-link" href="/profile" >Perfil</a>
           <a className="mobile-nav-link" href="/categories" >Categorias</a>
           <a className="mobile-nav-link" href="/contact" >Contacto</a>

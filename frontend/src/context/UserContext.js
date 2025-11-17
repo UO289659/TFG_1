@@ -8,10 +8,14 @@ export const UserContext = createContext();
 export function UserProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState({ isPremium: false, email: null, _id:null });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+
     if (!token) {
       setUser({ isPremium: false, email: null, _id:null });
+      setLoading(false);
       return;
     }
     try {
@@ -27,6 +31,8 @@ export function UserProvider({ children }) {
       localStorage.setItem('userId', id);
     } catch {
       setUser({ isPremium: false, email: null, _id: null});
+    } finally {
+      setLoading(false); 
     }
   }, [token]);
 
@@ -41,7 +47,7 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user, token, loading, login, logout }}>
       {children}
     </UserContext.Provider>
   );

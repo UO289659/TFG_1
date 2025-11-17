@@ -26,7 +26,8 @@ import toast from 'react-hot-toast';
 import Footer from "./Footer.js";
 
 const Contact = () => {
-  const apiEndpoint = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const apiEndpoint = 'https://gateway-tfg.azure-api.net/mail' || 'http://localhost:4000';
+  const apiEndpoint = process.env.REACT_APP_GATEWAY_URL;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -228,32 +229,6 @@ const Contact = () => {
               </Link>
             </Box>
           </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-            <Box
-              sx={{
-                background: 'var(--glass-bg)',
-                borderRadius: '50%',
-                p: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <MapPinIcon />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight="bold" mb={1}>
-                Dirección
-              </Typography>
-              <Typography sx={{ opacity: 0.9 }}>
-                Calle Principal, 123
-                <br />
-                28001 Madrid, España
-              </Typography>
-            </Box>
-          </Box>
         </Box>
 
         {/* Right form panel */}
@@ -297,7 +272,7 @@ const Contact = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Email"
+                  label="Tu email"
                   type="email"
                   name="email"
                   value={formData.email}

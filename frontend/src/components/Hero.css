@@ -279,6 +279,7 @@
 }
 
 /* Responsive Design */
+
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 3rem;
@@ -287,16 +288,22 @@
   .hero-content-new {
     gap: 3rem;
   }
+  
 }
 
-@media (max-width: 768px) {
+
+@media (max-width: 875px) {
   .hero-content-new {
     grid-template-columns: 1fr;
     gap: 2rem;
     text-align: center;
     padding: 2rem 1rem;
+   
   }
-  
+   .hero-subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
   .stats-container-new {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
@@ -325,6 +332,10 @@
   
   .chart-container-new {
     padding: 1.5rem;
+  }
+
+  .chart-section{
+    flex-direction: column;
   }
 }
 

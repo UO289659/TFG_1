@@ -47,7 +47,7 @@ const faqData = [
     preguntas: [
        {
         pregunta: "¿Dónde puedo añadir mis gastos o ingresos?",
-        respuesta: "1) Accede a la pestaña 'Track', 2) Haz clic en '+ Nueva transacción' 3) Completa los datos requeridos, 4) Guarda los cambios",
+        respuesta: "1) Accede a la pestaña 'Transacciones', 2) Haz clic en '+ Nueva transacción' 3) Completa los datos requeridos, 4) Guarda los cambios",
         tags: ["registrar", "ingreso", "gasto", "transacciones"]
       },
       {
@@ -102,7 +102,7 @@ const faqData = [
     preguntas: [
       {
         pregunta: "¿Dónde veo mis estadísticas?",
-        respuesta: "Puedes ver tus estadísticas en el panel principal. Aquí encontrarás gráficos de ingresos vs gastos, distribución por categorías y tendencias temporales.",
+        respuesta: "Puedes ver tus estadísticas en el panel principal. Ahí encontrarás gráficos de ingresos vs gastos, distribución por categorías y tendencias temporales.",
         tags: ["estadísticas", "análisis", "gráficos"]
       },
       {
@@ -143,7 +143,7 @@ const faqData = [
         {
         pregunta: "¿Dónde puedo ver mis solicitudes de amistad?",
         respuesta: "En la pestaña 'Amigos', dentro del apartado 'Solicitudes' verás las solicitudes recibidas y enviadas con su correspondiente estado.",
-        tags: ["premium", "amigos", "añadir"]
+        tags: ["premium", "amigos", "solicitudes"]
       },
        {
         pregunta: "¿Dónde puedo ver mis amigos?",
@@ -208,9 +208,9 @@ const guideSteps = [
 ];
 
 const supportInfo = {
-  email: "soporte@financeapp.com",
-  phone: "+1 (555) 123-4567",
-  hours: "Lunes a Viernes, 9:00 AM - 6:00 PM"
+  email: "saldosmart.info@gmail.com",
+  phone: "+34 673 48 14 14",
+  hours: "Lunes a Viernes, 9:00 - 18:00"
 };
 
 // Mover TabPanel fuera del componente principal
@@ -363,7 +363,6 @@ export default function ProfessionalHelpPage() {
       backdropFilter: 'blur(10px)',
       border: '1px solid var(--glass-border)',
       borderRadius: '15px',
-      boxShadow: 'var(--shadow-soft)'
     }
   };
 
@@ -487,27 +486,33 @@ export default function ProfessionalHelpPage() {
         ))}
       </TabPanel>
 
-      {/* Quick Guide Tab */}
+       {/* Quick Guide Tab */}
       <TabPanel value={tabIndex} index={1}>
-        <Grid container spacing={3}>
+        <Box sx={{ width: '100%' }}>
           {guideSteps.map((step, index) => (
-            <Grid item xs={12} md={6} key={index}>
-              <Card elevation={0} sx={customStyles.card}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <Box mr={2}>{step.icon}</Box>
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
-                      {index + 1}. {step.title}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ color: 'var(--text-secondary)' }}>
-                    {step.description}
+            <Card 
+              key={index} 
+              elevation={0} 
+              sx={{ 
+                ...customStyles.card,
+                mb: 3,
+                width: '100%'
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Box mr={2}>{step.icon}</Box>
+                  <Typography variant="h6" fontWeight="bold" sx={{ color: 'var(--text-primary)' }}>
+                    {index + 1}. {step.title}
                   </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+                <Typography sx={{ color: 'var(--text-secondary)', ml: 5 }}>
+                  {step.description}
+                </Typography>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
 
         <Alert severity="success" sx={{ ...customStyles.alert, mt: 4 }}>
           <Typography variant="h6" gutterBottom sx={{ color: 'var(--text-primary)' }}>
@@ -563,10 +568,6 @@ export default function ProfessionalHelpPage() {
                     </ListItem>
                   </List>
                 </Alert>
-
-                <Button variant="contained" size="large" sx={customStyles.button}>
-                  Notificarme cuando estén listos
-                </Button>
               </CardContent>
             </Card>
           </Grid>

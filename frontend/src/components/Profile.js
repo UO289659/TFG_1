@@ -11,7 +11,8 @@ import { useUserContext} from "../context/UserContext";
 
 
 const Profile = () => {
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const navigate = useNavigate();
   
   // Usar el contexto de usuario con manejo de errores
@@ -68,7 +69,6 @@ const Profile = () => {
           email: response.data.email || "",
         });
       } catch (err) {
-        console.error('Error al cargar datos del usuario:', err);
         setError(err.response?.data?.message || "Error al cargar datos del usuario.");
       } finally {
         setLoading(false);
@@ -90,7 +90,6 @@ const Profile = () => {
     
     try {
       const token = localStorage.getItem("token");
-      console.log("token en profile.js: "+token);
       
       await axios.put(GATEWAY_URL+"/profile", formData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -116,7 +115,6 @@ const Profile = () => {
         },
       });
     } catch (err) {
-      console.error('Error al actualizar perfil:', err);
       // Mostrar toast de error
       toast.error(err.response?.data?.message || "Error al actualizar perfil", {
         duration: 4000,
@@ -189,10 +187,6 @@ const Profile = () => {
         repeatNewPassword: "",
       });
     } catch (err) {
-      console.error('Error al actualizar contraseña:', err);
-  console.log('Status:', err.response?.status);
-  console.log('Data:', err.response?.data);
-  console.log('Message:', err.response?.data?.message);
       toast.error(err.response?.data?.message || "Error al actualizar contraseña", {
         duration: 4000,
         position: 'top-right',
@@ -207,12 +201,6 @@ const Profile = () => {
       });
     }
   };
-
-  const handleUpgrade = () => {
-    navigate("/subscribe");
-  };
-
-  
 
   // Función para mostrar confirmación de cancelación con SweetAlert2
   const handleUnsubscribe = async () => {
@@ -287,7 +275,6 @@ const Profile = () => {
       });
       
     } catch (error) {
-      console.error('Error al cambiar a plan básico:', error);
       
       // Mostrar error
       await Swal.fire({
@@ -455,6 +442,7 @@ const Profile = () => {
                 </form>
               </div>
             </div>
+             
 
             {/* Password Form */}
             <div className="col-lg-6">
@@ -478,11 +466,13 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
+                    
                   </div>
                   
                   <div className="mb-3">
-                    <label className="form-label fw-semibold">Nueva contraseña
+                    <label htmlFor="newPassword" className="form-label fw-semibold">Nueva contraseña </label>
                     <input
+                      id="newPassword"
                       name="newPassword"
                       type="password"
                       className="form-control form-control-modern"
@@ -490,12 +480,13 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
-                    </label>
+                   
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">Confirmar nueva contraseña
+                    <label htmlfor="repeatNewPassword" className="form-label fw-semibold">Confirmar nueva contraseña </label>
                     <input
+                      id="repeatNewPassword"
                       name="repeatNewPassword"
                       type="password"
                       className="form-control form-control-modern"
@@ -503,7 +494,7 @@ const Profile = () => {
                       onChange={handlePasswordInputChange}
                       required
                     />
-                    </label>
+                   
                   </div>
                   
                   <button

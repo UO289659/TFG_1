@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import Hero from "./components/Hero"; // Importamos el Hero
-import Login from "./components/Login"; // Importamos el Hero
-import Register from "./components/Register"; // Importamos el Hero
+import Hero from "./components/Hero";
+import Login from "./components/Login";
+import Register from "./components/Register";
 import Track from "./components/Track";
 import Navbar from "./components/Navbar";
 import Profile from "./components/Profile"
 import SelectPlan from "./components/SelectPlan";
 import Subscribe from "./components/Subscribe";
-import  Contact from "./components/Contact";
+import Contact from "./components/Contact";
 import ConfigurarCategorias from "./components/ConfigurarCategorias";
 import HelpPage from "./components/Help";
 import ForgotPassword from "./components/ForgotPassword";
@@ -17,8 +17,9 @@ import ExportTransactions from "./components/ExportTransactions";
 import { UserProvider, useUserContext } from './context/UserContext';
 import FriendsSystem from "./components/Friends";
 import { Toaster } from 'react-hot-toast';
-import { SocketProvider,useSocket  } from './socket/useSocket';
+import { SocketProvider, useSocket } from './socket/useSocket';
 import SubscriptionListener from './socket/SubscriptionListener';
+import ProtectedRoute, { PremiumRoute } from './ProtectedRoute';
 
 function AppWrapper() {
   const location = useLocation();
@@ -48,22 +49,99 @@ function AppWrapper() {
     <>
       {shouldShowNavbar() && <Navbar />}
       <div className="main-content">
-  
         <Routes>
+          {/* Rutas públicas (solo accesibles sin autenticación) */}
           <Route path="/" element={<Hero />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/track" element={<Track />} />
-           <Route path="/profile" element={<Profile />} />
-           <Route path="/select-plan" element={<SelectPlan />} />
-            <Route path="/subscribe" element={<Subscribe />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/categories" element={<ConfigurarCategorias />} />
-            <Route path="/help" element={<HelpPage />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-             <Route path="/export-transactions" element={<ExportTransactions />} />
-            <Route path="/friends" element={<FriendsSystem />} />
+          <Route 
+            path="/register" 
+            element={
+                <Register />
+            } 
+          />
+          <Route 
+            path="/login" 
+            element={
+                <Login />
+            } 
+          />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          
+          {/* Rutas protegidas (requieren autenticación) */}
+          <Route 
+            path="/track" 
+            element={
+              <ProtectedRoute>
+                <Track />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/select-plan" 
+            element={
+              <ProtectedRoute>
+                <SelectPlan />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/subscribe" 
+            element={
+              <ProtectedRoute>
+                <Subscribe />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/contact" 
+            element={
+              <ProtectedRoute>
+                <Contact />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/categories" 
+            element={
+              <ProtectedRoute>
+                <ConfigurarCategorias />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/help" 
+            element={
+              <ProtectedRoute>
+                <HelpPage />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Rutas premium (requieren autenticación + suscripción premium) */}
+          <Route 
+            path="/export-transactions" 
+            element={
+              <PremiumRoute>
+                <ExportTransactions />
+              </PremiumRoute>
+            } 
+          />
+          <Route 
+            path="/friends" 
+            element={
+              <PremiumRoute>
+                <FriendsSystem />
+              </PremiumRoute>
+            } 
+          />
         </Routes>
       </div>
     </>
@@ -72,7 +150,7 @@ function AppWrapper() {
 
 function SocketManager() {
   const { connectSocket, disconnectSocket, isConnected } = useSocket();
-  const { user, token } = useUserContext();
+  const { user } = useUserContext();
 
   useEffect(() => {
     console.log('🔍 SocketManager - Debug info:');
@@ -85,6 +163,7 @@ function SocketManager() {
     const token = localStorage.getItem('token');
     console.log('- Token exists:', !!token);
     console.log('- Token preview:', token ? `${token.substring(0, 20)}...` : 'No token');
+    
     // Conectar automáticamente cuando hay token y usuario
     if (token && user) {
       console.log('🔌 Conectando socket para usuario:', user.email);
@@ -98,7 +177,7 @@ function SocketManager() {
     return () => {
       disconnectSocket();
     };
-  }, [token, user, connectSocket, disconnectSocket]);
+  }, [user, connectSocket, disconnectSocket]);
 
   // Mostrar estado de conexión (opcional, para debugging)
   useEffect(() => {
@@ -109,20 +188,19 @@ function SocketManager() {
     }
   }, [isConnected]);
 
-  return null; // Este componente no renderiza nada
+  return null;
 }
 
-
 function App() {
- return (
+  return (
     <UserProvider>
-        <SocketProvider>
-          <SocketManager />
-           <SubscriptionListener />
-      <Router>
-        <AppWrapper />
-         <Toaster />
-      </Router>
+      <SocketProvider>
+        <SocketManager />
+        <SubscriptionListener />
+        <Router>
+          <AppWrapper />
+          <Toaster />
+        </Router>
       </SocketProvider>
     </UserProvider>
   );

@@ -6,7 +6,8 @@ import { useUserContext } from '../context/UserContext';
 import Footer from "./Footer";
 
 const Login = () => {
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const { login } = useUserContext();
   const navigate = useNavigate(); // Hook para redirigir al usuario
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ const Login = () => {
   });
 
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,6 +25,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
       localStorage.removeItem("token");
@@ -30,16 +33,18 @@ const Login = () => {
 
       // Guardar el token en localStorage o sessionStorage
       login(res.data.token); 
-      
-
-      console.log("nuevo token login: "+res.data.token);
 
       // Redirigir a la página de bienvenida
       navigate("/track");
     } catch (error) {
-      console.error("❌ Error al iniciar sesión:", error);
       setError("Correo o contraseña incorrectos.");
+    }finally{
+      setIsSubmitting(false);
     }
+  };
+
+   const handleBack = () => {
+    navigate("/"); 
   };
 
   return (
@@ -64,10 +69,12 @@ const Login = () => {
           <label>Contraseña</label>
           <div className="password-container">
             <input type="password" name="password" placeholder="Contraseña" onChange={handleChange} required />
-            <span className="eye-icon">👁️</span>
           </div>
 
-          <button type="submit" className="btn primary full-width">Iniciar Sesión</button>
+          <button type="submit" className="btn primary full-width" >Iniciar Sesión</button>
+          <button type="button" className="btn btn-secondary w-100 mt-3" onClick={handleBack} disabled={isSubmitting}>
+            ← Volver atrás
+          </button>
         </form>
 
         <div className="links">

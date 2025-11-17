@@ -20,11 +20,12 @@ import Swal from 'sweetalert2';
 import { Pencil, Trash2  } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Select from 'react-select';
 import CreateTransactionModal from './CreateTransactionModal';
 import EditTransactionModal from './EditTransactionModal';
 import ReactPaginate from 'react-paginate';
 import Footer from "./Footer";
+import "./Track.css";
+
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, 
   LineElement,
   TimeScale
@@ -38,7 +39,8 @@ const categories = [
 
 ];
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+//const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/transactions' || 'http://localhost:4000';
+const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
 
 const Track = () => {
   const [data, setData] = useState([]);
@@ -60,7 +62,7 @@ const Track = () => {
   const [newEntry, setNewEntry] = useState({
   name: "",
   type: "expense",
-  category: "Comida",  
+  category: expenseCategories.length > 0 ? expenseCategories[0].name : "",  
   value: "",
   icon: "💸",
   sharedWith: [],
@@ -72,8 +74,19 @@ const [friends, setFriends] = useState([]);
 const [clientId, setClientId] = useState(null);
 
 // Obtener categorías únicas de gastos y de ingresos por separado
-const expenseCategoriesUnique = [...new Set(data.filter(i => i.type === "expense").map(i => i.category.name))];
-const incomeCategoriesUnique = [...new Set(data.filter(i => i.type === "income").map(i => i.category.name))];
+const expenseCategoriesUnique = [...new Set(
+  data
+    .filter(i => i.type === "expense")
+    .map(i => i.category?.name)
+    .filter(name => name) // Filtrar valores null/undefined
+)];
+
+const incomeCategoriesUnique = [...new Set(
+  data
+    .filter(i => i.type === "income")
+    .map(i => i.category?.name)
+    .filter(name => name) // Filtrar valores null/undefined
+)];
 
 // Total por categoría gastos
 const expenseData = expenseCategoriesUnique.map(cat =>
@@ -89,7 +102,7 @@ const incomeData = incomeCategoriesUnique.map(cat =>
     .reduce((acc, curr) => acc + Number(curr.value), 0)
 );
 
-// Colores (puedes ajustar o usar más)
+// Colores
 const expenseColors = [
   "#f44336", "#e57373", "#ef9a9a", "#ffcdd2", "#b71c1c"
 ];
@@ -136,7 +149,6 @@ const doughnutData = {
 
 const doughnutOptions = {
   responsive: true,
-  //maintainAspectRatio: false,
   plugins: {
     legend: {
       position: "bottom",
@@ -175,18 +187,10 @@ const formattedDate = today.toLocaleDateString('es-ES', options);
   // Resetear página cuando cambien los datos
   useEffect(() => {
     setCurrentPage(0);
-  }, [data, selectedCategory]);
+  }, [selectedCategory]);
 
 
 const validateAndPrepareTransaction = (formData, clientId, friends = []) => {
-    console.log("🔍 Iniciando validación con datos:", {
-      name: formData.name,
-      value: formData.value,
-      originalValue: formData.value,
-      _id: formData._id,
-      clientId: formData.clientId,
-      isEditing: !!formData._id
-    });
     
     if (!formData.name || !formData.value || isNaN(formData.value)) {
       toast.error("Por favor, completa el nombre y un valor válido.");
@@ -222,17 +226,8 @@ const validateAndPrepareTransaction = (formData, clientId, friends = []) => {
       } else {
         totalValue = newValue;
       }
-      
-      console.log("🔍 Validación splits personalizados:", {
-        participantes: allParticipants,
-        importesPersonalizados: customAmounts,
-        sumaImportes: sumCustomAmounts,
-        valorTotal: totalValue
-      });
-      
-      // Validar la suma
    
-         // CAMBIO CLAVE: Para edición, permitir cambio del valor total
+         //Para edición, permitir cambio del valor total
       // solo validar si hay importes personalizados definidos
       if (formData._id) {
         // Si hay importes personalizados definidos, deben sumar exactamente al NUEVO valor
@@ -249,14 +244,12 @@ const validateAndPrepareTransaction = (formData, clientId, friends = []) => {
           if (allHaveAmounts && Math.abs(sumCustomAmounts - newValue) > 0.01) {
             toast.error(
               `La suma de los importes asignados (${sumCustomAmounts.toFixed(2)}€) debe ser exactamente igual al nuevo valor del gasto (${newValue.toFixed(2)}€). ` +
-              `Ajusta los importes personalizados o deja algunos en 0 para que se calculen automáticamente.`
+              `Ajusta los importes personalizados.`
             );
             return null;
           }
         }
-        
-        // Si no todos tienen importes definidos, está bien - el backend los calculará
-        
+       
       } else {
         // Al crear: suma no debe exceder el total
         if (sumCustomAmounts >= newValue) {
@@ -317,74 +310,8 @@ const validateAndPrepareTransaction = (formData, clientId, friends = []) => {
       }
     }
 
-    console.log("✅ Datos validados para transacción:", transactionData);
     return transactionData;
   };
-
-// Función para limpiar customAmounts cuando se eliminen usuarios (agregar al EditTransactionModal)
-const handleSharedWithChange = (selectedOptions) => {
-  const newSharedWith = selectedOptions.map(option => option.value);
-  
-  // Si estamos usando split personalizado, limpiar importes de usuarios eliminados
-  if (formData.splitType === "custom") {
-    const newCustomAmounts = { ...formData.customAmounts };
-    
-    // Eliminar importes de usuarios que ya no están seleccionados
-    Object.keys(newCustomAmounts).forEach(friendId => {
-      if (!newSharedWith.includes(friendId)) {
-        delete newCustomAmounts[friendId];
-        console.log(`🗑️ Eliminado importe personalizado del usuario: ${friendId}`);
-      }
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      sharedWith: newSharedWith,
-      customAmounts: newCustomAmounts
-    }));
-  } else {
-    setFormData(prev => ({
-      ...prev,
-      sharedWith: newSharedWith
-    }));
-  }
-  
-  console.log("👥 Usuarios compartidos actualizados:", newSharedWith);
-};
-
-const handleRemoveUserFromSharedTransaction = async (transactionId, userIdToRemove) => {
-  const token = localStorage.getItem("token");
-  
-  try {
-    const response = await axios.patch(GATEWAY_URL+`/track/${transactionId}/remove-user`, {
-      userIdToRemove: userIdToRemove
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (response.data.success) {
-      console.log("✅ Usuario eliminado, transacción actualizada:", response.data.transaction);
-      
-      // Actualizar la lista local con la transacción completa del servidor
-      setData(prevTransactions =>
-        prevTransactions.map(t => 
-          t._id === transactionId ? response.data.transaction : t
-        )
-      );
-      
-      // SI EL MODAL DE EDICIÓN ESTÁ ABIERTO PARA ESTA TRANSACCIÓN, ACTUALIZARLO
-      if (editModalOpen && editingTransaction?._id === transactionId) {
-        console.log("🔄 Actualizando modal de edición con datos frescos");
-        setEditingTransaction(response.data.transaction);
-      }
-      
-      toast.success("Usuario eliminado del gasto compartido");
-    }
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    toast.error("Error al eliminar el usuario del gasto");
-  }
-};
 
 // Función mejorada para recargar datos después de cambios complejos
 const refreshTransactionsData = async () => {
@@ -423,7 +350,6 @@ const refreshTransactionsData = async () => {
       setBalance({ expense: totalExpense, income: totalIncome });
       
     } catch (error) {
-      console.error("Error al recargar datos:", error);
       setError("Error al recargar los datos.");
     } finally {
       setLoading(false);
@@ -441,7 +367,6 @@ const refreshTransactionsData = async () => {
     // Solo puede editar si es el creador original
     return transaction.createdBy === currentUserId ;
   } catch (error) {
-    console.error("Error al verificar permisos:", error);
     return false;
   }
 };
@@ -449,29 +374,17 @@ const refreshTransactionsData = async () => {
 
 
 const handleCreateTransaction = async (formData) => {
-
-   console.log("Category being sent:", formData.category);
-  console.log("Category type:", typeof formData.category);
-  console.log("Category has _id:", formData.category?._id ? "Yes" : "No");
-
-  console.log("transaccion en create: ", formData);
     const token = localStorage.getItem("token");
     const decoded = jwtDecode(token);
     const currentClientId = decoded.userId; 
-
-    console.log("📝 Creando transacción:", formData);
 
     try {
       const newItem = validateAndPrepareTransaction(formData, currentClientId, friends);
       if (!newItem) return;
 
-      console.log("📤 Enviando datos:", newItem);
-
       const response = await axios.post(GATEWAY_URL+"/track", newItem, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      console.log("📥 Respuesta del servidor:", response.data);
 
       // Recargar datos actualizados
       await refreshTransactionsData();
@@ -480,7 +393,6 @@ const handleCreateTransaction = async (formData) => {
       toast.success("Transacción creada correctamente");
 
     } catch (error) {
-      console.error("❌ Error al crear transacción:", error);
       
       if (error.response?.data?.error) {
         toast.error(error.response.data.error);
@@ -493,15 +405,13 @@ const handleCreateTransaction = async (formData) => {
   };
 
 
-const handleEditTransaction = async (transaction) => {
-  console.log("✏️ Editando transacción:", transaction);  
+const handleEditTransaction = async (transaction) => {  
   try {
    
     setEditingTransaction(transaction);
     setEditModalOpen(true);
     
   } catch (error) {
-    console.error("❌ Error al obtener datos frescos:", error);
     
     // Fallback: usar los datos locales si falla la consulta al servidor
     const transactionForEdit = {
@@ -511,9 +421,6 @@ const handleEditTransaction = async (transaction) => {
       customAmounts: transaction.customAmounts || {},
       splitType: transaction.splitType || "equal"
     };
-
-    console.log("📋 Usando datos locales como fallback:", transactionForEdit);
-    console.log("💰 CustomAmounts del fallback:", transactionForEdit.customAmounts);
     
     setEditingTransaction(transactionForEdit);
     setEditModalOpen(true);
@@ -524,8 +431,6 @@ const handleUpdateTransaction = async (formData) => {
   const token = localStorage.getItem("token");
   const decoded = jwtDecode(token);
   const currentClientId = decoded.userId;
-
-  console.log("🔄 Actualizando transacción:", formData);
 
   try {
     const updateData = validateAndPrepareTransaction(formData, currentClientId, friends);
@@ -538,12 +443,9 @@ const handleUpdateTransaction = async (formData) => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("📥 Respuesta del servidor:", response.data);
-
     // CLAVE: Actualizar datos locales con información completa del servidor
     if (response.data.isConverted) {
       // Caso: se convirtió a transacción compartida
-      console.log("🔄 Transacción convertida a compartida:", response.data.transactions);
       
       setData(prevTransactions => {
         const filteredTransactions = prevTransactions.filter(t => t._id !== formData._id);
@@ -566,7 +468,6 @@ const handleUpdateTransaction = async (formData) => {
       toast.success("Transacción convertida a gasto individual");
     } else if (response.data.updatedTransactions) {
       // Caso: se actualizaron múltiples transacciones relacionadas
-      console.log("🔄 Múltiples transacciones actualizadas:", response.data.updatedTransactions);
       
       // Actualizar todas las transacciones relacionadas en el estado local
       setData(prevTransactions => {
@@ -596,7 +497,6 @@ const handleUpdateTransaction = async (formData) => {
     setEditingTransaction(null);
 
   } catch (error) {
-    console.error("❌ Error al actualizar transacción:", error);
     
     if (error.response?.data?.message) {
       toast.error(error.response.data.message);
@@ -612,13 +512,12 @@ useEffect(() => {
   const checkPremiumStatus = () => {
     const token = localStorage.getItem("token");
     if (token) {
+      const decoded = jwtDecode(token);
       try {
-        const decoded = jwtDecode(token);
         // Asumiendo que el token contiene información sobre el estado premium
         setIsPremium(decoded.isPremium || decoded.premium || false);
         setClientId(decoded.userId);
       } catch (error) {
-        console.error("Error al decodificar token:", error);
         setIsPremium( decoded.userId);
       }
     }
@@ -662,8 +561,6 @@ useEffect(() => {
 
 
   useEffect(() => {
-    console.log("useEffect triggered with selectedCategory:", selectedCategory);
-  console.log("Current loading state:", loading);
      setLoading(false);
   setError("");
     if (selectedCategory === "") {
@@ -732,10 +629,6 @@ useEffect(() => {
     setBalance((prev) => ({ ...prev, expense: totalExpense, income: totalIncome }));
   }, [data]);
 
-  const handleAddGasto = () => {
-  console.log("Abriendo modal");
-  setModalOpen(true);
-};
 
 
   // 1. Extraer fechas únicas, agrupar datos, preparar lineChartData
@@ -827,112 +720,8 @@ const friendsOptions = friends.map(friend => ({
   label: friend.name
 }));
 
-const handleSubmit = async (e) => {
-  
-
-  if (newEntry._id) {
-    console.log("Editando transacción:", newEntry._id);
-
-    // Preparar datos limpios para la actualización
-    const updateData = {
-      name: newEntry.name,
-      type: newEntry.type,
-      category: newEntry.category,
-      value: newValue,
-      icon: newEntry.icon,
-      sharedWith: newEntry.sharedWith || [],
-      splitType: newEntry.splitType,
-      customAmounts: newEntry.splitType === "custom" ? newEntry.customAmounts : {},
-    };
-
-    try {
-      const response = await axios.put(GATEWAY_URL+`/track/${newEntry._id}`, updateData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      // Manejar caso especial de conversión a transacción compartida
-      if (response.data.isConverted) {
-        console.log("Transacción convertida a compartida:", response.data.transactions);
-        
-        // Actualizar el estado local removiendo la transacción original
-        setData(prevTransactions => {
-          // Remover la transacción original
-          const filteredTransactions = prevTransactions.filter(t => t._id !== newEntry._id);
-          
-          // Agregar las nuevas transacciones compartidas
-          const newTransactions = response.data.transactions.filter(t => t.clientId === clientId);
-          
-          return [...filteredTransactions, ...newTransactions];
-        });
-        
-        toast.success("Transacción convertida a gasto compartido");
-      } else {
-        console.log("Transacción actualizada:", response.data);
-        
-        // Actualizar la transacción en el estado local
-        setData(prevTransactions =>
-          prevTransactions.map(t => 
-            t._id === newEntry._id ? response.data : t
-          )
-        );
-        
-        toast.success("Transacción actualizada correctamente");
-      }
-
-      // Limpiar el formulario y cerrar modal
-      setNewEntry({
-        name: "",
-        type: "expense",
-        category: "",
-        value: "",
-        icon: "💰",
-        sharedWith: [],
-        splitType: "equal",
-        customAmounts: {}
-      });
-      setModalOpen(false);
-
-    } catch (error) {
-      console.error("Error al actualizar transacción:", error);
-      toast.error("Error al actualizar la transacción");
-    }
-
-  } else {
-}
-};
-
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-
-  if (name === "type") {
-    const firstCategory = value === "income" 
-      ? incomeCategories[0] || "" 
-      : expenseCategories[0] || "";
-
-    setNewEntry((prev) => ({
-      ...prev,
-      type: value,
-      category: firstCategory, // actualizar categoría automáticamente
-      // Limpiar sharedWith si cambia a income o si no es premium
-      sharedWith: (value === "expense" && isPremium) ? prev.sharedWith : [],
-    }));
-  } else {
-    setNewEntry((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-};
-
-const handleModalClose = () => {
-  setModalOpen(false);
-  setNewEntry({ name: "", type: "expense", category:"Comida", value: "", icon: "💸",  sharedWith: [], splitType: "equal", customAmounts: {}});
-};
 
 const handleDeleteTransaction = async (id) => {
-  // Opcionalmente, puedes obtener datos de la transacción para mostrar más detalles
-  // const transaction = data.find(t => t._id === id);
-  
   const result = await Swal.fire({
     title: '¿Eliminar transacción?',
     text: "Esta acción no se puede deshacer",
@@ -984,9 +773,8 @@ const handleDeleteTransaction = async (id) => {
     });
     
   } catch (error) {
-    console.error("Error al borrar la transacción:", error);
     
-    // Mensaje de error con SweetAlert2
+    // Mensaje de error 
     Swal.fire({
       title: 'Error',
       text: 'No se pudo eliminar la transacción. Inténtalo de nuevo.',
@@ -1002,6 +790,11 @@ const handleDeleteTransaction = async (id) => {
 const fetchCustomRangeData = async () => {
   if (!customStartDate || !customEndDate) {
     toast.error("Selecciona un rango de fechas válido.");
+    return;
+  }
+
+  if(customStartDate > customEndDate) {
+    toast.error("La fecha de inicio no puede ser posterior a la fecha final.");
     return;
   }
 
@@ -1028,7 +821,6 @@ const fetchCustomRangeData = async () => {
 
   const { start, end } = formatDateRange(customStartDate, customEndDate);
   
-  console.log("📅 Enviando fechas:", { start, end });
 
   try {
     setLoading(true);
@@ -1037,7 +829,6 @@ const fetchCustomRangeData = async () => {
       params: { start, end },
     });
     
-     console.log("Datos recibidos desde el backend:", res.data);  // Verifica los datos
     setData(res.data);
 
     // Calcular balance
@@ -1050,7 +841,6 @@ const fetchCustomRangeData = async () => {
 
     setBalance({ expense: totalExpense, income: totalIncome });
   } catch (error) {
-    console.error("Error al obtener datos personalizados:", error);
     setError("Error al obtener datos personalizados.");
   } finally {
     setLoading(false);
@@ -1107,7 +897,7 @@ const safeTotal = totalAmount > 0 ? totalAmount : 1;
       {period == true && (
   <div className="period-date-picker">
     <div className="date-input-group">
-      <label>📅 Desde:</label>
+      <label>Desde:</label>
       <div className="date-input-wrapper">
         <DatePicker
           selected={customStartDate}
@@ -1129,7 +919,7 @@ const safeTotal = totalAmount > 0 ? totalAmount : 1;
     </div>
     
     <div className="date-input-group">
-      <label>📅 Hasta:</label>
+      <label>Hasta:</label>
       <div className="date-input-wrapper">
         <DatePicker
           selected={customEndDate}
@@ -1161,8 +951,7 @@ const safeTotal = totalAmount > 0 ? totalAmount : 1;
         </>
       ) : (
         <>
-          <span>✨</span>
-          Aplicar Filtro
+          Aplicar filtro
         </>
       )}
     </button>
@@ -1310,6 +1099,7 @@ const safeTotal = totalAmount > 0 ? totalAmount : 1;
           marginPagesDisplayed={2}
           pageRangeDisplayed={3}
           onPageChange={handlePageClick}
+          forcePage={currentPage}
           containerClassName="pagination"
           activeClassName="active"
           pageClassName="page-item"

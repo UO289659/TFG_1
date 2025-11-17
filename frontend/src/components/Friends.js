@@ -7,7 +7,8 @@ import Swal from 'sweetalert2';
 import Footer from "./Footer.js";
 
 const FriendsSystem = () => {
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const [activeTab, setActiveTab] = useState('friends');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -23,7 +24,6 @@ const FriendsSystem = () => {
     const token = localStorage.getItem("token");
     setToken(token);
     if (!token) {
-      console.error("No hay token disponible");
       return;
     }
 
@@ -70,39 +70,8 @@ const FriendsSystem = () => {
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
-    console.log("id del usuario autenticado" + id);
     setCurrentUserId(id);
   }, []);
-
-  // Función para obtener datos de usuario por ID (con cache)
-  const getUserById = async (userId) => {
-    // Si ya tenemos el usuario en cache, lo devolvemos
-    if (usersCache[userId]) {
-      return usersCache[userId];
-    }
-
-    try {
-      const res = await axios.get(GATEWAY_URL+`/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Guardamos en cache
-      setUsersCache(prev => ({
-        ...prev,
-        [userId]: res.data
-      }));
-      
-      return res.data;
-    } catch (error) {
-      console.error("Error al obtener usuario:", error);
-      return {
-        _id: userId,
-        name: "Usuario desconocido",
-        email: "email@desconocido.com",
-        avatar: "👤"
-      };
-    }
-  };
 
    // Función para verificar si un usuario ya es amigo
   const isAlreadyFriend = (userId) => {
@@ -135,9 +104,9 @@ const FriendsSystem = () => {
       const users = result.data
         .filter(user => user._id !== currentUserId) // Excluir usuario actual
         .filter(user => 
-          user.name.toLowerCase().includes(term.toLowerCase()) ||
-          user.surname.toLowerCase().includes(term.toLowerCase()) ||
-          user.email.toLowerCase().includes(term.toLowerCase())
+          user.name.toLowerCase().startsWith(term.toLowerCase()) ||
+          user.surname.toLowerCase().startsWith(term.toLowerCase()) ||
+          user.email.split('@')[0].toLowerCase().includes(term.toLowerCase())
         )
         .filter(user => !isAlreadyFriend(user._id)) // Excluir amigos existentes
         .filter(user => !hasSentRequest(user._id)) // Excluir usuarios con solicitudes enviadas
@@ -175,7 +144,6 @@ const FriendsSystem = () => {
   // Enviar solicitud de amistad
   const sendFriendRequest = async (userId) => {
     try {
-      console.log('Enviando solicitud a usuario:', userId);
       await axios.post(GATEWAY_URL+"/send-friend-request",
         { senderId: currentUserId, receiverId: userId },
         { headers: { Authorization: `Bearer ${token}` }}
@@ -191,7 +159,6 @@ const FriendsSystem = () => {
       setSearchResults(prev => prev.filter(u => u._id !== userId));
       toast.success('Solicitud enviada correctamente');
     } catch (error) {
-      console.error("❌ Error al enviar solicitud:", error);
       toast.error('Error al enviar solicitud');
     }
   };
@@ -211,7 +178,6 @@ const FriendsSystem = () => {
       
       toast.success('Solicitud aceptada');
     } catch (error) {
-      console.error('Error al aceptar solicitud:', error);
       toast.error('Error al aceptar solicitud');
     }
   };
@@ -226,7 +192,6 @@ const FriendsSystem = () => {
       setFriendRequests(prev => prev.filter(r => r._id !== requestId));
       toast.success('Solicitud rechazada');
     } catch (error) {
-      console.error('Error al rechazar solicitud:', error);
       toast.error('Error al rechazar solicitud');
     }
   };
@@ -263,7 +228,6 @@ const FriendsSystem = () => {
         });
         
       } catch (error) {
-        console.error('Error al eliminar amigo:', error);
         Swal.fire({
           title: 'Error',
           text: 'No se pudo eliminar el amigo. Inténtalo de nuevo.',
@@ -289,7 +253,7 @@ const FriendsSystem = () => {
             className={`tab-button ${activeTab === 'friends' ? 'active' : ''}`}
           >
             <Users size={18} />
-            Mis Amigos
+            Mis amigos
             <span className="badge">{friends.length}</span>
           </button>
           <button
@@ -314,7 +278,7 @@ const FriendsSystem = () => {
             <div>
               <h2 className="section-title">
                 <Users size={24} />
-                Mis Amigos
+                Mis amigos
               </h2>
               {friends.length === 0 ? (
                 <div className="empty-state">
@@ -448,7 +412,7 @@ const FriendsSystem = () => {
             <div>
               <h2 className="section-title">
                 <Search size={24} />
-                Buscar Nuevos Amigos
+                Buscar nuevos amigos
               </h2>
               
               <div className="search-section">

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // 1. Crea el contexto
 export const UserContext = createContext();
-
+ 
 // 2. Provider
 export function UserProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));

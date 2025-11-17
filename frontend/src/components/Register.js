@@ -3,16 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
 import Footer from "./Footer";
+import { useUserContext } from "../context/UserContext";
 
 const Register = () => {
-  const GATEWAY_URL = process.env.REACT_APP_API_GATEWAY_URL || 'http://localhost:4000';
-
-  // 🔍 DEBUG - Agregar logs para ver qué está pasando
-  console.log('🔍 Environment DEBUG:');
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('NEXT_PUBLIC_API_GATEWAY_URL:', process.env.REACT_APP_API_GATEWAY_URL);
-  console.log('GATEWAY_URL final:', GATEWAY_URL);
-  console.log('All NEXT_PUBLIC vars:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP')));
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
+  const { login } = useUserContext();
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -23,6 +19,7 @@ const Register = () => {
   });
 
   const [error, setError] = useState(""); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,20 +28,36 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
     const password = formData.password;
     const passwordRegex = /^(?=.*\d).{8,}$/; // mínimo 8 caracteres y al menos un número
-
+    
     if (!passwordRegex.test(password)) {
       setError("La contraseña debe tener al menos 8 caracteres y contener al menos un número.");
+      setIsSubmitting(false);
       return;
     }
-    try {
-      const res = await axios.post(GATEWAY_URL+"/register", formData);
-       localStorage.setItem("token", res.data.token);
-      navigate("/select-plan"); 
-    } catch (error) {
+    try { 
+     const res = await axios.post(GATEWAY_URL + "/register", formData);
+      
+      // Guardar el token de forma síncrona
+      login(res.data.token);
+      
+      // Pequeña pausa para asegurar que localStorage se guarde
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // Navegar después de confirmar el guardado
+      navigate("/select-plan", { replace: true });
+
+       } catch (error) {
       setError(error.response?.data?.error || "Hubo un error al registrarse. Inténtalo de nuevo.");
+    }finally{
+      setIsSubmitting(false);
     }
+  };
+
+   const handleBack = () => {
+    navigate("/"); 
   };
 
   return (
@@ -75,7 +88,11 @@ const Register = () => {
             <label>Contraseña</label>
             <input type="password"  placeholder="Contraseña" className="form-control" name="password" onChange={handleChange} required />
           </div>
-          <button type="submit" className="btn btn-primary w-100">Registrarse</button>
+         <button type="submit" className="btn btn-primary w-100">Registrarse
+          </button>
+          <button type="button" className="btn btn-secondary w-100 mt-3" onClick={handleBack} disabled={isSubmitting}>
+            ← Volver atrás
+          </button>
         </form>
       </div>
     </div>

@@ -1,4 +1,5 @@
-@import url('../styles/variables.css'); /* ajusta la ruta según tu estructura */
+@import url('../styles/variables.css'); 
+
 
 /* Fondo con gradiente */
 .form-container {
@@ -191,19 +192,26 @@ input::placeholder {
     transform: translateY(0);
 }
 
-.btn.secondary {
+.btn.btn-secondary {
     background: var(--glass-bg);
-    color: white;
-    border: 2px solid var(--glass-border);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    border-radius: 12px;
+    border: none;
 }
 
-.btn.secondary:hover {
+.btn.btn-secondary:hover {
     background: var(--white-transparent);
     color: var(--text-primary);
     border-color: white;
     transform: translateY(-1px);
 }
+.btn.btn-secondary:disabled {
+  background-color: #ffffff;
+  color: var(--text-primary);
+}
+
 
 .btn.full-width {
     width: 100%;

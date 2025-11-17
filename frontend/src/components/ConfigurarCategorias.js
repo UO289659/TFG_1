@@ -8,7 +8,8 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const ConfigurarCategorias = () => {
   //const GATEWAY_URL = "http://localhost:4000"; 
-  constGATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000'; 
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/transactions' || 'http://localhost:4000'; 
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const [categorias, setCategorias] = useState({ expense: [], income: [] });
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoTipo, setNuevoTipo] = useState("expense");
@@ -28,7 +29,6 @@ const ConfigurarCategorias = () => {
         });
         setCategorias(res.data);
       } catch (error) {
-        console.error("Error fetching categories:", error);
        toast.error(error.response?.data?.message || "Error al cargar las categorías");
       } finally {
         setInitialLoading(false);
@@ -70,7 +70,7 @@ const ConfigurarCategorias = () => {
     
     setCategorias((prev) => ({
       ...prev,
-      [nuevoTipo]: [...prev[nuevoTipo], nuevaCategoria] // ✅ Ahora guardas el objeto completo
+      [nuevoTipo]: [...prev[nuevoTipo], nuevaCategoria] 
     }));
       
       setNuevoNombre("");
@@ -78,7 +78,6 @@ const ConfigurarCategorias = () => {
       toast.success(`Categoría "${nuevoNombre.trim()}" añadida correctamente`);
       
     } catch (error) {
-      console.error("Error adding category:", error);
       toast.error(error.response?.data?.message || "Error al añadir la categoría");
     } finally {
       setIsLoading(false);
@@ -99,7 +98,6 @@ const ConfigurarCategorias = () => {
       
       toast.success(`Categoría "${name}" eliminada correctamente`);
     } catch (error) {
-      console.error("Error deleting category:", error);
       toast.error(error.response?.data?.message || "Error al eliminar la categoría");
     }
   };

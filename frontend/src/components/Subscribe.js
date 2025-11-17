@@ -4,25 +4,24 @@ import axios from "axios";
 import { loadStripe } from '@stripe/stripe-js';
 import { 
   Crown, 
-  CreditCard, 
   Shield, 
   CheckCircle, 
   ArrowLeft, 
   Lock,
   AlertCircle,
   Loader,
-  Star,
   Zap,
   Users,
-  Download
+
 } from "lucide-react";
 import "./Subscribe.css";
 import Footer from "./Footer";
 import { useUserContext } from "../context/UserContext"; 
 
-// Inicializar Stripe con validación más robusta
+// Inicializar Stripe
 let stripePromise = null;
-const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+//const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
 
 const initializeStripe = () => {
   try {
@@ -30,22 +29,17 @@ const initializeStripe = () => {
     
     // Verificar que la key existe y no es undefined/null/empty
     if (!stripeKey || stripeKey === 'undefined' || stripeKey.trim() === '') {
-      console.error('Stripe publishable key is not defined or empty in environment variables');
-      console.error('Make sure REACT_APP_STRIPE_PUBLISHABLE_KEY is set in your .env file');
       return null;
     }
     
     // Verificar formato de la key
     if (!stripeKey.startsWith('pk_')) {
-      console.error('Invalid Stripe publishable key format. Key should start with "pk_"');
-      console.error('Received key:', stripeKey.substring(0, 10) + '...');
       return null;
     }
     
     // Solo cargar Stripe si la key es válida
     return loadStripe(stripeKey);
   } catch (error) {
-    console.error('Error initializing Stripe:', error);
     return null;
   }
 };
@@ -54,7 +48,6 @@ const initializeStripe = () => {
 try {
   stripePromise = initializeStripe();
 } catch (error) {
-  console.error('Failed to initialize Stripe:', error);
   stripePromise = null;
 }
 
@@ -84,11 +77,6 @@ const Subscribe = () => {
       const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
       const monthlyPriceId = process.env.REACT_APP_STRIPE_MONTHLY_PRICE_ID;
       const yearlyPriceId = process.env.REACT_APP_STRIPE_YEARLY_PRICE_ID;
-      
-      console.log('Checking Stripe configuration...');
-      console.log('Stripe Key exists:', !!stripeKey);
-      console.log('Monthly Price ID exists:', !!monthlyPriceId);
-      console.log('Yearly Price ID exists:', !!yearlyPriceId);
       
       if (!stripeKey || stripeKey === 'undefined') {
         setStripeError(true);
@@ -234,7 +222,6 @@ const Subscribe = () => {
       }
 
     } catch (err) {
-      console.error('Checkout error:', err);
       setError(err.message || "Error al crear la sesión de pago");
       setLoading(false);
     }
@@ -294,8 +281,8 @@ const Subscribe = () => {
               </div>
             </div>
             <div className="loading-redirect">
-              <Loader className="spinner" size={20} />
-              <span>Redirigiendo a tu perfil...</span>
+              <Loader className="animate-spin align-middle" size={20} />
+              Redirigiendo a tu perfil...
             </div>
           </div>
         </div>
@@ -346,13 +333,13 @@ const Subscribe = () => {
                 {/* Price Display */}
                 <div className="price-display">
                   <div className="price">
-                    <span className="currency">€</span>
                     <span className="amount">{prices[billingCycle].amount}</span>
+                     <span className="currency">€</span>
                     <span className="period">/{billingCycle === "monthly" ? "mes" : "año"}</span>
                   </div>
                   {billingCycle === "yearly" && (
                     <div className="yearly-note">
-                      Equivale a €8.33/mes
+                      Equivale a 8.33€/mes
                     </div>
                   )}
                 </div>
@@ -437,7 +424,7 @@ const Subscribe = () => {
         
         <div className="summary-item">
           <div className="item-label">Precio del plan:</div>
-          <div className="item-value">€{prices[billingCycle].amount}</div>
+          <div className="item-value">{prices[billingCycle].amount}€</div>
         </div>
         
         {billingCycle === "yearly" && (
@@ -449,7 +436,7 @@ const Subscribe = () => {
         
         <div className="summary-item">
           <div className="item-label">Total a pagar:</div>
-          <div className="item-value">€{prices[billingCycle].amount}</div>
+          <div className="item-value">{prices[billingCycle].amount}€</div>
         </div>
       </div>
 
@@ -474,17 +461,17 @@ const Subscribe = () => {
                   onClick={handleCheckout}
                   disabled={loading || stripeError}
                 >
-                  {loading ? (
-                    <>
-                      <Loader className="spinner" size={20} />
-                      Creando sesión...
-                    </>
-                  ) : (
-                    <>
-                      <Crown size={20} />
-                      Continuar con Stripe Checkout
-                    </>
-                  )}
+                 {loading ? (
+                  <>
+                      <Loader className="animate-spin align-middle" size={20} />
+                    Creando sesión...
+                  </>
+                ) : (
+                  <>
+                    <Crown size={20} />
+                    Continuar con Stripe Checkout
+                  </>
+                )}
                 </button>
 
                 {/* Terms */}

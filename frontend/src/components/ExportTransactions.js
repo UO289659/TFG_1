@@ -32,7 +32,8 @@ import '../styles/variables.css';
 import Footer from "./Footer.js";
 
 const ExportTransactions = () => {
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/transactions' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');
@@ -88,7 +89,6 @@ const ExportTransactions = () => {
       setSnackbarMessage('Error al exportar transacciones');
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
-      console.error(err);
       setLoading(false);
     }
   };

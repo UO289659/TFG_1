@@ -16,7 +16,7 @@ const TransactionForm = ({
   const [formData, setFormData] = useState({
     name: "",
     type: "expense",
-    category: "comida",
+    category: expenseCategories.length > 0 ? expenseCategories[0].name : "",
     value: "",
     icon: "💸",
     sharedWith: [],
@@ -31,7 +31,7 @@ const TransactionForm = ({
     if (name === "type") {
       const firstCategory = value === "income" 
         ? incomeCategories[0].name|| "" 
-        : expenseCategories[0] || "";
+        : expenseCategories[0].name || "";
 
       setFormData(prev => ({
         ...prev,
@@ -39,6 +39,24 @@ const TransactionForm = ({
         category: firstCategory,
         sharedWith: (value === "expense" && isPremium) ? prev.sharedWith : [],
       }));
+   } else if (name === "value") {
+  // Permitir vacío mientras escribe
+  if (value === "" || value === null) {
+    setFormData(prev => ({
+      ...prev,
+      value: value,
+    }));
+  } else {
+    const floatValue = parseFloat(value);
+    if (!isNaN(floatValue) && floatValue >= 0) {
+      const roundedValue = parseFloat(floatValue.toFixed(2));
+      setFormData(prev => ({
+        ...prev,
+        value: roundedValue,
+      }));
+    }
+  }
+     
     } else {
       setFormData(prev => ({
         ...prev,
@@ -50,7 +68,7 @@ const TransactionForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 🔧 CORRECCIÓN: Limpiar customAmounts antes de enviar
+    //Limpiar customAmounts antes de enviar
     const cleanedFormData = { ...formData };
     
     if (formData.splitType === 'custom') {
@@ -71,11 +89,6 @@ const TransactionForm = ({
         validCustomAmounts[friendId] > 0
       );
       
-      console.log("🧹 Datos limpiados antes del submit:", {
-        original: formData.customAmounts,
-        cleaned: validCustomAmounts,
-        sharedWithFiltered: cleanedFormData.sharedWith
-      });
     }
     
     onSubmit(cleanedFormData);
@@ -86,20 +99,14 @@ const TransactionForm = ({
     label: friend.name
   }));
 
-  // 🔧 CORRECCIÓN: Función helper para manejar cambios en customAmounts
+  // Función helper para manejar cambios en customAmounts
   const handleCustomAmountChange = (participantId, inputValue) => {
-    console.log(`💰 Cambiando monto para ${participantId}: "${inputValue}"`);
     
     if (inputValue === "" || inputValue === null || inputValue === undefined) {
       // Si el campo está vacío, remover la entrada en lugar de poner 0
       setFormData(prev => {
         const newCustomAmounts = { ...prev.customAmounts };
         delete newCustomAmounts[participantId];
-        
-        console.log("🗑️ Removiendo entrada vacía:", {
-          participantId,
-          newCustomAmounts
-        });
         
         return {
           ...prev,
@@ -110,13 +117,13 @@ const TransactionForm = ({
       const amount = parseFloat(inputValue);
       
       if (!isNaN(amount) && amount > 0) {
+        const roundedAmount = Math.round(amount * 100) / 100;
         // Solo guardar si es un número válido y mayor que 0
         setFormData(prev => ({
           ...prev,
-          customAmounts: { ...prev.customAmounts, [participantId]: amount }
+          customAmounts: { ...prev.customAmounts, [participantId]: roundedAmount }
         }));
         
-        console.log("✅ Guardando monto válido:", { participantId, amount });
       } else {
         console.log("❌ Monto inválido, no se guarda:", { participantId, inputValue, amount });
       }
@@ -239,8 +246,9 @@ const TransactionForm = ({
                     <div>
                       <label>Tú (creador):</label>
                       <input
+                        required
                         type="number"
-                        min="0"
+                        min="0.01"
                         step="0.01"
                         value={formData.customAmounts[formData.clientId] || ""}
                         onChange={(e) => {
@@ -256,8 +264,9 @@ const TransactionForm = ({
                       <div key={friendId}>
                         <label>{friend?.name || "Amigo"}:</label>
                         <input
+                        required
                           type="number"
-                          min="0"
+                          min="0.01"
                           step="0.01"
                           value={formData.customAmounts[friendId] || ""}
                           onChange={(e) => {

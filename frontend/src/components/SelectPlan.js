@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PlanCard from "./PlanCard"; 
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Star, ArrowRight, Check  } from "lucide-react";
 import "./SelectPlan.css";
@@ -14,11 +13,6 @@ const SelectPlan = () => {
   const handleSubscribe = async (plan) => {
     try {
       const token = localStorage.getItem("token");
-      // await axios.post(
-      //   "http://localhost:4000/subscribe",
-      //   { plan },
-      //   { headers: { Authorization: `Bearer ${token}` } }
-      // );
       navigate("/subscribe");
     } catch (error) {
       toast.error("Error al actualizar el plan");

@@ -1,4 +1,4 @@
-/* Profile.css - Estilos para el componente de perfil profesional */
+/* Profile.css */
 @import url('../styles/variables.css');
 /* Header principal con gradiente */
 .gradient-header {
@@ -97,7 +97,7 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
-/* Cards profesionales */
+/* Cards */
 .professional-card {
   background: var(--white-transparent);
   border-radius: 20px;
@@ -130,7 +130,7 @@
   flex-shrink: 0;
 }
 
-/* Inputs modernos */
+/* Inputs */
 .form-control-modern {
   border-radius: 12px;
   border: 2px solid #e0e0e0;
@@ -224,7 +224,7 @@
   }
 }
 
-/* Estados hover mejorados */
+/* Estados hover */
 .gradient-btn:active,
 .gradient-btn-green:active {
   transform: translateY(0);
@@ -241,13 +241,6 @@
   outline: 2px solid var(--purple);
   outline-offset: 2px;
 }
-
-/* Estilos para etiquetas de formulario 
-.form-label {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}*/
 
 /* Espaciado consistente */
 .mb-custom {

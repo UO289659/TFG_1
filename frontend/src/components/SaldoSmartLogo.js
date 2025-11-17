@@ -26,7 +26,7 @@
         strokeWidth="1"
       />
       
-      {/* Símbolo de dinero moderno */}
+      {/* Símbolo de dinero */}
       <circle cx="60" cy="65" r="20" fill="#ffffff" opacity="0.95"/>
       <text
         x="60"

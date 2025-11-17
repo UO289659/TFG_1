@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./Footer.js";
 
 const ForgotPassword = () => {
-  const GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:4000';
+  //const GATEWAY_URL = 'https://gateway-tfg.azure-api.net/users' || 'http://localhost:4000';
+  const GATEWAY_URL = process.env.REACT_APP_GATEWAY_URL;
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -21,14 +22,14 @@ const ForgotPassword = () => {
 
     try {
       const res = await axios.post(`${GATEWAY_URL}/forgot-password`, { email });
-      setMessage(res.data.message); // Mensaje de éxito (ej. "Revisa tu correo para restablecer la contraseña.")
+      setMessage(res.data.message); // Mensaje de éxito
       setTimeout(() => navigate("/login"), 5000); // Redirigir al login después de 5 segundos
     } catch (err) {
       setError(err.response?.data?.error || "Hubo un problema con la solicitud.");
     }
   };
 
-  return (
+  return ( 
     <>
     <div className="form-container">
       <nav className="navbar">
